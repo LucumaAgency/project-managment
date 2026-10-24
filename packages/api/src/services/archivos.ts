@@ -202,6 +202,15 @@ export async function listarArchivos(tx: Tx, actor: Actor, projectId: string, ca
   const plan = await planDeCuenta(tx, actor.ctx.accountId);
   return {
     ruta,
+    // La carpeta abierta: si le llega al cliente y si quien mira puede cambiarlo.
+    carpeta: carpeta
+      ? {
+          id: carpeta.elemento.id,
+          visibleParaCliente: carpeta.elemento.visibleEnCadena,
+          visibleToClients: (await tx.recording.findUniqueOrThrow({ where: { id: carpeta.elemento.id }, select: { visibleToClients: true } })).visibleToClients,
+          cambiarVisibilidad: puede(actor, 'elemento.cambiarVisibilidad', { proyecto, elemento: carpeta.elemento }),
+        }
+      : null,
     carpetas: hijos
       .filter((h) => h.type === 'folder')
       .map((h) => ({ id: h.id, title: h.title, visibleToClients: h.visibleToClients, elementos: cuantos.get(h.id) ?? 0 })),
@@ -220,7 +229,10 @@ export async function listarArchivos(tx: Tx, actor: Actor, projectId: string, ca
       subir: puede(actor, 'elemento.crear', { proyecto, elemento: carpeta?.elemento, tipo: 'upload' }),
       crearCarpeta: puede(actor, 'elemento.crear', { proyecto, elemento: carpeta?.elemento, tipo: 'folder' }),
     },
-    almacenamiento: { usados: uso, maximo: plan.maxAlmacenamientoBytes, maxArchivo: env.archivosMaxBytes },
+    // El espacio de la cuenta es asunto de la agencia: el cliente solo ve el máximo por archivo.
+    almacenamiento: esCliente(actor.rol)
+      ? { usados: null, maximo: null, maxArchivo: env.archivosMaxBytes }
+      : { usados: uso, maximo: plan.maxAlmacenamientoBytes, maxArchivo: env.archivosMaxBytes },
   };
 }
 
@@ -245,6 +257,8 @@ export async function detalleArchivo(tx: Tx, actor: Actor, id: string) {
       title: fila.title,
       carpetaId: fila.parentId,
       visibleToClients: fila.visibleToClients,
+      /** Le llega al cliente de verdad: él y su carpeta (con toda la cadena) son visibles. */
+      visibleParaCliente: elemento.visibleEnCadena,
       createdAt: fila.createdAt,
       creator: fila.creator,
       versiones: fila.versions.map(aVersion),

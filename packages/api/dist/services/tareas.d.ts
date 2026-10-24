@@ -70,6 +70,7 @@ export declare function listarTareas(tx: Tx, actor: Actor, proyecto: ProyectoCar
             papelera: boolean;
             agregar: boolean;
             mover: boolean;
+            visibilidad: boolean;
         };
         tareas: {
             comentarios: number;
@@ -107,6 +108,7 @@ export declare function listarTareas(tx: Tx, actor: Actor, proyecto: ProyectoCar
 /** Detalle de una tarea con el documento de las notas (para editarlo) y lo que puedo hacer. */
 export declare function tareaDetalle(tx: Tx, actor: Actor, id: string): Promise<{
     tarea: {
+        visibleParaCliente: boolean;
         visibleToClients: boolean;
         position: number;
         createdAt: Date;
@@ -148,6 +150,7 @@ export interface DatosTarea {
     assigneeIds?: string[];
 }
 export declare function crearTarea(tx: Tx, actor: Actor, listaId: string, datos: DatosTarea): Promise<{
+    visibleParaCliente: boolean;
     visibleToClients: boolean;
     position: number;
     createdAt: Date;
@@ -173,6 +176,7 @@ export declare function crearTarea(tx: Tx, actor: Actor, listaId: string, datos:
     tieneNotas: boolean;
 }>;
 export declare function editarTarea(tx: Tx, actor: Actor, id: string, datos: DatosTarea): Promise<{
+    visibleParaCliente: boolean;
     visibleToClients: boolean;
     position: number;
     createdAt: Date;
@@ -198,6 +202,7 @@ export declare function editarTarea(tx: Tx, actor: Actor, id: string, datos: Dat
     tieneNotas: boolean;
 }>;
 export declare function completarTarea(tx: Tx, actor: Actor, id: string, completar: boolean): Promise<{
+    visibleParaCliente: boolean;
     visibleToClients: boolean;
     position: number;
     createdAt: Date;

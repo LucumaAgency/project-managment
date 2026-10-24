@@ -89,6 +89,7 @@ export async function listarTareas(tx, actor, proyecto) {
             papelera: puede(actor, 'elemento.papelera', { proyecto, elemento }),
             agregar: puede(actor, 'elemento.crear', { proyecto, elemento, tipo: 'todo' }),
             mover: puede(actor, 'elemento.mover', { proyecto, elemento }),
+            visibilidad: puede(actor, 'elemento.cambiarVisibilidad', { proyecto, elemento }),
         };
     };
     return {
@@ -121,7 +122,7 @@ export async function tareaDetalle(tx, actor, id) {
     const fila = (await tx.recording.findUniqueOrThrow({ where: { id }, select: SELECCION_TAREA }));
     const asignado = fila.assignees.some((a) => a.user.id === actor.ctx.userId);
     return {
-        tarea: aTarea(fila, true),
+        tarea: { ...aTarea(fila, true), visibleParaCliente: elemento.visibleEnCadena },
         permisos: {
             editar: puede(actor, 'elemento.editar', { proyecto, elemento }),
             completar: puede(actor, 'tarea.completar', { proyecto, elemento, esAsignado: asignado }),

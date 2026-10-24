@@ -320,6 +320,10 @@ Lógica en `services/elementos.ts` (cadena de padres) y `services/permisos.ts` (
   recalcular.
 - Correos, bandeja y búsqueda pasan por el mismo filtro.
 - Lo comprueban los tests de `proyectos.test.ts`; con el filtro quitado a propósito fallan 3.
+- **Auditoría de fugas** (`cliente.test.ts`, D-55): todas las rutas del cliente, con una marca en
+  todo lo interno. Toda ruta nueva que vea un cliente se agrega ahí.
+- Para el equipo: `visibleParaCliente` en el detalle de tarea, archivo y elemento (con la cadena);
+  `vistaCliente` en el detalle del proyecto (qué ve el cliente en la raíz).
 
 ## Actividad y avisos
 

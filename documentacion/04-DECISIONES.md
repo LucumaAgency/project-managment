@@ -356,6 +356,16 @@ por cuenta; RLS separa cuentas, no personas, así que toda consulta filtra por l
 - Sin resumen diario en la bandeja: la bandeja ya muestra todo lo que sigues; el resumen tiene
   sentido cuando haya correo. Sin pantalla de preferencias todavía (por la misma razón).
 
+**D-55 · La vista del cliente se audita con un test de fugas** (2026-10-24, día 13)
+`test/cliente.test.ts` arma un proyecto con todo tipo de contenido interno marcado con una
+palabra y recorre como cliente todas las rutas que puede usar: la palabra no puede aparecer en
+ninguna respuesta; lo interno pedido por id da 404; escribir en lo interno, también. Probado a
+propósito: con el filtro de mensajes quitado, el test falla. **Toda ruta nueva que vea un
+cliente se suma a esa lista.** Además, para el equipo: cada detalle dice si a la persona cliente
+le llega de verdad (`visibleParaCliente`, con toda la cadena), el proyecto resume qué ve el
+cliente en la raíz, y listas y carpetas se pueden mostrar u ocultar después de creadas. El
+espacio usado de la cuenta ya no se le muestra al cliente.
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

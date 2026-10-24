@@ -70,7 +70,7 @@ export default async function rutasElementos(app) {
             const { proyecto, elemento } = await elementoPara(tx, actor, req.params.id, 'elemento.ver');
             const fila = await tx.recording.findUniqueOrThrow({ where: { id: elemento.id }, select: SELECCION });
             return {
-                elemento: fila,
+                elemento: { ...fila, visibleParaCliente: elemento.visibleEnCadena },
                 permisos: {
                     editar: puede(actor, 'elemento.editar', { proyecto, elemento }),
                     papelera: puede(actor, 'elemento.papelera', { proyecto, elemento }),

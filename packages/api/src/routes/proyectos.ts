@@ -48,6 +48,16 @@ async function personasDelProyecto(tx: Tx, accountId: string, projectId: string,
     }));
 }
 
+async function vistaCliente(tx: Tx, projectId: string) {
+  const filas = await tx.recording.groupBy({
+    by: ['type'],
+    where: { projectId, parentId: null, status: 'active', visibleToClients: true, type: { in: ['todolist', 'message', 'folder', 'upload'] } },
+    _count: { _all: true },
+  });
+  const n = Object.fromEntries(filas.map((f) => [f.type, f._count._all]));
+  return { listas: n.todolist ?? 0, mensajes: n.message ?? 0, carpetas: n.folder ?? 0, archivos: n.upload ?? 0 };
+}
+
 export default async function rutasProyectos(app: FastifyInstance) {
   /**
    * Proyectos que puedo ver. Owner y admin ven todos; el resto, donde es miembro. Archivados
@@ -147,6 +157,9 @@ export default async function rutasProyectos(app: FastifyInstance) {
           archivos: (cuantos.folder ?? 0) + (cuantos.upload ?? 0),
         },
         permisos: permisosEn(actor, p),
+        // Para el equipo: qué ve el cliente en la raíz del proyecto (lo de adentro depende,
+        // además, de que cada cosa esté marcada visible).
+        vistaCliente: cliente ? null : await vistaCliente(tx, p.id),
       };
     });
   });

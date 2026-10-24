@@ -5,10 +5,10 @@ actualiza aquí y se anota en la bitácora de [09-AVANCE.md](09-AVANCE.md).
 
 ## Estado al 2026-10-24
 
-- **Fase:** construcción del MVP. Días 1 a 12 de 15 terminados.
+- **Fase:** construcción del MVP. Días 1 a 13 de 15 terminados.
 - **Repo:** https://github.com/LucumaAgency/project-managment (público, rama `main`).
 - **En línea:** https://proyectos.pruebalucuma.site (beta en Plesk, guía en [10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md)).
-- **Siguiente paso:** día 13, la vista del cliente (repaso completo de lo que ve).
+- **Siguiente paso:** día 14, papelera con purga, búsqueda, ajustes para celular y exportar la cuenta.
 - **Esperando tu confirmación:** ver «Para confirmar» en [09-AVANCE.md](09-AVANCE.md).
 
 ## Documentos

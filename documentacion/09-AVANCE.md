@@ -19,8 +19,8 @@ pendientes** del proyecto.
 | 10 | Archivos | ✅ 2026-10-24 |
 | 11 | Bandeja de notificaciones | ✅ 2026-10-24 |
 | 12 | Recordatorios dentro de la app | ✅ 2026-10-24 |
-| 13 | Vista del cliente | Siguiente |
-| 14 | Papelera, búsqueda, celular, exportación | Pendiente |
+| 13 | Vista del cliente | ✅ 2026-10-24 |
+| 14 | Papelera, búsqueda, celular, exportación | Siguiente |
 | 15 | Servidor y salida a producción | Pendiente |
 
 Detalle de cada día en [07-PLAN-MVP.md](07-PLAN-MVP.md).
@@ -527,6 +527,32 @@ Probado:
 versión de este paso; lo notó el usuario. Sin él, el cliente de Prisma del servidor no conoce el
 campo nuevo y los recordatorios fallan.) Después, el latido en cron-job.org
 ([10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md) §5c).
+
+### 2026-10-24 · Día 13
+
+Casi todo lo de la vista del cliente ya existía (se fue construyendo cada día con su regla de
+visibilidad en cadena). Este día fue una auditoría (D-55):
+
+Hecho:
+
+- `test/cliente.test.ts`: auditoría de fugas (21 rutas, 16 accesos directos, 8 escrituras).
+  **Pasó a la primera: no había fugas.** Con el filtro de mensajes quitado a propósito, falla.
+- Huecos cerrados: listas y carpetas se pueden mostrar u ocultar después de creadas (menú de la
+  lista; aviso con botón dentro de la carpeta); el detalle de un archivo avisa si está marcado
+  visible pero su carpeta es interna; el espacio usado de la cuenta ya no se le muestra al cliente.
+- Para el equipo: la página del proyecto dice qué ve el cliente ("2 listas · 1 mensaje · 1
+  carpeta. Todo lo demás es interno.", o que todavía no hay clientes); `visibleParaCliente` en
+  los detalles.
+
+Probado:
+
+- 203 tests en verde (6 nuevos en `cliente.test.ts`).
+- En navegador real (web compilada), escritorio y celular: el equipo arma un proyecto con
+  contenido visible e interno; una cliente invitada recorre proyecto, tareas, detalle de tarea,
+  mensajes, archivos, actividad y bandeja **sin que aparezca nada interno en ninguna pantalla**;
+  el equipo hace visible una lista desde su menú, el resumen cambia y la cliente pasa a verla.
+
+Para desplegar: Git → Desplegar y reiniciar. Sin migraciones.
 
 ## Para confirmar
 

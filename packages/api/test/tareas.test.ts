@@ -68,7 +68,7 @@ describe('crear y listar', () => {
     const r = (await member.get(`/proyectos/${projectId}/tareas`)).json;
     const laLista = r.listas.find((x: { id: string }) => x.id === l);
     expect(ids(laLista.tareas)).toEqual([t1.id, t2.id]);
-    expect(laLista.permisos).toEqual({ editar: true, papelera: true, agregar: true, mover: true });
+    expect(laLista.permisos).toEqual({ editar: true, papelera: true, agregar: true, mover: true, visibilidad: true });
     expect(r.permisos).toMatchObject({ crearLista: true, asignar: true });
     expect(await prismaAdmin.event.count({ where: { recordingId: t1.id, action: 'assigned' } })).toBe(1);
   });

@@ -23,6 +23,8 @@ export declare function subirArchivo(actor: Actor, projectId: string, datos: {
         title: string | null;
         carpetaId: string | null;
         visibleToClients: boolean;
+        /** Le llega al cliente de verdad: él y su carpeta (con toda la cadena) son visibles. */
+        visibleParaCliente: boolean;
         createdAt: Date;
         creator: {
             name: string;
@@ -61,6 +63,8 @@ export declare function nuevaVersion(actor: Actor, id: string, datos: {
         title: string | null;
         carpetaId: string | null;
         visibleToClients: boolean;
+        /** Le llega al cliente de verdad: él y su carpeta (con toda la cadena) son visibles. */
+        visibleParaCliente: boolean;
         createdAt: Date;
         creator: {
             name: string;
@@ -95,6 +99,12 @@ export declare function listarArchivos(tx: Tx, actor: Actor, projectId: string, 
         id: string;
         title: string | null;
     }[];
+    carpeta: {
+        id: string;
+        visibleParaCliente: boolean;
+        visibleToClients: boolean;
+        cambiarVisibilidad: boolean;
+    } | null;
     carpetas: {
         id: string;
         title: string | null;
@@ -128,6 +138,10 @@ export declare function listarArchivos(tx: Tx, actor: Actor, projectId: string, 
         crearCarpeta: boolean;
     };
     almacenamiento: {
+        usados: null;
+        maximo: null;
+        maxArchivo: number;
+    } | {
         usados: number;
         maximo: number | null;
         maxArchivo: number;
@@ -139,6 +153,8 @@ export declare function detalleArchivo(tx: Tx, actor: Actor, id: string): Promis
         title: string | null;
         carpetaId: string | null;
         visibleToClients: boolean;
+        /** Le llega al cliente de verdad: él y su carpeta (con toda la cadena) son visibles. */
+        visibleParaCliente: boolean;
         createdAt: Date;
         creator: {
             name: string;

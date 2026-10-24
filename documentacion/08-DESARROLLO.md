@@ -47,6 +47,13 @@ npm run usuario -- soporte tu@correo.com --quitar # le quita la marca
 En el servidor, con la API compilada: `npm run usuario:prod -- …` y `npm run cuenta:crear:prod -- …`.
 Soporte entra a cualquier cuenta como admin mientras `SOPORTE_BETA` no sea `0` (D-31).
 
+## Recorridos en navegador
+
+Con dos o más ventanas abiertas a la vez, el modo desarrollo de Vite (cientos de archivos
+sueltos) deja al navegador sin recursos (`ERR_INSUFFICIENT_RESOURCES`). Para recorridos largos:
+`npm run build -w @lucuma-pm/web` y usar la API en `http://localhost:3100`, que sirve la web
+compilada (reiniciar la API después de compilar: registra los archivos al arrancar).
+
 ## Probar el editor en local
 
 Con la API y la web corriendo, entrar y abrir http://localhost:5174/_editor?cuenta=lucuma: guarda
@@ -87,11 +94,12 @@ tipos y tests en cada push a `main` y en cada PR.
 | `test/archivos.test.ts` | Subir y bajar (huella, clave sin nombre, encabezados seguros), HTML/SVG disfrazados nunca en línea, PDF en línea, nombre limpio, vacío 400 y demasiado grande 413 sin dejar nada (también por partes), espacio del plan, versiones (la anterior queda), carpetas con ruta, comentar un archivo, el cliente no baja lo de una carpeta interna ni con el enlace, sube en lo visible, no versiona lo ajeno, otra cuenta 404, sin sesión 401 |
 | `test/bandeja.test.ts` | A quién le llega qué (mención que abre lo comentado, quien escribe no recibe, seguidores con una sola fila por persona, asignar, completar, mensaje nuevo solo a quien lo ve, al editar solo los nuevos mencionados, desactivados no), el cliente nunca se entera de lo interno (ni lo nuevo ni lo viejo tras pasar a interno), la bandeja (frase, contador, leer uno, al abrir, todo), nadie ve ni marca la bandeja ajena, la bandeja es por cuenta |
 | `test/recordatorios.test.ts` | Vence mañana al responsable una sola vez (también calculado en paralelo), sin responsable a quien la creó, vencida, completada o lejana no, cliente solo si es visible, nada de papelera ni archivados, cómo se ve en la bandeja, se calcula al usar la app, latido (503 sin token, 401, 200), días en la zona de la cuenta |
+| `test/cliente.test.ts` | **Auditoría de fugas**: 21 rutas recorridas como cliente sin que aparezca nada interno; 16 accesos directos a lo interno dan 404 (la papelera 403); 8 escrituras sobre lo interno rechazadas; el espacio usado no se le muestra; lo que el equipo ve de la vista del cliente; cambiar la visibilidad de una carpeta ya creada |
 | `test/planes.test.ts` | `planPermite()`, excepciones por cuenta (ignora valores raros), plan desconocido, `puedeInvitar()` |
 | `test/host.test.ts` | Lectura del host: subdominio, raíz, reservados, dominios ajenos |
 | `test/semilla.ts` | Crea una cuenta con filas en **todas** las tablas con RLS (un test verifica que ninguna quede vacía) |
 
-Comprobado el 2026-10-24: con el RLS de una sola tabla apagado a propósito, 4 tests fallan; con el filtro de visibilidad para clientes quitado, 3.
+Comprobado el 2026-10-24: con el RLS de una sola tabla apagado a propósito, 4 tests fallan; con el filtro de visibilidad para clientes quitado, 3; con el filtro de mensajes quitado, la auditoría de fugas falla.
 
 **Al agregar una tabla nueva:** si lleva `accountId` o cuelga de un recording, el test de
 estructura falla hasta que tenga su RLS y su política; además hay que sumarla a la semilla.

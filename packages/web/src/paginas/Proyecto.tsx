@@ -144,6 +144,8 @@ export default function Proyecto() {
       </div>
       {error && <p className="error" role="alert">{error}</p>}
 
+      {d.vistaCliente && <VistaCliente v={d.vistaCliente} hayClientes={d.personas.some((x) => x.role === 'client')} />}
+
       <div className="secciones">
         {SECCIONES.map((s) => {
           const n = d.secciones[s.clave];
@@ -344,5 +346,27 @@ function PersonasDelProyecto(props: { detalle: ProyectoDetalle; verCorreos: bool
       )}
       {error && <p className="error" role="alert">{error}</p>}
     </Modal>
+  );
+}
+
+/** Para el equipo: qué ve el cliente en este proyecto, de un vistazo. */
+function VistaCliente({ v, hayClientes }: { v: NonNullable<ProyectoDetalle['vistaCliente']>; hayClientes: boolean }) {
+  const partes = [
+    v.listas && `${v.listas} ${v.listas === 1 ? 'lista' : 'listas'}`,
+    v.mensajes && `${v.mensajes} ${v.mensajes === 1 ? 'mensaje' : 'mensajes'}`,
+    v.carpetas && `${v.carpetas} ${v.carpetas === 1 ? 'carpeta' : 'carpetas'}`,
+    v.archivos && `${v.archivos} ${v.archivos === 1 ? 'archivo' : 'archivos'}`,
+  ].filter(Boolean);
+  return (
+    <p className="aviso vista-cliente">
+      <Icono nombre="ojo" tam={15} />
+      <span>
+        {!hayClientes
+          ? 'Todavía no hay clientes en este proyecto. Lo que marques "visible para el cliente" lo verán cuando los invites.'
+          : partes.length
+            ? `El cliente ve: ${partes.join(' · ')}. Todo lo demás es interno.`
+            : 'El cliente todavía no ve nada de este proyecto: todo es interno.'}
+      </span>
+    </p>
   );
 }
