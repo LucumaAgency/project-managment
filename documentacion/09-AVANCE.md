@@ -322,7 +322,8 @@ El usuario configuró Plesk siguiendo la guía: base `carlosm_lucuma_pm` con `ca
 |---|---|---|
 | Git trajo el código sin `public/` ni `dist/` | Estaba en la rama `main` | Rama `produccion` |
 | `Falta la variable de entorno DATABASE_URL` | Faltaba el `.env` | Creado en la raíz. El error ahora dice dónde buscó el `.env` y si lo encontró |
-| *Error starting web application*, `ERR_REQUIRE_ESM` | Passenger usa `require()` y Node 21.7.3 no carga módulos ES así | `arranque.cjs` como archivo de inicio (carga la API con `import()`); además, pasar a Node 22 |
+| *Error starting web application*, `ERR_REQUIRE_ESM` | Passenger usa `require()` y Node 21.7.3 no carga módulos ES así | `arranque.cjs` como archivo de inicio (carga la API con `import()`). La suscripción no ofrece Node 22: se queda en 21.7.3 |
+| 500 al entrar: `option domain is invalid: ."\"\"` | Node 21.7 lee `BASE_DOMAIN=""` como el texto `""` | `BASE_DOMAIN=` sin comillas; además la app quita comillas de las variables y no arranca con un dominio inválido |
 
 ## Para confirmar
 

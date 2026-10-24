@@ -70,11 +70,13 @@ DATABASE_URL="postgresql://carlosm_pm_app:<clave de pm_app>@localhost:5432/carlo
 DATABASE_ADMIN_URL="postgresql://carlosm_pm_admin:<clave de pm_admin>@localhost:5432/carlosm_lucuma_pm"
 APP_URL="https://proyectos.pruebalucuma.site"
 SESSION_SECRET="<texto aleatorio largo>"
-BASE_DOMAIN=""        # un solo dominio por ahora: la cuenta se elige al entrar (D-24)
+BASE_DOMAIN=          # vacío y SIN comillas: un solo dominio, la cuenta se elige al entrar (D-24)
 SOPORTE_BETA=1
 ```
 
-`PORT` lo pone Passenger. Sin `SMTP_HOST` no sale ningún correo (D-32): la web oculta el
+`PORT` lo pone Passenger. Ojo con Node 21: su lector de `.env` dejaba `BASE_DOMAIN=""` como
+el texto `""` y rompía la cookie (500 al entrar). Desde el 2026-10-24 la app quita esas comillas
+sola, pero lo más simple es escribir `BASE_DOMAIN=` sin nada. Sin `SMTP_HOST` no sale ningún correo (D-32): la web oculta el
 acceso por enlace y la ruta responde 503.
 
 ## 3. Git de Plesk
