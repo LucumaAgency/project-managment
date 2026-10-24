@@ -29,5 +29,13 @@ $$;
 
 REVOKE ALL ON FUNCTION cuenta_por_slug(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION cuentas_de_usuario() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION cuenta_por_slug(text) TO pm_app;
-GRANT EXECUTE ON FUNCTION cuentas_de_usuario() TO pm_app;
+DO $$
+DECLARE
+  rol_app text := replace(current_user, 'pm_admin', 'pm_app');
+BEGIN
+  IF rol_app = current_user OR NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = rol_app) THEN
+    RAISE EXCEPTION 'Las migraciones se corren con el usuario dueño (…pm_admin) y tiene que existir el usuario de la app (%). Ver documentacion/10-DESPLIEGUE-PLESK.md', rol_app;
+  END IF;
+  EXECUTE format('GRANT EXECUTE ON FUNCTION cuenta_por_slug(text) TO %I', rol_app);
+  EXECUTE format('GRANT EXECUTE ON FUNCTION cuentas_de_usuario() TO %I', rol_app);
+END $$;

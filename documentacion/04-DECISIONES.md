@@ -236,6 +236,15 @@ y con `base:verificar:prod`: `pm_app` no es dueño de ninguna tabla, ni miembro 
 tiene BYPASSRLS, para comportarse igual que el servidor. Descartado: pedir al hosting un
 superusuario solo para esto.
 
+**D-45 · Nombres de usuario con prefijo y PostgreSQL 12** (2026-10-24)
+Plesk antepone el usuario de la suscripción (`carlosm_pm_admin`) y el servidor tiene PostgreSQL
+12.22. Las migraciones ya no nombran a `pm_app`: lo deducen del que migra (`…pm_admin` →
+`…pm_app`) y cortan con un mensaje claro si no existe. Se reescribieron tres migraciones que
+solo se habían aplicado en la base local (se actualizó su huella ahí, sin perder datos). Los
+tests corren siempre con usuarios `plesk_…` para cubrir el prefijo, y aceptan otra base con
+`TEST_PG_URL_APP` / `TEST_PG_URL_ADMIN`. La suite completa pasó en PostgreSQL 12.22 con la base
+a nombre del servidor (el caso más restrictivo). El piso de versión pasa de 13 a 12.
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

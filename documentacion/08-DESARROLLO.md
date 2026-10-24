@@ -60,8 +60,10 @@ npm test          # compila shared y corre vitest en packages/api
 npm run typecheck # tipos de shared, api (incluidos los tests) y web
 ```
 
-No necesitan `npm run db:local`: cada corrida levanta su propio Postgres 16 temporal, aplica
-las migraciones y lo borra al terminar. GitHub Actions (`.github/workflows/ci.yml`) corre
+No necesitan `npm run db:local`: cada corrida levanta su propio Postgres 16 temporal (con
+usuarios `plesk_pm_admin` / `plesk_pm_app`, como en Plesk), aplica las migraciones y lo borra al
+terminar. Para probar contra otro Postgres (por ejemplo la versión del servidor), con una base
+vacía: `TEST_PG_URL_APP=… TEST_PG_URL_ADMIN=… npm test`. GitHub Actions (`.github/workflows/ci.yml`) corre
 tipos y tests en cada push a `main` y en cada PR.
 
 | Archivo | Qué prueba |
