@@ -299,6 +299,19 @@ El usuario confirmó: hay PostgreSQL en el servidor, **no hay root**, y el domin
 - Guía [10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md) con los pasos del panel (sin SSH).
 - Nada tocado en producción.
 
+### 2026-10-24 · Base creada en Plesk: prefijo y PostgreSQL 12
+
+El usuario creó en Plesk la base `carlosm_lucuma_pm` con el usuario `carlosm_pm_admin`
+(PostgreSQL 12.22, sitio `proyectos.pruebalucuma.site`). Ajustes (D-45):
+
+- Plesk antepone `carlosm_` a los nombres: las migraciones ahora deducen el usuario de la app.
+- Tests siempre con usuarios prefijados; opción para correrlos contra otra base.
+- Suite completa en PostgreSQL 12.22 simulando Plesk: 116 tests en verde; verificador en orden.
+- La contraseña del usuario de la base se pegó en el chat y tiene `@` (rompe la conexión):
+  se recomendó cambiarla por una larga solo con letras y números.
+- El disco de esta máquina de desarrollo se llenó (99 %) durante la prueba; se borraron solo
+  las copias temporales propias. Quedan ~500 MB libres.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;

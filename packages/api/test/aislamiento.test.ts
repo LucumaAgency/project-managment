@@ -21,6 +21,9 @@ interface InfoTabla {
 }
 
 let tablas: InfoTabla[] = [];
+/** Nombres reales de los roles (en los tests llevan el prefijo plesk_, como en Plesk). */
+let rolApp = '';
+let rolAdmin = '';
 let A: Semilla;
 let B: Semilla;
 
@@ -45,6 +48,8 @@ const contar = (tx: { $queryRawUnsafe: typeof prisma.$queryRawUnsafe }, tabla: s
 
 beforeAll(async () => {
   [A, B] = await Promise.all([sembrarCuenta('A'), sembrarCuenta('B')]);
+  rolApp = (await prisma.$queryRaw<{ u: string }[]>`SELECT current_user AS u`)[0].u;
+  rolAdmin = (await prismaAdmin.$queryRaw<{ u: string }[]>`SELECT current_user AS u`)[0].u;
   tablas = await prismaAdmin.$queryRaw<InfoTabla[]>`
     SELECT c.relname AS tabla,
            c.relrowsecurity AS rls,
@@ -78,9 +83,9 @@ describe('estructura', () => {
     // pm_admin, también la saltaría.
     const [r] = await prismaAdmin.$queryRaw<{ ajenas: string[]; deApp: number; miembro: boolean; forzadas: number }[]>`
       SELECT
-        coalesce(array_agg(c.relname) FILTER (WHERE pg_get_userbyid(c.relowner) <> 'pm_admin'), '{}') AS ajenas,
-        count(*) FILTER (WHERE pg_get_userbyid(c.relowner) = 'pm_app')::int AS "deApp",
-        pg_has_role('pm_app', 'pm_admin', 'MEMBER') AS miembro,
+        coalesce(array_agg(c.relname) FILTER (WHERE pg_get_userbyid(c.relowner) <> ${rolAdmin}), '{}') AS ajenas,
+        count(*) FILTER (WHERE pg_get_userbyid(c.relowner) = ${rolApp})::int AS "deApp",
+        pg_has_role(${rolApp}, ${rolAdmin}, 'MEMBER') AS miembro,
         count(*) FILTER (WHERE c.relforcerowsecurity)::int AS forzadas
       FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
       WHERE n.nspname = 'public' AND c.relkind = 'r'`;
@@ -89,7 +94,7 @@ describe('estructura', () => {
 
   it('pm_admin no tiene BYPASSRLS ni es superusuario (como en Plesk): ve todo solo por ser dueño', async () => {
     const [r] = await prismaAdmin.$queryRaw<{ bypass: boolean; superuser: boolean }[]>`
-      SELECT rolbypassrls AS bypass, rolsuper AS superuser FROM pg_roles WHERE rolname = 'pm_admin'`;
+      SELECT rolbypassrls AS bypass, rolsuper AS superuser FROM pg_roles WHERE rolname = ${rolAdmin}`;
     expect(r).toEqual({ bypass: false, superuser: false });
   });
 
@@ -112,7 +117,11 @@ describe('estructura', () => {
     const [r] = await prisma.$queryRaw<{ usuario: string; bypass: boolean; superuser: boolean }[]>`
       SELECT current_user AS usuario, rolbypassrls AS bypass, rolsuper AS superuser
       FROM pg_roles WHERE rolname = current_user`;
-    expect(r).toEqual({ usuario: 'pm_app', bypass: false, superuser: false });
+    expect(r).toEqual({ usuario: rolApp, bypass: false, superuser: false });
+  });
+
+  it('los roles llevan el prefijo de Plesk y las migraciones lo resolvieron solas', () => {
+    expect([rolAdmin, rolApp]).toEqual(['plesk_pm_admin', 'plesk_pm_app']);
   });
 });
 

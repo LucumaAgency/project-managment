@@ -10,26 +10,35 @@ una rama aparte, `produccion`, que arma CI (D-43).
 
 | Qué | Por qué | Estado |
 |---|---|---|
-| **PostgreSQL 13 o más** (ideal 16) en el servidor | La app usa Row Level Security y búsqueda de Postgres; MariaDB no sirve (D-12) | ✅ Lo hay (confirmado por el usuario) |
+| PostgreSQL 12 o más | La app usa Row Level Security y búsqueda de Postgres; MariaDB no sirve (D-12) | ✅ El servidor tiene **12.22**; la suite completa pasa en 12.22 (D-45) |
 | Root o superusuario de Postgres | **No hace falta** (D-44): alcanza con dos usuarios comunes creados desde Plesk | Sin root, está bien |
 | Dominio con SSL: `proyectos.pruebalucuma.site` | La cookie de sesión exige HTTPS en producción | ✅ Elegido por el usuario |
 | Node.js 22 o 20 en la suscripción | Igual que el CRM; evitar versiones impares | |
 
 ## 1. Base de datos (Plesk → Bases de datos)
 
-1. **Añadir base de datos**: tipo **PostgreSQL**, nombre `lucuma_pm`. En el mismo formulario,
-   el usuario **`pm_admin`** con una clave larga. Ese primer usuario queda como **dueño** de la
-   base: es el que crea las tablas.
-2. En esa base → **Gestión de usuarios** → **Añadir usuario**: **`pm_app`** con otra clave larga.
-   Es el que usa la API.
+Plesk antepone el usuario de la suscripción a los nombres: en este servidor, `carlosm_`. Está
+bien: las migraciones deducen el nombre del usuario de la app a partir del administrador
+(`carlosm_pm_admin` → `carlosm_pm_app`, D-45).
 
-Los nombres tienen que ser **exactamente** `pm_admin` y `pm_app`: están escritos en las
-migraciones. Si Plesk no deja usarlos (por ejemplo, les agrega un prefijo), avisar antes de
-seguir: se ajusta.
+1. **Añadir base de datos**: tipo PostgreSQL, nombre `lucuma_pm` (queda **`carlosm_lucuma_pm`**),
+   sitio `proyectos.pruebalucuma.site`. En el mismo formulario, el usuario **`pm_admin`** (queda
+   **`carlosm_pm_admin`**). Es el que crea las tablas.
+2. En esa base → **Gestión de usuarios** → **Añadir usuario**: **`pm_app`** (queda
+   **`carlosm_pm_app`**). Es el que usa la API.
+3. En los dos usuarios, **desmarcar** "El usuario tiene acceso a todas las bases de datos de la
+   suscripción": cada uno solo necesita esta base.
+
+**Contraseñas:** largas y **solo con letras y números** (20 o más). Van dentro de una dirección
+de conexión, y ahí `@`, `:`, `/`, `#`, `?` o `%` la rompen. Si la clave trae alguno, hay que
+escribirlo codificado en el `.env` (`@` → `%40`, `#` → `%23`, `/` → `%2F`, `:` → `%3A`,
+`?` → `%3F`, `%` → `%25`). Nunca pegar las claves en un chat ni en el repo.
+
+El sufijo tiene que ser **exactamente** `pm_admin` y `pm_app`: es lo que buscan las migraciones.
 
 Por qué alcanza sin superusuario (D-44): Postgres no aplica las políticas de una tabla a su
-dueño. `pm_admin` es dueño de todo (corre las migraciones) y ve todo; `pm_app` no es dueño de
-nada ni miembro de `pm_admin`, así que todo lo que consulta pasa por RLS.
+dueño. `carlosm_pm_admin` es dueño de todo (corre las migraciones) y ve todo; `carlosm_pm_app` no
+es dueño de nada ni miembro del administrador, así que todo lo que consulta pasa por RLS.
 
 ## 2. Aplicación (Plesk → Node.js)
 
@@ -51,8 +60,8 @@ que leen los comandos de consola (`Run script`), que no reciben las variables de
 
 ```bash
 NODE_ENV=production
-DATABASE_URL="postgresql://pm_app:<clave 2>@localhost:5432/lucuma_pm"
-DATABASE_ADMIN_URL="postgresql://pm_admin:<clave 1>@localhost:5432/lucuma_pm"
+DATABASE_URL="postgresql://carlosm_pm_app:<clave de pm_app>@localhost:5432/carlosm_lucuma_pm"
+DATABASE_ADMIN_URL="postgresql://carlosm_pm_admin:<clave de pm_admin>@localhost:5432/carlosm_lucuma_pm"
 APP_URL="https://proyectos.pruebalucuma.site"
 SESSION_SECRET="<texto aleatorio largo>"
 BASE_DOMAIN=""        # un solo dominio por ahora: la cuenta se elige al entrar (D-24)
@@ -129,7 +138,13 @@ El primero imprime la contraseña del dueño **una sola vez**. El segundo lo mar
 - **Subdominios por cuenta:** con `BASE_DOMAIN` vacío todo vive en un dominio. Para pasar a
   `<cuenta>.dominio` se usa el mismo truco de nginx del CRM (`docs/21-DOS-ORGANIZACIONES-PLESK.md`).
 
-## 7. Simulacro (2026-10-24)
+## 7. Simulacros (2026-10-24)
+
+**PostgreSQL 12.22 como en Plesk** (D-45): base a nombre del servidor (no del usuario), usuarios
+`plesk_pm_admin` y `plesk_pm_app` con permisos sobre la base. Las migraciones corren, los 116
+tests pasan y `base:verificar` dice Todo en orden.
+
+**Despliegue completo:**
 
 Probado en local partiendo de una carpeta limpia (solo el código + lo compilado, sin
 `node_modules`) y una base vacía, con `NODE_ENV=production`:

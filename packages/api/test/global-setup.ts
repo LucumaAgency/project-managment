@@ -33,12 +33,29 @@ function puertoLibre(): Promise<number> {
  * desarrollo y corre igual en CI. Se aplican las MISMAS migraciones que en producción.
  */
 export default async function setup(project: TestProject) {
+  // Contra otro Postgres (p. ej. la versión del servidor): TEST_PG_URL_APP y TEST_PG_URL_ADMIN.
+  // La base tiene que estar vacía; se le aplican las migraciones y queda con datos de prueba.
+  const externa = { app: process.env.TEST_PG_URL_APP, admin: process.env.TEST_PG_URL_ADMIN };
+  if (externa.app && externa.admin) {
+    execSync('npx prisma migrate deploy', {
+      cwd: raiz,
+      env: { ...process.env, DATABASE_URL: externa.app, DATABASE_ADMIN_URL: externa.admin },
+      stdio: 'pipe',
+    });
+    project.provide('urlApp', externa.app);
+    project.provide('urlAdmin', externa.admin);
+    return;
+  }
+
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pm-test-pg-'));
   const pg = await levantarPostgres({
     dataDir,
     puerto: await puertoLibre(),
     base: 'lucuma_pm_test',
     persistente: false,
+    // Roles con prefijo, como los crea Plesk (carlosm_pm_admin): así cada corrida prueba que
+    // las migraciones no dependen del nombre exacto (D-45).
+    prefijo: 'plesk_',
   });
 
   execSync('npx prisma migrate deploy', {
