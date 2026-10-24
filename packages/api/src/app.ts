@@ -1,4 +1,8 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import Fastify from 'fastify';
+import fastifyStatic from '@fastify/static';
 import cookie from '@fastify/cookie';
 import { correoActivo, env } from './env.js';
 import { prisma } from './db.js';
@@ -18,9 +22,27 @@ export interface OpcionesApp {
   logger?: boolean;
 }
 
+/** Raíz del repo: dist/app.js y src/app.ts están a tres niveles. */
+const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+/** El SPA compilado (vite lo deja en <raíz>/public, que es el docroot en Plesk). */
+const WEB = path.join(RAIZ, 'public');
+
+/**
+ * En producción el log va a logs/app.txt (fuera del docroot): Passenger se queda con la salida
+ * estándar y es incómodo de encontrar. `.txt` para que el Administrador de archivos de Plesk lo
+ * abra. Mismo criterio que el CRM.
+ */
+function opcionesLog(opciones: OpcionesApp) {
+  if (opciones.logger === false) return false;
+  if (!env.isProd) return { level: 'debug' };
+  const dir = path.join(RAIZ, 'logs');
+  fs.mkdirSync(dir, { recursive: true });
+  return { level: 'info', file: path.join(dir, 'app.txt') };
+}
+
 export async function buildApp(opciones: OpcionesApp = {}) {
   const app = Fastify({
-    logger: opciones.logger === false ? false : { level: env.isProd ? 'info' : 'debug' },
+    logger: opcionesLog(opciones),
     trustProxy: true,
     bodyLimit: 1_000_000,
   });
@@ -62,6 +84,17 @@ export async function buildApp(opciones: OpcionesApp = {}) {
   await app.register(rutasInvitaciones);
   await app.register(rutasProyectos);
   await app.register(rutasElementos);
+
+  // La web: nginx entrega los estáticos desde el docroot; lo que llega aquí son las rutas del
+  // SPA (/proyectos/abc al recargar). Un archivo que falta da 404, no el index.html.
+  if (fs.existsSync(path.join(WEB, 'index.html'))) {
+    await app.register(fastifyStatic, { root: WEB, wildcard: false });
+    app.setNotFoundHandler((req, reply) => {
+      if (req.url.startsWith('/api/')) return reply.code(404).send({ error: 'No encontrado.' });
+      if (req.method !== 'GET' || /\.[a-z0-9]+(\?|$)/i.test(req.url)) return reply.code(404).send({ error: 'No encontrado.' });
+      return reply.sendFile('index.html');
+    });
+  }
 
   return app;
 }

@@ -106,7 +106,7 @@ describe('proyectos', () => {
   it('archivar deja el proyecto en solo lectura; reactivar lo devuelve', async () => {
     const id = await proyectoConTodos();
     const lista = (await member.post(`/proyectos/${id}/elementos`, { type: 'todolist', title: 'Lista' })).json.elemento.id;
-    expect((await member.post(`/proyectos/${id}/archivar`)).status).toBe(403); // no lo creó
+    expect((await member.post(`/proyectos/${id}/archivar`)).status).toBe(403); // solo owner/admin
     expect((await owner.post(`/proyectos/${id}/archivar`)).json.proyecto.status).toBe('archived');
 
     expect((await member.get(`/proyectos/${id}`)).status).toBe(200); // se sigue viendo
@@ -121,10 +121,12 @@ describe('proyectos', () => {
     expect((await member.post(`/proyectos/${id}/elementos`, { type: 'todo', parentId: lista, title: 'Ya se puede' })).status).toBe(200);
   });
 
-  it('papelera: deja de verse para el equipo; owner la ve y restaura', async () => {
+  it('papelera: solo owner/admin (ni quien lo creó); deja de verse para el equipo; owner restaura', async () => {
     const id = await proyectoConTodos(member);
     expect((await client.post(`/proyectos/${id}/papelera`)).status).toBe(403);
-    expect((await member.post(`/proyectos/${id}/papelera`)).json.proyecto.status).toBe('trashed'); // lo creó
+    expect((await member.post(`/proyectos/${id}/papelera`)).status).toBe(403); // lo creó, pero no es admin
+    expect((await member.post(`/proyectos/${id}/archivar`)).status).toBe(403);
+    expect((await owner.post(`/proyectos/${id}/papelera`)).json.proyecto.status).toBe('trashed');
     expect((await member.get(`/proyectos/${id}`)).status).toBe(404);
     expect((await member.get('/proyectos?estado=trashed')).status).toBe(403);
     expect((await owner.get('/proyectos?estado=trashed')).json.proyectos.map((p: { id: string }) => p.id)).toContain(id);
@@ -199,7 +201,19 @@ describe('elementos genéricos', () => {
     expect((await ownerB.post(`/proyectos/${p1}/elementos`, { type: 'todolist', title: 'X' })).status).toBe(404);
   });
 
-  it('editar: quien lo creó o un admin; otro del equipo no', async () => {
+  it('tareas y listas las edita todo el equipo del proyecto; el cliente no', async () => {
+    const id = await proyectoConTodos();
+    await owner.post(`/proyectos/${id}/personas`, { userId: otroMemberId });
+    const lista = (await member.post(`/proyectos/${id}/elementos`, { type: 'todolist', title: 'Lista', visibleToClients: true })).json.elemento.id;
+    const tarea = (await member.post(`/proyectos/${id}/elementos`, { type: 'todo', parentId: lista, title: 'Logo', visibleToClients: true })).json.elemento.id;
+    expect((await otroMember.patch(`/elementos/${tarea}`, { title: 'Logo final' })).status).toBe(200);
+    expect((await otroMember.patch(`/elementos/${lista}`, { title: 'Lista renombrada' })).status).toBe(200);
+    expect((await client.patch(`/elementos/${tarea}`, { title: 'Hack' })).status).toBe(403);
+    // Borrar lo ajeno sigue siendo de quien lo creó o de un admin.
+    expect((await otroMember.post(`/elementos/${tarea}/papelera`)).status).toBe(403);
+  });
+
+  it('mensajes: los edita quien los escribió o un admin; otro del equipo no', async () => {
     const id = await proyectoConTodos();
     const msg = (await member.post(`/proyectos/${id}/elementos`, { type: 'message', title: 'Original' })).json.elemento.id;
     expect((await member.patch(`/elementos/${msg}`, { title: 'Cambiado', bodyText: 'Hola' })).json.elemento).toMatchObject({ title: 'Cambiado', bodyText: 'Hola' });

@@ -184,7 +184,7 @@ export default async function rutasProyectos(app: FastifyInstance) {
     app.post<{ Params: { id: string } }>(`/api/v1/proyectos/:id/${ruta}`, async (req) => {
       const actor = exigirCuenta(req);
       return conCuenta(actor.ctx, async (tx) => {
-        const p = await proyectoPara(tx, actor, req.params.id, t.accion, 'Solo quien creó el proyecto o un administrador.');
+        const p = await proyectoPara(tx, actor, req.params.id, t.accion, 'Solo dueños y administradores.');
         if (!(t.desde as readonly string[]).includes(p.status)) throw new HttpError(409, 'El proyecto no está en un estado que permita esto.');
         if (t.a === 'active') await exigirCupoProyectos(tx, actor.ctx.accountId);
         const ahora = new Date();
