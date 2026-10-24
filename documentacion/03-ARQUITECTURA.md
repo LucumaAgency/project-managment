@@ -135,39 +135,89 @@ visibilidad. Las rutas no deciden permisos por su cuenta.
 
 ## Acceso (login)
 
-La persona es global: entra una sola vez y elige cuenta. Rutas en `routes/auth.ts`:
+La persona es global: entra una sola vez y elige cuenta. En el MVP **no hay correo** (D-32):
+se entra con correo y contraseña. Rutas en `routes/auth.ts`:
 
 | Ruta | Qué hace |
 |---|---|
-| `POST /api/v1/auth/enlace` | Envía un enlace mágico (20 min, un uso). Misma respuesta exista o no el correo |
-| `POST /api/v1/auth/canjear` | Canjea el token por una sesión. Se marca usado en el mismo paso que se valida |
 | `POST /api/v1/auth/entrar` | Correo y contraseña (scrypt). Mismo error y mismo tiempo para todo fallo |
-| `GET /api/v1/auth/sesion` | Quién soy y mis cuentas (selector) |
+| `POST /api/v1/auth/enlace` | Envía un enlace mágico (20 min, un uso). Misma respuesta exista o no el correo. **Sin SMTP en producción: 503**; la web no lo ofrece |
+| `POST /api/v1/auth/canjear` | Canjea el token por una sesión. Se marca usado en el mismo paso que se valida |
+| `GET /api/v1/auth/sesion` | Quién soy (incluye si soy soporte) y mis cuentas (selector) |
 | `POST /api/v1/auth/salir` | Borra la fila de la sesión y la cookie |
 | `POST /api/v1/auth/password` | Define o cambia la contraseña; cierra las otras sesiones |
-| `GET /api/v1/config` | Dominio base, para que la web arme los enlaces entre cuentas |
+| `GET /api/v1/config` | Dominio base y si hay correo saliente |
 
-- **Cookie** `pm_sesion`: HttpOnly, SameSite=Lax, Secure en producción, 30 días. Con dominio
-  base va a `.dominio`, así una sesión sirve para todas las cuentas de la persona.
-- **Enlace del correo:** se arma solo con el dominio configurado (o `APP_URL`), nunca con el
-  Host de la petición. Si no, alguien podría pedir el enlace de otra persona con un Host falso
-  y recibir su token en su propio sitio (lo prueba un test).
+- **Contraseñas:** las del dueño las genera `cuenta:crear`; las de invitados las elige la
+  persona al aceptar; si alguien la olvida, soporte genera otra con `npm run usuario -- clave`.
+- **Cookie** `pm_sesion`: HttpOnly, SameSite=Lax, Secure en producción, 30 días desde que se
+  entra (ver C-3). Con dominio base va a `.dominio`: una sesión sirve para todas las cuentas.
+- **Enlaces** (correo e invitaciones, `lib/enlaces.ts`): se arman solo con el dominio
+  configurado (o `APP_URL`), nunca con el Host de la petición. Si no, alguien podría hacer que
+  el enlace de otra persona apunte a su sitio (lo prueba un test).
 - **Frenos:** 5 contraseñas fallidas por IP y correo cada 15 min (429); 3 enlaces por correo
   y 20 por IP cada 15 min (se responde igual, sin enviar).
 - **Solo JSON:** la API no acepta `text/plain`, para que un formulario de otro sitio no pueda
   mandar un POST sin preflight.
-- **Auditoría:** `user.login` (con método), `user.login_fallido`, `user.password` en `audit_log`
-  sin cuenta.
-- **Correo:** `lib/correo.ts`. En tests va a un buzón en memoria; sin `SMTP_HOST` en desarrollo
-  se imprime en consola con sus enlaces; en producción sale por SMTP (Brevo) y sin SMTP no
-  arranca el envío. Los correos de acceso salen en la misma petición; los demás irán por la cola.
+- **Auditoría:** `user.login` (con método: password, enlace o invitación), `user.login_fallido`,
+  `user.password` en `audit_log` sin cuenta.
+- **Correo:** `lib/correo.ts` queda listo para cuando se active: en tests va a un buzón en
+  memoria; sin `SMTP_HOST` en desarrollo se imprime en consola; con SMTP sale por Brevo.
+
+## Soporte de Lucuma (beta)
+
+Durante la beta (`SOPORTE_BETA` distinto de `0`), una persona con `users.isStaff` entra a
+cualquier cuenta abierta sin ser miembro, con rol **admin** (D-31).
+
+- `exigirCuenta()` devuelve `soporte: true` y `/yo` también: la web muestra la franja ámbar.
+- `GET /api/v1/soporte/cuentas` lista las cuentas abiertas (función `cuentas_para_soporte()`,
+  SECURITY DEFINER, vacía si quien pregunta no es staff). El selector las muestra aparte.
+- Cada entrada queda en `audit_log` de la cuenta como `soporte.acceso`, una vez por sesión.
+- RLS no cambia: soporte trabaja con la cuenta fijada igual que cualquiera; no usa `pm_admin`.
+- Si además es miembro de esa cuenta, entra con su rol de miembro, sin franja.
+
+## Personas e invitaciones
+
+Rutas en `routes/personas.ts` y `routes/invitaciones.ts`. Reglas en D-34, D-35 y D-36.
+
+| Ruta | Quién | Qué hace |
+|---|---|---|
+| `GET /api/v1/personas` | todos menos clientes | Personas de la cuenta, invitaciones pendientes (el equipo ve solo las suyas), uso del plan y qué puede hacer quien pregunta |
+| `PATCH /api/v1/personas/:id` | owner, admin | Rol, desactivar/reactivar, empresa |
+| `POST /api/v1/invitaciones` | según rol | Crea la invitación y devuelve el **enlace** para compartir |
+| `POST /api/v1/invitaciones/:id/renovar` | quien invitó, owner, admin | Enlace nuevo y 7 días más; el anterior deja de servir |
+| `DELETE /api/v1/invitaciones/:id` | quien invitó, owner, admin | Anula |
+| `POST /api/v1/invitacion/ver` | pública (token) | Qué cuenta, rol, proyecto, quién invita, si el correo ya tiene usuario |
+| `POST /api/v1/invitacion/aceptar` | pública (token) | Persona nueva: nombre + contraseña y entra. Ya existente: con su sesión |
+
+- El enlace es `<cuenta>/invitacion?token=…`. En la base solo va `sha256(token)`; por eso
+  "renovar" genera otro en vez de mostrar el mismo.
+- La invitación se lee antes de saber la cuenta con `invitacion_por_token(hash)` (SECURITY
+  DEFINER, columnas mínimas). Sin el token no hay forma de listar invitaciones.
+- Aceptar corre en **una** transacción con la cuenta fijada: crear la persona, marcar la
+  invitación como usada, revisar el límite, crear o reactivar la membresía y sumarla al
+  proyecto. Si algo falla, no queda una persona creada a medias.
+
+## Planes y límites
+
+`shared/planes.ts`: catálogo (`interno`, `prueba`, `estudio`, `agencia`), `planDe(plan,
+limites)` que aplica las excepciones de `Account.limits` (solo claves conocidas con número o
+null), y `planPermite(plan, consulta)`, el `can()` del plan: responde `{ ok }` o `{ ok: false,
+motivo }` con el texto para mostrar. Un plan desconocido cae en `prueba` (lo más restrictivo).
+Del lado del servidor, `lib/plan.ts` cuenta el uso con la cuenta fijada (`usuariosEnUso`,
+`exigirCupoUsuarios`). Hoy se aplica a personas; proyectos (día 5) y almacenamiento (día 10)
+usan la misma función.
 
 ## Web
 
-SPA React con React Router (`packages/web`). Pantallas al día 3: Entrar (enlace o contraseña),
-Canjear enlace, Selector de cuentas, Portada de la cuenta, Mi cuenta (contraseña). Estilos
-provisionales en `estilos.css` con tokens de color y modo oscuro (marca pendiente, C-4).
+SPA React con React Router (`packages/web`), con el sistema visual del CRM (D-33).
 
+- **Sin cuenta** (tarjeta centrada, `PaginaAcceso`): Entrar, Canjear enlace, Selector de
+  cuentas (con la sección de soporte), Invitación.
+- **Dentro de una cuenta** (`Marco`: menú lateral, barra superior, franja de soporte): Inicio,
+  Personas (clientes no la ven), Mi cuenta. `Marco` carga `/yo` una vez y lo comparte con
+  `useYo()`.
+- Componentes: `Icono` (trazos propios, sin librería), `Marca`, `Modal`, `EnlaceCompartir`.
 - En producción la cuenta sale del subdominio; en local, de `?cuenta=` y se guarda en
   `sessionStorage` para mandarla en `X-Cuenta`.
 - En local también se pueden usar subdominios reales con `BASE_DOMAIN=lvh.me`

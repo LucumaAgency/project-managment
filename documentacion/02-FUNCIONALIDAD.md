@@ -19,12 +19,14 @@ cómo técnico está en [03-ARQUITECTURA.md](03-ARQUITECTURA.md).
 ### 1. Cuentas, personas e invitaciones
 
 - Una cuenta se crea por script en el MVP (el registro abierto llega en la fase 3).
-- El dueño o un admin invita al equipo por correo, con su rol.
+- El dueño o un admin invita al equipo con su rol. En el MVP no hay correo: la invitación es
+  un enlace que quien invita copia y manda por WhatsApp u otro medio.
 - Cualquiera del equipo puede invitar a un cliente **a un proyecto concreto**. Al aceptar,
   entra directo a ese proyecto.
 - Las invitaciones vencen. Si la persona ya existe (por otra cuenta), se suma sin crear otra
   identidad.
-- Acceso por enlace mágico al correo o con contraseña (mismo sistema que el CRM).
+- Acceso con correo y contraseña. El enlace mágico al correo llega cuando haya correo.
+- Durante la beta, soporte de Lucuma puede entrar a cualquier cuenta para ayudar (queda registrado).
 - Si una persona está en varias cuentas, al entrar elige a cuál.
 - Una persona se puede desactivar en una cuenta sin borrar lo que hizo.
 

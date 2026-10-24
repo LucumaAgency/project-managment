@@ -1,14 +1,18 @@
 import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
-import { env } from './env.js';
+import { correoActivo, env } from './env.js';
 import { prisma } from './db.js';
 import { registrarContexto } from './plugins/contexto.js';
 import rutasAuth from './routes/auth.js';
+import rutasInvitaciones from './routes/invitaciones.js';
+import rutasPersonas from './routes/personas.js';
 import rutasYo from './routes/yo.js';
 
 export interface OpcionesApp {
   /** Por defecto `env.baseDomain`. Los tests lo cambian para probar ambos modos. */
   baseDomain?: string;
+  /** Por defecto `env.soporteBeta`. */
+  soporteBeta?: boolean;
   logger?: boolean;
 }
 
@@ -34,7 +38,10 @@ export async function buildApp(opciones: OpcionesApp = {}) {
   // POST "simple" (sin preflight) a la API.
   app.removeContentTypeParser('text/plain');
   await app.register(cookie);
-  registrarContexto(app, opciones.baseDomain ?? env.baseDomain);
+  registrarContexto(app, {
+    baseDomain: opciones.baseDomain ?? env.baseDomain,
+    soporteBeta: opciones.soporteBeta ?? env.soporteBeta,
+  });
 
   /** Salud: la API responde y llega a la base con el rol de la app. */
   app.get('/api/v1/salud', async () => {
@@ -44,10 +51,13 @@ export async function buildApp(opciones: OpcionesApp = {}) {
   });
 
   /** Lo que la web necesita saber del despliegue antes de tener sesión. */
-  app.get('/api/v1/config', async () => ({ baseDomain: app.config.baseDomain }));
+  // `correo`: si hay correo saliente. Sin él (MVP) la web no ofrece el acceso por enlace.
+  app.get('/api/v1/config', async () => ({ baseDomain: app.config.baseDomain, correo: correoActivo() }));
 
   await app.register(rutasAuth);
   await app.register(rutasYo);
+  await app.register(rutasPersonas);
+  await app.register(rutasInvitaciones);
 
   return app;
 }

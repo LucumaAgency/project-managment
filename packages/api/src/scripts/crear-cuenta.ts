@@ -3,8 +3,9 @@
  *
  *   npm run cuenta:crear -- <slug> "<Nombre de la cuenta>" <correo> ["Nombre de la persona"] [--clave]
  *
- * Si la persona ya existe (está en otra cuenta), se suma como dueña sin crear otra identidad.
- * Con --clave genera una contraseña y la imprime UNA vez; sin ella, entra por enlace al correo.
+ * Persona nueva: se le genera una contraseña y se imprime UNA vez (en el MVP no hay correo:
+ * se le pasa a mano). Si la persona ya existe (está en otra cuenta), se suma como dueña sin
+ * crear otra identidad y conserva su contraseña; con --clave se le genera una nueva.
  * Usa pm_admin: es un script de soporte, no una petición de usuario.
  */
 import { slugValido } from '@lucuma-pm/shared';
@@ -30,7 +31,8 @@ async function main() {
     process.exit(1);
   }
 
-  const clave = conClave ? generarPassword() : null;
+  const existia = await prismaAdmin.user.findUnique({ where: { email }, select: { id: true } });
+  const clave = conClave || !existia ? generarPassword() : null;
   const resultado = await prismaAdmin.$transaction(async (tx) => {
     const cuenta = await tx.account.create({ data: { slug, name: nombreCuenta } });
     const existente = await tx.user.findUnique({ where: { email } });
@@ -48,7 +50,7 @@ async function main() {
   console.log(`Cuenta creada: ${resultado.cuenta.name} (${slug})`);
   console.log(`Dueño: ${resultado.user.email}${resultado.nuevo ? ' (persona nueva)' : ' (ya existía, se sumó)'}`);
   if (clave) console.log(`Contraseña: ${clave}   ← se muestra solo esta vez`);
-  else console.log('Sin contraseña: entra con el enlace al correo.');
+  else console.log('Conserva su contraseña actual (con --clave se le genera una nueva).');
 }
 
 main()

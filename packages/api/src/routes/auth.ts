@@ -1,26 +1,21 @@
 import { randomBytes } from 'node:crypto';
-import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
+import { MIN_LARGO_PASSWORD } from '@lucuma-pm/shared';
 import { z } from 'zod';
 import { prisma } from '../db.js';
-import { env } from '../env.js';
+import { correoActivo, env } from '../env.js';
+import { abrirSesion, estadoDeSesion } from '../lib/acceso.js';
 import { auditar } from '../lib/auditoria.js';
-import { conUsuario } from '../lib/contexto.js';
 import { correoEnlaceAcceso, enviarCorreo } from '../lib/correo.js';
+import { urlEnCuenta } from '../lib/enlaces.js';
 import { HttpError } from '../lib/errores.js';
 import { Freno } from '../lib/freno.js';
 import { hashDeRelleno, hashPassword, verifyPassword } from '../lib/password.js';
-import {
-  borrarCookieSesion,
-  cerrarSesiones,
-  COOKIE_SESION,
-  crearSesion,
-  hashToken,
-  ponerCookieSesion,
-} from '../lib/sesion.js';
+import { leer } from '../lib/validar.js';
+import { borrarCookieSesion, cerrarSesiones, COOKIE_SESION, hashToken } from '../lib/sesion.js';
 import { exigirUsuario } from '../plugins/contexto.js';
 
 const VIGENCIA_ENLACE_MIN = 20;
-const MIN_LARGO_PASSWORD = 10;
 const VENTANA = 15 * 60 * 1000;
 
 // Contraseña: 5 fallos por IP+correo. Enlace: 3 pedidos por correo y 20 por IP.
@@ -37,59 +32,17 @@ const cambiarPassword = z.object({
   nueva: z.string().min(MIN_LARGO_PASSWORD, `Mínimo ${MIN_LARGO_PASSWORD} caracteres.`).max(200),
 });
 
-function leer<T>(esquema: z.ZodType<T>, cuerpo: unknown): T {
-  const r = esquema.safeParse(cuerpo);
-  if (!r.success) throw new HttpError(400, r.error.issues[0]?.message ?? 'Datos inválidos.');
-  return r.data;
-}
-
-/**
- * A dónde apunta el enlace del correo. Se arma SOLO con valores configurados (dominio base
- * + slug que ya existe, o APP_URL), nunca con el Host de la petición: si no, cualquiera
- * podría pedir un enlace para el correo de otra persona con un Host falso y recibir su token.
- */
+/** A dónde apunta el enlace del correo: a la cuenta desde la que se pidió, si existe. */
 function urlParaEnlace(req: FastifyRequest, token: string): string {
-  const { baseDomain } = req.server.config;
   const cuenta = req.cuenta && !req.cuenta.cerrada ? req.cuenta : null;
-  if (baseDomain) {
-    const host = cuenta ? `${cuenta.slug}.${baseDomain}` : baseDomain;
-    return `https://${host}/entrar/enlace?token=${token}`;
-  }
-  const extra = cuenta ? `&cuenta=${encodeURIComponent(cuenta.slug)}` : '';
-  return `${env.appUrl}/entrar/enlace?token=${token}${extra}`;
-}
-
-async function abrirSesion(
-  req: FastifyRequest,
-  reply: FastifyReply,
-  user: { id: string; email: string; name: string },
-  metodo: 'enlace' | 'password'
-) {
-  const { token, expiresAt } = await crearSesion(user.id, { userAgent: req.headers['user-agent'], ip: req.ip });
-  ponerCookieSesion(reply, token, expiresAt, req.server.config.baseDomain);
-  await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-  await auditar({ userId: user.id, action: 'user.login', ip: req.ip, meta: { metodo } });
-  return estadoDeSesion(user.id);
-}
-
-/** Lo que la web necesita tras entrar: quién eres y a qué cuentas puedes ir. */
-async function estadoDeSesion(userId: string) {
-  const user = await prisma.user.findUniqueOrThrow({
-    where: { id: userId },
-    select: { id: true, name: true, email: true, passwordHash: true },
-  });
-  const cuentas = await conUsuario(userId, (tx) =>
-    tx.$queryRaw<{ id: string; slug: string; name: string; role: string }[]>`SELECT * FROM cuentas_de_usuario()`
-  );
-  return {
-    usuario: { id: user.id, name: user.name, email: user.email, tienePassword: !!user.passwordHash },
-    cuentas,
-  };
+  return urlEnCuenta(req.server.config.baseDomain, cuenta?.slug ?? null, '/entrar/enlace', { token });
 }
 
 export default async function rutasAuth(app: FastifyInstance) {
   /** Pide un enlace mágico. Responde lo mismo exista o no el correo: no revela quién tiene cuenta. */
   app.post('/api/v1/auth/enlace', async (req) => {
+    // Sin correo saliente (MVP: los correos llegan después) no hay a dónde mandar el enlace.
+    if (!correoActivo() && env.isProd) throw new HttpError(503, 'El acceso por correo todavía no está disponible.');
     const { email } = leer(pedirEnlace, req.body);
     const respuesta = { ok: true, mensaje: 'Si el correo tiene acceso, te llegará un enlace en unos segundos.' };
 
@@ -136,7 +89,7 @@ export default async function rutasAuth(app: FastifyInstance) {
     const { email, password } = leer(entrar, req.body);
     const clave = `${req.ip}|${email}`;
     if (frenoPassword.bloqueado(clave)) {
-      throw new HttpError(429, 'Demasiados intentos. Espera 15 minutos o entra con un enlace al correo.');
+      throw new HttpError(429, 'Demasiados intentos. Espera 15 minutos e intenta de nuevo.');
     }
 
     const user = await prisma.user.findUnique({

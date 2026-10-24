@@ -24,16 +24,34 @@ roles y la base. Para empezar de cero: apagarlo y borrar `.pgdata/`.
 ## Primera cuenta en local
 
 ```bash
-npm run cuenta:crear -- lucuma "Lucuma Agency" tu@correo.com "Tu Nombre" --clave
+npm run cuenta:crear -- lucuma "Lucuma Agency" tu@correo.com "Tu Nombre"
 ```
 
-Imprime una contraseña una sola vez. Sin `--clave` se entra con enlace: sin `SMTP_HOST`, el
-correo no sale y la API imprime el enlace en su consola (`[correo:dev] enlace: …`).
+Crea la cuenta con su dueño e imprime la contraseña **una sola vez** (en el MVP no hay correo).
+Si el correo ya existe (es dueño o miembro de otra cuenta), se suma como dueño y conserva su
+contraseña; con `--clave` se le genera una nueva.
 
 Luego abrir http://localhost:5174 → Entrar. Con una sola cuenta entra directo a ella.
 
 Subdominios como en producción (opcional): `BASE_DOMAIN=lvh.me` en `.env`, reiniciar la API y
 abrir http://lucuma.lvh.me:5174 (la raíz es http://lvh.me:5174).
+
+## Soporte de personas (consola)
+
+```bash
+npm run usuario -- clave tu@correo.com            # contraseña nueva (se imprime una vez) y cierra sus sesiones
+npm run usuario -- soporte tu@correo.com          # lo marca como soporte de Lucuma
+npm run usuario -- soporte tu@correo.com --quitar # le quita la marca
+```
+
+En el servidor, con la API compilada: `npm run usuario:prod -- …` y `npm run cuenta:crear:prod -- …`.
+Soporte entra a cualquier cuenta como admin mientras `SOPORTE_BETA` no sea `0` (D-31).
+
+## Invitar en local
+
+Personas → Invitar → copiar el enlace y abrirlo en otra ventana privada (o en otro navegador):
+la persona nueva pone su nombre y una contraseña y entra. Si el correo ya tiene usuario, pide
+su contraseña.
 
 ## Tests
 
@@ -48,9 +66,11 @@ tipos y tests en cada push a `main` y en cada PR.
 
 | Archivo | Qué prueba |
 |---|---|
-| `test/aislamiento.test.ts` | Toda tabla con datos de cuenta tiene RLS activado, forzado y con política; sin cuenta no se ve nada; cada cuenta ve exactamente lo suyo; no se puede crear, modificar, mover ni borrar en otra cuenta; la búsqueda respeta la cuenta; la cuenta no se filtra entre conexiones del pool; una persona en dos cuentas |
+| `test/aislamiento.test.ts` | Toda tabla con datos de cuenta tiene RLS activado, forzado y con política; sin cuenta no se ve nada; cada cuenta ve exactamente lo suyo; no se puede crear, modificar, mover ni borrar en otra cuenta; la búsqueda respeta la cuenta; la cuenta no se filtra entre conexiones del pool; una persona en dos cuentas; `invitacion_por_token()` solo con el hash exacto; `cuentas_para_soporte()` vacía para quien no es staff |
 | `test/http-contexto.test.ts` | `/yo` y `/mis-cuentas` por HTTP: 200, 400, 401, 403, 404, 410; sesión vencida o inventada; membresía desactivada; cuenta cerrada; subdominio y que con subdominio no se pueda cambiar de cuenta por parámetro |
-| `test/auth.test.ts` | Enlace mágico (un uso, vencido, correo inexistente sin aviso, freno de pedidos, enlace armado con el dominio configurado y no con el Host), contraseña (correcta, mismo 401 para todo fallo, bloqueo tras 5 fallos), sesión, salir invalida la cookie, cookie para todos los subdominios, cambio de contraseña cierra las otras sesiones, rechazo de `text/plain` |
+| `test/auth.test.ts` | Enlace mágico (queda listo para cuando haya correo) (un uso, vencido, correo inexistente sin aviso, freno de pedidos, enlace armado con el dominio configurado y no con el Host), contraseña (correcta, mismo 401 para todo fallo, bloqueo tras 5 fallos), sesión, salir invalida la cookie, cookie para todos los subdominios, cambio de contraseña cierra las otras sesiones, rechazo de `text/plain` |
+| `test/invitaciones.test.ts` | Invitaciones: quién invita a quién, proyecto de otra cuenta, reemplazo, enlace de un uso, vencida, renovada, anulada; persona nueva crea su contraseña y entra con el rol y el proyecto; persona existente necesita su sesión (el enlace no da su identidad); no baja el rol de quien ya estaba; desde otra cuenta 404. Límite del plan (cuenta pendientes, no clientes, se revisa al aceptar y al pasar a equipo). Personas: listar, desactivar corta el acceso, reglas de dueño y de uno mismo. Soporte en beta: entra como admin, queda registrado, lista cuentas; con `SOPORTE_BETA=0` no entra. `/config` sin correo |
+| `test/planes.test.ts` | `planPermite()`, excepciones por cuenta (ignora valores raros), plan desconocido, `puedeInvitar()` |
 | `test/host.test.ts` | Lectura del host: subdominio, raíz, reservados, dominios ajenos |
 | `test/semilla.ts` | Crea una cuenta con filas en **todas** las tablas con RLS (un test verifica que ninguna quede vacía) |
 

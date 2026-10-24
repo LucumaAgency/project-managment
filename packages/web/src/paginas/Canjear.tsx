@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, ErrorApi, type Sesion } from '../api';
+import PaginaAcceso from '../componentes/PaginaAcceso';
 import { despuesDeEntrar, useConfig } from '../contexto';
 
 /** Destino del enlace del correo: canjea el token y sigue. */
@@ -21,18 +22,13 @@ export default function Canjear() {
   }, [config, navegar]);
 
   return (
-    <div className="centro">
-      <div className="tarjeta">
-        {error ? (
-          <>
-            <h1>No se pudo entrar</h1>
-            <p className="mensaje error">{error}</p>
-            <p className="mensaje"><Link to="/entrar">Volver a entrar</Link></p>
-          </>
-        ) : (
-          <p>Entrando…</p>
-        )}
-      </div>
-    </div>
+    <PaginaAcceso titulo={error ? 'No se pudo entrar' : 'Entrando…'}>
+      {error && (
+        <>
+          <p className="error">{error}</p>
+          <p className="meta pie"><Link to="/entrar">Volver a entrar</Link></p>
+        </>
+      )}
+    </PaginaAcceso>
   );
 }

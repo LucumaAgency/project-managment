@@ -1,10 +1,17 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Rol } from '@lucuma-pm/shared';
+import { auditar } from '../lib/auditoria.js';
 import { conCuenta, type Contexto } from '../lib/contexto.js';
 import { cuentaPorSlug, type CuentaResuelta } from '../lib/cuenta.js';
 import { HttpError } from '../lib/errores.js';
 import { destinoDesdeHost } from '../lib/host.js';
 import { COOKIE_SESION, usuarioDeSesion, type UsuarioSesion } from '../lib/sesion.js';
+
+export interface ConfigApp {
+  baseDomain: string;
+  /** Beta: soporte de Lucuma (isStaff) entra a cualquier cuenta como admin. */
+  soporteBeta: boolean;
+}
 
 export interface MiembroResuelto {
   id: string;
@@ -14,7 +21,7 @@ export interface MiembroResuelto {
 
 declare module 'fastify' {
   interface FastifyInstance {
-    config: { baseDomain: string };
+    config: ConfigApp;
   }
   interface FastifyRequest {
     /** Slug pedido (subdominio, o `?cuenta=` / `X-Cuenta` en local). Null = sin cuenta. */
@@ -36,8 +43,9 @@ declare module 'fastify' {
  *  - Con `baseDomain` (producción): del subdominio. `?cuenta=` y `X-Cuenta` se ignoran.
  *  - Sin `baseDomain` (local y tests): de `?cuenta=slug` o del encabezado `X-Cuenta`.
  */
-export function registrarContexto(app: FastifyInstance, baseDomain: string) {
-  app.decorate('config', { baseDomain });
+export function registrarContexto(app: FastifyInstance, config: ConfigApp) {
+  const { baseDomain } = config;
+  app.decorate('config', config);
   app.decorateRequest('slugPedido', null);
   app.decorateRequest('cuenta', null);
   app.decorateRequest('usuario', null);
@@ -61,8 +69,29 @@ export function registrarContexto(app: FastifyInstance, baseDomain: string) {
         })
       );
       req.miembro = m ? { id: m.id, role: m.role, activo: m.status === 'active' } : null;
+      if (entraComoSoporte(req, config)) await anotarAccesoSoporte(req);
     }
   });
+}
+
+/** Soporte entra sin membresía activa solo en beta y solo si es staff. */
+function entraComoSoporte(req: FastifyRequest, config: ConfigApp): boolean {
+  return config.soporteBeta && !!req.usuario?.isStaff && !(req.miembro?.activo ?? false);
+}
+
+/**
+ * Cada entrada de soporte a una cuenta queda en audit_log de ESA cuenta (la ve su dueño
+ * cuando exista la pantalla de seguridad). Una vez por sesión y cuenta, no por petición.
+ */
+const accesosSoporteAnotados = new Set<string>();
+async function anotarAccesoSoporte(req: FastifyRequest) {
+  const clave = `${req.usuario!.sessionId}|${req.cuenta!.id}`;
+  if (accesosSoporteAnotados.has(clave)) return;
+  if (accesosSoporteAnotados.size > 10_000) accesosSoporteAnotados.clear();
+  accesosSoporteAnotados.add(clave);
+  await conCuenta({ accountId: req.cuenta!.id, userId: req.usuario!.id }, (tx) =>
+    auditar({ accountId: req.cuenta!.id, userId: req.usuario!.id, action: 'soporte.acceso', ip: req.ip }, tx)
+  );
 }
 
 function slugDePeticion(req: FastifyRequest, baseDomain: string): string | null {
@@ -86,24 +115,24 @@ export interface Acceso {
   rol: Rol;
   cuenta: CuentaResuelta;
   usuario: UsuarioSesion;
+  /** Entró como soporte de Lucuma, sin ser miembro (beta). Actúa como admin. */
+  soporte: boolean;
 }
 
 /**
  * La ruta trabaja dentro de una cuenta: exige que exista, esté abierta, haya sesión y la
  * persona sea miembro activo. Devuelve el `ctx` que se pasa a `conCuenta`.
  *
- * Soporte de Lucuma (`isStaff`) todavía no entra sin membresía: llega con el superadmin.
+ * Soporte de Lucuma (`isStaff`), durante la beta, entra sin membresía con rol de admin.
+ * Fuera de la beta (`SOPORTE_BETA=0`) necesita ser miembro como cualquiera.
  */
 export function exigirCuenta(req: FastifyRequest): Acceso {
   if (!req.slugPedido) throw new HttpError(400, 'Falta la cuenta.');
   if (!req.cuenta) throw new HttpError(404, 'Esa cuenta no existe.');
   if (req.cuenta.cerrada) throw new HttpError(410, 'Esta cuenta fue cerrada.');
   const usuario = exigirUsuario(req);
-  if (!req.miembro || !req.miembro.activo) throw new HttpError(403, 'No tienes acceso a esta cuenta.');
-  return {
-    ctx: { accountId: req.cuenta.id, userId: usuario.id },
-    rol: req.miembro.role,
-    cuenta: req.cuenta,
-    usuario,
-  };
+  const ctx = { accountId: req.cuenta.id, userId: usuario.id };
+  if (req.miembro?.activo) return { ctx, rol: req.miembro.role, cuenta: req.cuenta, usuario, soporte: false };
+  if (entraComoSoporte(req, req.server.config)) return { ctx, rol: 'admin', cuenta: req.cuenta, usuario, soporte: true };
+  throw new HttpError(403, 'No tienes acceso a esta cuenta.');
 }

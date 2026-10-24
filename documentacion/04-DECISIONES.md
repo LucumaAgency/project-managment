@@ -101,8 +101,7 @@ Sin `BASE_DOMAIN` no hay subdominios. Con `BASE_DOMAIN` (producción) esos dos s
 que nadie cambie de cuenta con un parámetro (lo prueba un test).
 
 **D-25 · Soporte (`isStaff`) no entra a cuentas ajenas todavía** (2026-10-24, día 2)
-Sin membresía recibe 403 como cualquiera. El acceso de soporte llega con el superadmin (fase 3)
-y quedará en `AuditLog`.
+~~Sin membresía recibe 403 como cualquiera.~~ Reemplazada por D-31.
 
 **D-26 · Login único para todas las cuentas** (2026-10-24, día 3)
 Como la persona es global (D-08), entra una vez y la cookie vale para todos los subdominios.
@@ -110,8 +109,7 @@ Si tiene una sola cuenta va directo; si tiene varias, elige. Descartado: login p
 en el CRM.
 
 **D-27 · Enlace mágico como forma principal de entrar** (2026-10-24, día 3)
-La pantalla ofrece primero el enlace al correo y la contraseña como alternativa. Los clientes
-de las agencias entran pocas veces y no recuerdan contraseñas. Ver C-5.
+~~La pantalla ofrece primero el enlace al correo.~~ Reemplazada por D-32: sin correo en el MVP.
 
 **D-28 · Los correos de acceso salen en la misma petición** (2026-10-24, día 3)
 El enlace mágico tiene que llegar en segundos; no espera a la cola, que además se construye en
@@ -122,8 +120,53 @@ la semana 3. Los avisos y resúmenes sí irán por la cola.
 probar el login en local. Si la persona ya existe, se suma como dueña.
 
 **D-30 · Estilos propios provisionales, sin shadcn/ui por ahora** (2026-10-24, día 3)
-CSS con variables de color y modo oscuro. shadcn/ui (o la librería que se elija) entra cuando
-esté definida la identidad del producto. Ver C-4.
+~~Estilos neutros con modo oscuro.~~ Reemplazada por D-33.
+
+**D-31 · Soporte de Lucuma entra a cualquier cuenta durante la beta** (2026-10-24, día 4, decidido por el usuario)
+Quien tiene `isStaff` entra sin membresía con permisos de **administrador**: ve la lista de
+todas las cuentas en el selector, la web muestra una franja ámbar "Estás como soporte", y cada
+entrada queda en `audit_log` de esa cuenta (`soporte.acceso`, una vez por sesión y cuenta). Se
+apaga con `SOPORTE_BETA=0`. La marca se da por consola (`npm run usuario -- soporte <correo>`),
+nunca desde la web. Ver C-9.
+
+**D-32 · Sin correo en el MVP: contraseña y enlaces que se comparten a mano** (2026-10-24, día 4, decidido por el usuario)
+- Se entra con correo y contraseña. El acceso por enlace al correo sigue programado, pero la
+  web solo lo muestra si hay SMTP (`/config` devuelve `correo: false`) y en producción sin SMTP
+  la ruta responde 503.
+- Las cuentas se crean por consola (`cuenta:crear`), que genera e imprime la contraseña del
+  dueño nuevo.
+- Las invitaciones generan un enlace que quien invita copia y manda (WhatsApp, Slack). La
+  pantalla trae "Copiar", "Copiar mensaje" y "Abrir en WhatsApp" (solo `wa.me` con el texto,
+  no es integración).
+- Contraseña olvidada: la restablece soporte por consola (`npm run usuario -- clave <correo>`).
+- Cuando haya correo, los mismos enlaces salen también por correo: no se reescribe nada.
+
+**D-33 · El sistema visual del CRM** (2026-10-24, día 4, decidido por el usuario)
+Mismos tokens (azul `#174FCA`, neutros, estados), Montserrat, wordmark "Lucuma Agency" con la
+etiqueta del producto ("Proyectos"), menú lateral que en celular es cajón, tarjetas, tablas que
+en celular pasan a tarjetas, modales que en celular son hoja inferior, íconos de trazo propios
+y el favicon "LA". Solo modo claro, como el CRM. CSS propio, sin librería de componentes: así
+los dos productos se ven iguales y no se suma peso. Fuente de verdad: el `styles.css` del CRM.
+
+**D-34 · Invitaciones: el enlace es la llave, con tres resguardos** (2026-10-24, día 4)
+Quien tiene el enlace puede aceptar. Por eso: vence a los 7 días, sirve una vez, se puede
+anular o renovar (el anterior deja de servir) y en la base solo está su hash. Si el correo ya
+tiene usuario, para aceptar hay que entrar con **su** contraseña: el enlace no da acceso a una
+identidad que ya existe. Invitar de nuevo al mismo correo reemplaza la invitación pendiente.
+A quien ya está activo no se le baja el rol al aceptar otra invitación (p. ej. como cliente de
+un proyecto). Owner y admin invitan a cualquier rol menos dueño; el equipo solo invita clientes
+y a un proyecto donde está.
+
+**D-35 · Límite de usuarios del plan: cuenta el equipo, no los clientes** (2026-10-24, día 4)
+Equipo activo + invitaciones de equipo vigentes. Las pendientes cuentan para que no se pueda
+pasar el límite invitando de más. Se revisa al invitar, al aceptar (por si el límite bajó) y al
+pasar a alguien de cliente a equipo o reactivarlo. La regla vive en `shared/planes.ts`
+(`planPermite`, el `can()` del plan) para que web y API digan lo mismo.
+
+**D-36 · Gestión de personas: al dueño y a uno mismo no se los toca** (2026-10-24, día 4)
+Owner y admin cambian rol, desactivan y reactivan. El dueño no cambia por esta vía (la
+transferencia de dueño llega aparte) y nadie se cambia a sí mismo, para no quedarse fuera por
+error. Desactivar corta el acceso en la petición siguiente; no borra nada de lo que hizo.
 
 ## Operación
 

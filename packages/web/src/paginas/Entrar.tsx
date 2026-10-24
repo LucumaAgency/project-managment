@@ -1,13 +1,17 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, ErrorApi, type Sesion } from '../api';
+import PaginaAcceso from '../componentes/PaginaAcceso';
 import { despuesDeEntrar, useConfig } from '../contexto';
 
-/** Entrar: por defecto con enlace al correo; contraseña opcional. */
+/**
+ * Entrar con correo y contraseña. El enlace al correo solo aparece si hay correo saliente
+ * (en el MVP no lo hay: la contraseña la entrega quien crea la cuenta o la invitación).
+ */
 export default function Entrar() {
   const config = useConfig();
   const navegar = useNavigate();
-  const [modo, setModo] = useState<'enlace' | 'password'>('enlace');
+  const [modo, setModo] = useState<'password' | 'enlace'>('password');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -33,30 +37,30 @@ export default function Entrar() {
   }
 
   return (
-    <div className="centro">
-      <form className="tarjeta" onSubmit={enviar}>
-        <h1>Entrar</h1>
-        <p className="suave">
-          {modo === 'enlace' ? 'Te enviamos un enlace al correo para entrar sin contraseña.' : 'Entra con tu correo y contraseña.'}
-        </p>
+    <PaginaAcceso titulo={modo === 'password' ? 'Inicia sesión' : 'Entrar con enlace'} subtitulo="Proyectos y clientes, en un solo lugar">
+      <form onSubmit={enviar}>
         <label htmlFor="email">Correo</label>
-        <input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input id="email" type="email" autoComplete="email" placeholder="tu@empresa.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
         {modo === 'password' && (
           <>
             <label htmlFor="password">Contraseña</label>
             <input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
           </>
         )}
-        <button className="primario" disabled={enviando}>
-          {enviando ? 'Un momento…' : modo === 'enlace' ? 'Enviarme el enlace' : 'Entrar'}
+        <button className="btn btn-bloque" style={{ marginTop: 16 }} disabled={enviando}>
+          {enviando ? (modo === 'password' ? 'Entrando…' : 'Enviando…') : modo === 'password' ? 'Entrar' : 'Enviar enlace'}
         </button>
-        {mensaje && <p className={`mensaje ${mensaje.tipo}`} role="status">{mensaje.texto}</p>}
-        <p className="mensaje">
-          <button type="button" className="enlace" onClick={() => { setModo(modo === 'enlace' ? 'password' : 'enlace'); setMensaje(null); }}>
-            {modo === 'enlace' ? 'Prefiero usar contraseña' : 'Prefiero un enlace al correo'}
-          </button>
-        </p>
       </form>
-    </div>
+      {mensaje && <p className={mensaje.tipo} role="status">{mensaje.texto}</p>}
+      <p className="meta pie">
+        {config.correo ? (
+          <button type="button" className="btn-texto" onClick={() => { setModo(modo === 'password' ? 'enlace' : 'password'); setMensaje(null); }}>
+            {modo === 'password' ? '¿Sin contraseña u olvidada? Entra con enlace al correo' : 'Entrar con contraseña'}
+          </button>
+        ) : (
+          '¿Olvidaste tu contraseña? Pide a soporte de Lucuma que te genere una nueva.'
+        )}
+      </p>
+    </PaginaAcceso>
   );
 }

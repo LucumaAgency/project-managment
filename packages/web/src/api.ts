@@ -1,3 +1,5 @@
+import type { Rol, RolAsignable } from '@lucuma-pm/shared';
+
 /**
  * Cliente de la API. En producción la cuenta sale del subdominio (la API la lee del Host).
  * En local, sin dominio base, la web la guarda y la manda en el encabezado X-Cuenta.
@@ -54,6 +56,8 @@ export async function api<T>(ruta: string, opciones: { method?: string; body?: u
 
 export interface Config {
   baseDomain: string;
+  /** Hay correo saliente. Sin él (MVP) no se ofrece entrar con enlace al correo. */
+  correo: boolean;
 }
 export interface CuentaDeUsuario {
   id: string;
@@ -62,11 +66,56 @@ export interface CuentaDeUsuario {
   role: string;
 }
 export interface Sesion {
-  usuario: { id: string; name: string; email: string; tienePassword: boolean };
+  usuario: { id: string; name: string; email: string; tienePassword: boolean; soporte: boolean };
   cuentas: CuentaDeUsuario[];
 }
 export interface Yo {
   usuario: { id: string; name: string; email: string };
   cuenta: { id: string; slug: string; name: string; plan: string };
-  rol: string;
+  rol: Rol;
+  /** Soporte de Lucuma dentro de una cuenta donde no es miembro (beta). */
+  soporte: boolean;
+}
+
+export interface Persona {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  role: Rol;
+  status: 'active' | 'disabled';
+  company: string | null;
+  lastLoginAt: string | null;
+  esYo: boolean;
+}
+export interface InvitacionPendiente {
+  id: string;
+  email: string;
+  role: RolAsignable;
+  projectId: string | null;
+  expiresAt: string;
+  createdAt: string;
+  invitedById: string;
+  vencida: boolean;
+}
+export interface Personas {
+  personas: Persona[];
+  invitaciones: InvitacionPendiente[];
+  plan: { nombre: string; maxUsuarios: number | null; usuariosEnUso: number };
+  permisos: { gestionar: boolean; invitar: RolAsignable[] };
+}
+export interface InvitacionCreada {
+  invitacion: { id: string; email: string; role: RolAsignable; expiresAt: string };
+  enlace: string;
+}
+export interface InvitacionVista {
+  estado: 'vigente' | 'usada' | 'vencida' | 'cerrada';
+  cuenta: { slug: string; name: string };
+  email: string;
+  role: RolAsignable;
+  proyecto: string | null;
+  invitadoPor: string | null;
+  expiresAt: string;
+  existeUsuario: boolean;
+  sesion: { email: string; esLaInvitada: boolean } | null;
 }

@@ -6,4 +6,4 @@ dist/
 !.env.example
 # Postgres local de desarrollo (scripts/db-local.mjs)
 .pgdata/
-public/
+/public/

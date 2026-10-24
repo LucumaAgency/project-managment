@@ -46,4 +46,13 @@ export const env = {
     pass: process.env.SMTP_PASS ?? '',
   },
   mailFrom: process.env.MAIL_FROM?.trim() || 'Lucuma Proyectos <no-reply@localhost>',
+  /**
+   * Beta: el personal de soporte de Lucuma (users.isStaff) entra a cualquier cuenta como
+   * administrador, sin ser miembro, y queda en el registro de auditoría. Encendido salvo
+   * SOPORTE_BETA=0. Se apaga al salir de la beta (ver documentacion/03-ARQUITECTURA.md).
+   */
+  soporteBeta: process.env.SOPORTE_BETA !== '0',
 };
+
+/** Hay correo saliente de verdad. Sin él, la web oculta el acceso por enlace al correo. */
+export const correoActivo = () => !!env.smtp.host;

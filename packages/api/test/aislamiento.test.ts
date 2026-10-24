@@ -227,3 +227,19 @@ describe('resolver la cuenta antes de saberla', () => {
     expect(await prisma.$queryRaw`SELECT * FROM cuenta_por_slug('no-existe')`).toEqual([]);
   });
 });
+
+describe('invitaciones y soporte antes de la cuenta', () => {
+  it('invitacion_por_token() solo encuentra con el hash exacto', async () => {
+    const inv = await prismaAdmin.invitation.findFirstOrThrow({ where: { accountId: A.accountId } });
+    const [fila] = await prisma.$queryRaw<{ accountId: string }[]>`SELECT * FROM invitacion_por_token(${inv.tokenHash})`;
+    expect(fila.accountId).toBe(A.accountId);
+    expect(await prisma.$queryRaw`SELECT * FROM invitacion_por_token('')`).toEqual([]);
+    expect(await prisma.$queryRaw`SELECT * FROM invitacion_por_token(NULL)`).toEqual([]);
+  });
+
+  it('cuentas_para_soporte() está vacía si la persona fijada no es staff', async () => {
+    expect(await prisma.$queryRaw`SELECT * FROM cuentas_para_soporte()`).toEqual([]);
+    expect(await conUsuario(A.ownerId, (tx) => tx.$queryRaw`SELECT * FROM cuentas_para_soporte()`)).toEqual([]);
+  });
+});
+

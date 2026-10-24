@@ -34,7 +34,7 @@ model Account {
   slug      String   @unique
   /// Plan comercial. En el MVP todas son `interno`; los límites salen de shared/planes.ts.
   plan      String   @default("interno")
-  /// Excepciones al plan para esta cuenta: { maxUsers?, maxProjects?, maxStorageBytes? }.
+  /// Excepciones al plan para esta cuenta: { maxUsuarios?, maxProyectos?, maxAlmacenamientoBytes? } (shared/planes.ts).
   limits    Json?
   /// Zona horaria por defecto para resúmenes y recordatorios si el usuario no definió la suya.
   timeZone  String   @default("America/Lima")

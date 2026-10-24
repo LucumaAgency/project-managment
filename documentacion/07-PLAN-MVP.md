@@ -9,13 +9,13 @@ Fecha del plan: 2026-10-24. Nombre de trabajo; se cambia cuando haya marca.
 
 Entra:
 
-1. Cuentas y roles (owner, admin, equipo, cliente), con invitaciones por correo
+1. Cuentas y roles (owner, admin, equipo, cliente), con invitaciones por enlace (el correo llega después)
 2. Proyectos con sus miembros
 3. Tareas: listas, responsable, fecha, completar, comentarios
 4. Mensajes: anuncios o temas del proyecto
 5. Archivos: subida directa a R2, vista previa, versiones
 6. Comentarios y @menciones en todo
-7. Notificaciones: bandeja, correo y resumen diario
+7. Notificaciones: bandeja (correo y resumen diario en espera: no hay correo en el MVP, ver C-8)
 8. Vista del cliente: solo ve lo marcado como visible
 9. Actividad y papelera (30 días)
 
@@ -29,13 +29,13 @@ cobros, onboarding de prueba, app móvil.
 | Pieza | Elección | Nota |
 |---|---|---|
 | API | Node 20 + TypeScript + Fastify | Igual que el CRM |
-| Web | React + Vite (SPA) + shadcn/ui | Igual que el CRM |
+| Web | React + Vite (SPA), CSS propio con el sistema visual del CRM | Igual que el CRM (D-33) |
 | Base | **PostgreSQL 16** + Prisma | Distinto del CRM (MariaDB): RLS y búsqueda |
 | Cola | Tabla `jobs` + worker con `SKIP LOCKED` | Patrón del CRM. Sin Redis: sin chat no hay tiempo real |
 | Editor | Tiptap (+ extensión Mention) | MIT |
 | Archivos | Cloudflare R2 + URL firmada + Uppy | El archivo no pasa por el servidor |
 | Miniaturas | sharp (imágenes) + pdftoppm (PDF) en job | |
-| Correo | Brevo | |
+| Correo | Brevo | En espera: el MVP no envía correos (D-32) |
 | Hosting | Vultr + CloudPanel | Cron real desde el día 1 |
 | Errores | Sentry | |
 
@@ -111,7 +111,7 @@ que no ve nada de B. Corre en CI siempre.
 | 1 ✅ | Monorepo (copiar estructura del CRM), Postgres local, schema, migración inicial + RLS, roles `pm_app`/`pm_admin` | `prisma migrate dev` corre limpio |
 | 2 ✅ | `conCuenta()`, hook de contexto, resolución por subdominio, **test de aislamiento** entre cuentas | Test A/B en verde |
 | 3 ✅ | Login: enlace mágico + contraseña + sesiones (copiar del CRM), selector de cuenta si tiene varias | Entrar y salir |
-| 4 | Invitaciones (equipo y cliente-a-proyecto), alta de cuenta por script (adelantado al día 3: `cuenta:crear`), `planes.ts` con `can()` y límites | Invitar a alguien y que entre |
+| 4 ✅ | Invitaciones por enlace (equipo y cliente-a-proyecto), gestión de personas, `planPermite()` (el `can()` del plan) y límites, soporte en beta, sistema visual del CRM | Invitar a alguien y que entre |
 | 5 | Proyectos (crear, miembros, archivar) + servicio Recording genérico: crear, editar, papelera, restaurar, Event en la misma transacción, `puede()` | Pantalla de proyecto vacía con sus secciones |
 
 ### Semana 2 — contenido
@@ -129,10 +129,10 @@ que no ve nada de B. Corre en CI siempre.
 | Día | Qué | Termina con |
 |---|---|---|
 | 11 | Job `notify.fanout`: Event → Notification (mencionado, asignado, suscrito). Bandeja con no leídos | Bandeja funcionando |
-| 12 | Correo inmediato (menciones y asignaciones), resumen diario por zona horaria, recordatorio de vencimiento, preferencias | Correos llegando por Brevo |
+| 12 ⏸ | ~~Correo inmediato, resumen diario, recordatorio de vencimiento, preferencias~~ En espera: sin correo en el MVP (D-32). Qué hacer con este día: C-8 | — |
 | 13 | Vista del cliente: interruptor "visible para el cliente", herencia de visibilidad, feed filtrado, prueba entrando como cliente | Cliente ve solo lo suyo |
 | 14 | Papelera con purga a 30 días, búsqueda simple (tsvector), responsive móvil, exportar cuenta (ZIP) | Todo usable en celular |
-| 15 | Servidor Vultr + CloudPanel, Postgres, cron del worker, R2, Brevo, Sentry, respaldo diario, carga de Lucuma | En producción con el equipo dentro |
+| 15 | Servidor Vultr + CloudPanel, Postgres, cron del worker, R2, Sentry, respaldo diario, carga de Lucuma (Brevo cuando haya correo) | En producción con el equipo dentro |
 
 ## 7. Riesgos
 
