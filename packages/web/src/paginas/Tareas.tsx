@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { esCliente } from '@lucuma-pm/shared';
 import type { JSONContent } from '@tiptap/react';
 import { api, ErrorApi, type ListaTareas, type Tarea, type TareaDetalle, type TareasProyecto } from '../api';
 import Comentarios from '../componentes/Comentarios';
-import Editor, { Contenido, type PersonaMencionable } from '../componentes/Editor';
+import Editor, { Contenido } from '../componentes/Editor';
+import { useMencionables } from '../componentes/mencionables';
 import Icono from '../componentes/Icono';
 import Modal from '../componentes/Modal';
 import { useYo } from '../contexto';
@@ -32,7 +33,15 @@ export default function Tareas() {
   const [datos, setDatos] = useState<TareasProyecto | null>(null);
   const [nombreProyecto, setNombreProyecto] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [abierta, setAbierta] = useState<string | null>(null);
+  const [params, setParams] = useSearchParams();
+  // ?tarea=<id> abre esa tarea (enlaces de la actividad y, más adelante, de la bandeja).
+  const abierta = params.get('tarea');
+  const setAbierta = (id: string | null) => {
+    const p = new URLSearchParams(params);
+    if (id) p.set('tarea', id);
+    else p.delete('tarea');
+    setParams(p, { replace: !id });
+  };
   const [creandoLista, setCreandoLista] = useState(false);
   const arrastrada = useRef<{ id: string; listaId: string } | null>(null);
   const [sobre, setSobre] = useState<string | null>(null);
@@ -342,7 +351,6 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
   const [dia, setDia] = useState('');
   const [responsables, setResponsables] = useState<string[]>([]);
   const [visible, setVisible] = useState(false);
-  const [personas, setPersonas] = useState<PersonaMencionable[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
 
@@ -359,11 +367,7 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
   }, [id]);
   const lista = listas.find((l) => l.id === d?.tarea.listaId);
   const visibleEfectiva = visible && !!lista?.visibleToClients;
-  useEffect(() => {
-    api<{ personas: PersonaMencionable[] }>(`/proyectos/${projectId}/mencionables${visibleEfectiva ? '' : '?interno=1'}`)
-      .then((r) => setPersonas(r.personas))
-      .catch(() => {});
-  }, [projectId, visibleEfectiva]);
+  const personas = useMencionables(projectId, !visibleEfectiva);
 
   if (!d) {
     return (

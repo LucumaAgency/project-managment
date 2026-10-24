@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { JSONContent } from '@tiptap/react';
 import { api, ErrorApi } from '../api';
 import { useYo } from '../contexto';
-import Editor, { Contenido, type ControlEditor, type PersonaMencionable } from './Editor';
+import Editor, { Contenido, type ControlEditor } from './Editor';
+import { useMencionables } from './mencionables';
 import { iniciales } from './Marca';
 
 interface Comentario {
@@ -32,7 +33,6 @@ const mensajeDe = (e: unknown) => (e instanceof ErrorApi ? e.message : 'No se pu
 export default function Comentarios({ elementoId, projectId, interno, onCambio }: { elementoId: string; projectId: string; interno: boolean; onCambio?: () => void }) {
   const yo = useYo();
   const [d, setD] = useState<Respuesta | null>(null);
-  const [personas, setPersonas] = useState<PersonaMencionable[]>([]);
   const [nuevo, setNuevo] = useState<{ doc: JSONContent; vacio: boolean } | null>(null);
   const [editando, setEditando] = useState<string | null>(null);
   const [edicion, setEdicion] = useState<JSONContent | null>(null);
@@ -44,11 +44,7 @@ export default function Comentarios({ elementoId, projectId, interno, onCambio }
     api<Respuesta>(`/elementos/${elementoId}/comentarios`).then(setD).catch((e) => setError(mensajeDe(e)));
   }, [elementoId]);
   useEffect(cargar, [cargar]);
-  useEffect(() => {
-    api<{ personas: PersonaMencionable[] }>(`/proyectos/${projectId}/mencionables${interno ? '?interno=1' : ''}`)
-      .then((r) => setPersonas(r.personas.filter((p) => p.userId !== yo.usuario.id)))
-      .catch(() => {});
-  }, [projectId, interno, yo.usuario.id]);
+  const personas = useMencionables(projectId, interno, yo.usuario.id);
 
   const hacer = async (f: () => Promise<unknown>) => {
     setError(null);

@@ -270,6 +270,20 @@ cuándo) y sus `TodoAssignee`. Ordenar usa el movimiento genérico de elementos.
 
 Listas: renombrar y papelera con las rutas genéricas de elementos.
 
+## Mensajes y actividad
+
+`services/mensajes.ts`, `services/actividad.ts`, `routes/mensajes.ts` (D-51).
+
+| Ruta | Qué hace |
+|---|---|
+| `GET /api/v1/proyectos/:id/mensajes` | Mensajes con extracto, comentarios y última actividad |
+| `GET /api/v1/proyectos/:id/actividad?antes=&limite=` | Eventos del proyecto con lo necesario para la frase y el enlace |
+
+Publicar, ver, editar y borrar un mensaje usan las rutas genéricas de elementos. Web:
+`paginas/Mensajes.tsx`, `paginas/Mensaje.tsx`, `paginas/Actividad.tsx` y
+`componentes/Actividad.tsx` (frases y enlaces; la página del proyecto muestra las 8 últimas).
+`/proyectos/:id/tareas?tarea=<id>` abre una tarea directamente (lo usan los enlaces).
+
 ## Comentarios y seguir
 
 `services/comentarios.ts`, `services/suscripciones.ts`, `routes/comentarios.ts` (D-50).

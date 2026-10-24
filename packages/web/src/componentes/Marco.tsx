@@ -12,6 +12,9 @@ import PaginaAcceso from './PaginaAcceso';
 const TITULOS: [string, string][] = [
   ['/', 'Proyectos'],
   ['/proyectos/:id/tareas', 'Tareas'],
+  ['/proyectos/:id/mensajes/:mensajeId', 'Mensaje'],
+  ['/proyectos/:id/mensajes', 'Mensajes'],
+  ['/proyectos/:id/actividad', 'Actividad'],
   ['/proyectos/:id', 'Proyecto'],
   ['/personas', 'Personas'],
   ['/mi-cuenta', 'Mi cuenta'],

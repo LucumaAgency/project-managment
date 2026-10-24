@@ -294,6 +294,19 @@ Los avisos a los mencionados llegan con la bandeja (día 11).
 - En algo interno, un cliente mencionado no pasa a seguir (la mención ya no se guarda, D-48).
 - Los seguidores son a quienes llegarán los avisos de comentarios nuevos (día 11).
 
+**D-51 · Mensajes y actividad** (2026-10-24, día 9)
+- Mensajes: anuncios o temas en la raíz del proyecto. Arriba los que tuvieron movimiento
+  reciente: un comentario nuevo sube el mensaje. Editar: quien lo escribió (u owner/admin).
+- Actividad: los eventos del proyecto, del más nuevo al más viejo, de a 30. Un cliente ve un
+  evento solo si se marcó visible al ocurrir **y** el elemento (con toda su cadena) sigue
+  visible y activo hoy: si algo pasa a interno, su historial deja de verse. Tampoco ve eventos
+  del proyecto (sumar personas, archivar). Lo borrado aparece al equipo sin enlace.
+- `visiblesParaCliente()` resuelve eso para muchos elementos en una sola consulta recursiva;
+  lo usarán también la bandeja (día 11) y la búsqueda (día 14).
+- La lista de @ y de responsables se pide una vez por minuto y se filtra en el navegador según
+  la visibilidad (antes se volvía a pedir al marcar "visible" y quien escribía rápido no veía
+  al cliente). Ordena por parecido: primero quien empieza con lo escrito.
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

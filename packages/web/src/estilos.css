@@ -378,6 +378,31 @@ label.casilla { display: flex; align-items: center; gap: 8px; font-weight: 500; 
 .nuevo-comentario .editor-area, .comentario .editor-area { min-height: 70px; }
 .con-icono { display: inline-flex; align-items: center; gap: 3px; }
 
+/* --- Mensajes ------------------------------------------------------------- */
+.lista-mensajes { list-style: none; padding: 0; margin: 0; background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio); }
+.lista-mensajes li + li { border-top: 1px solid var(--borde-suave); }
+.mensaje-fila { display: flex; align-items: center; gap: 12px; padding: 12px 14px; color: var(--texto); }
+.mensaje-fila:hover { background: var(--fondo); text-decoration: none; }
+.mensaje-fila .datos { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mensaje-fila .nombre, .mensaje-fila .extracto { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mensaje-lado { display: flex; gap: 10px; align-items: center; flex: none; }
+.nuevo-mensaje .editor-area { min-height: 160px; }
+.mensaje-titulo { font-size: 22px; margin: 0 0 8px; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.mensaje-autor { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.mensaje-autor .avatar { width: 26px; height: 26px; font-size: 10.5px; }
+
+/* --- Actividad ------------------------------------------------------------ */
+.actividad section + section { margin-top: 8px; }
+.actividad-dia { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--tenue); margin: 12px 0 4px; font-weight: 600; }
+.actividad ul { list-style: none; padding: 0; margin: 0; }
+.evento-fila { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; font-size: 13px; }
+.evento-fila .avatar { width: 24px; height: 24px; font-size: 10px; }
+.evento-texto { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.evento-texto a { color: var(--texto); }
+.evento-texto a:hover { color: var(--azul); }
+.evento-texto .extracto { margin-top: 2px; }
+.evento-hora { flex: none; }
+
 /* --- Texto con formato (editor y contenido guardado) ------------------- */
 .prosa { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
 .prosa > :first-child { margin-top: 0; }
