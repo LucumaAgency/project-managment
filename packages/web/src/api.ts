@@ -153,6 +153,8 @@ export interface ProyectoDetalle {
   personas: PersonaProyecto[];
   secciones: { tareas: number; mensajes: number; archivos: number };
   permisos: { editar: boolean; archivar: boolean; papelera: boolean; personas: boolean; verPapelera: boolean };
+  /** Solo para el equipo: qué ve el cliente en la raíz del proyecto. */
+  vistaCliente: { listas: number; mensajes: number; carpetas: number; archivos: number } | null;
 }
 
 export interface Tarea {
@@ -180,7 +182,7 @@ export interface ListaTareas {
   body: unknown;
   visibleToClients: boolean;
   position: number;
-  permisos: { editar: boolean; papelera: boolean; agregar: boolean; mover: boolean };
+  permisos: { editar: boolean; papelera: boolean; agregar: boolean; mover: boolean; visibilidad: boolean };
   tareas: Tarea[];
 }
 export interface TareasProyecto {
@@ -249,13 +251,14 @@ export interface VersionArchivo {
 }
 export interface ListadoArchivos {
   ruta: { id: string; title: string }[];
+  carpeta: { id: string; visibleParaCliente: boolean; visibleToClients: boolean; cambiarVisibilidad: boolean } | null;
   carpetas: { id: string; title: string; visibleToClients: boolean; elementos: number }[];
   archivos: { id: string; title: string; visibleToClients: boolean; updatedAt: string; versiones: number; comentarios: number; actual: VersionArchivo }[];
   permisos: { subir: boolean; crearCarpeta: boolean };
-  almacenamiento: { usados: number; maximo: number | null; maxArchivo: number };
+  almacenamiento: { usados: number | null; maximo: number | null; maxArchivo: number };
 }
 export interface DetalleArchivo {
-  archivo: { id: string; title: string; carpetaId: string | null; visibleToClients: boolean; createdAt: string; creator: { id: string; name: string }; versiones: VersionArchivo[] };
+  archivo: { id: string; title: string; carpetaId: string | null; visibleToClients: boolean; visibleParaCliente: boolean; createdAt: string; creator: { id: string; name: string }; versiones: VersionArchivo[] };
   permisos: { nuevaVersion: boolean; renombrar: boolean; papelera: boolean; cambiarVisibilidad: boolean; mover: boolean };
 }
 

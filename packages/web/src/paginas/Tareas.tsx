@@ -121,6 +121,7 @@ export default function Tareas() {
           onAgregar={(title) => accion(() => api(`/listas/${l.id}/tareas`, { body: { title } }))}
           onRenombrar={(title) => accion(() => api(`/elementos/${l.id}`, { method: 'PATCH', body: { title } }))}
           onPapelera={() => accion(() => api(`/elementos/${l.id}/papelera`, { body: {} }))}
+          onVisibilidad={() => accion(() => api(`/elementos/${l.id}`, { method: 'PATCH', body: { visibleToClients: !l.visibleToClients } }))}
           onArrastrar={(t) => (arrastrada.current = { id: t.id, listaId: l.id })}
           onSobre={setSobre}
           onSoltar={(antesDe) => soltar(l, antesDe)}
@@ -161,6 +162,7 @@ interface PropsLista {
   onAgregar: (title: string) => Promise<void> | void;
   onRenombrar: (title: string) => void;
   onPapelera: () => void;
+  onVisibilidad: () => void;
   onArrastrar: (t: Tarea) => void;
   onSobre: (id: string | null) => void;
   onSoltar: (antesDe: string | null) => void;
@@ -205,7 +207,7 @@ function Lista(p: PropsLista) {
             {!p.esCliente && lista.visibleToClients && <span className="chip chip-verde" style={{ marginLeft: 8 }}><Icono nombre="ojo" tam={12} />Visible para el cliente</span>}
           </div>
         </div>
-        {(lista.permisos.editar || lista.permisos.papelera) && (
+        {(lista.permisos.editar || lista.permisos.papelera || lista.permisos.visibilidad) && (
           <div className="menu-acciones">
             <button type="button" className="btn btn-sec btn-chico" aria-label={`Acciones de ${lista.title}`} onClick={() => setMenu((v) => !v)}>
               <Icono nombre="puntos" tam={16} />
@@ -215,6 +217,11 @@ function Lista(p: PropsLista) {
                 {lista.permisos.editar && (
                   <button type="button" role="menuitem" onClick={() => { setMenu(false); const t = window.prompt('Nombre de la lista', lista.title); if (t?.trim()) p.onRenombrar(t.trim()); }}>
                     <Icono nombre="editar" tam={16} />Renombrar
+                  </button>
+                )}
+                {lista.permisos.visibilidad && (
+                  <button type="button" role="menuitem" onClick={() => { setMenu(false); p.onVisibilidad(); }}>
+                    <Icono nombre="ojo" tam={16} />{lista.visibleToClients ? 'Hacer interna (el cliente deja de verla)' : 'Mostrar al cliente'}
                   </button>
                 )}
                 {lista.permisos.papelera && (

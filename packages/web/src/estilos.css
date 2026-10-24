@@ -317,6 +317,8 @@ textarea { resize: vertical; line-height: 1.45; }
 .seccion-cab { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14.5px; }
 .seccion-cab svg { color: var(--azul); }
 .seccion-cab .cuenta { margin-left: auto; color: var(--tenue); font-weight: 500; font-size: 12.5px; }
+.vista-cliente { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 14px; }
+.vista-cliente svg { flex: none; margin-top: 2px; }
 .seccion-enlace { color: var(--texto); }
 .seccion-enlace:hover { border-color: var(--azul-suave); box-shadow: var(--sombra); text-decoration: none; }
 .seccion .vacia { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--tenue); font-size: 12.5px; padding: 12px 0 0; }

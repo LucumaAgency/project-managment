@@ -72,7 +72,7 @@ export default function Archivo() {
             <h2 className="mensaje-titulo">{a.title}</h2>
             <p className="meta" style={{ margin: 0 }}>
               v{actual.version} · {tamano(actual.bytes)} · subido por {actual.uploadedBy.name} el {cuando(actual.createdAt)}
-              {!esCliente(yo.rol) && (a.visibleToClients ? ' · visible para el cliente' : ' · interno')}
+              {!esCliente(yo.rol) && (a.visibleParaCliente ? ' · visible para el cliente' : ' · interno')}
             </p>
           </div>
           <a className="btn" href={urlArchivo(actual.blobId, true)}>
@@ -80,6 +80,9 @@ export default function Archivo() {
           </a>
         </div>
 
+        {!esCliente(yo.rol) && a.visibleToClients && !a.visibleParaCliente && (
+          <p className="aviso ambar">Está marcado visible, pero su carpeta es interna: el cliente no lo ve hasta que la carpeta sea visible.</p>
+        )}
         <div className="vista-previa">
           {actual.enLinea && actual.contentType.startsWith('image/') && <img src={urlArchivo(actual.blobId)} alt={a.title} />}
           {actual.enLinea && actual.contentType === 'application/pdf' && <iframe src={urlArchivo(actual.blobId)} title={a.title} />}

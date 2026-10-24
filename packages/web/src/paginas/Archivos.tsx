@@ -104,9 +104,27 @@ export default function Archivos() {
         ))}
       </nav>
 
+      {d.carpeta && !cliente && (
+        <p className={`aviso${d.carpeta.visibleParaCliente ? '' : ' ambar'}`} style={{ marginTop: 0, marginBottom: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Icono nombre="ojo" tam={15} />
+          <span style={{ flex: 1 }}>
+            {d.carpeta.visibleParaCliente
+              ? 'El cliente ve esta carpeta (y lo que tenga marcado como visible adentro).'
+              : d.carpeta.visibleToClients
+                ? 'Esta carpeta está marcada visible, pero está dentro de otra interna: el cliente no la ve.'
+                : 'Carpeta interna: el cliente no ve nada de lo que hay adentro.'}
+          </span>
+          {d.carpeta.cambiarVisibilidad && (
+            <button type="button" className="btn btn-sec btn-chico" onClick={async () => { await api(`/elementos/${d.carpeta!.id}`, { method: 'PATCH', body: { visibleToClients: !d.carpeta!.visibleToClients } }); cargar(); }}>
+              {d.carpeta.visibleToClients ? 'Hacer interna' : 'Mostrar al cliente'}
+            </button>
+          )}
+        </p>
+      )}
+
       <div className="herramientas">
         <div className="empuja meta">
-          {d.almacenamiento.maximo !== null
+          {d.almacenamiento.maximo !== null && d.almacenamiento.usados !== null
             ? `Usado: ${tamano(d.almacenamiento.usados)} de ${tamano(d.almacenamiento.maximo)}`
             : `Máximo por archivo: ${tamano(d.almacenamiento.maxArchivo)}`}
         </div>
