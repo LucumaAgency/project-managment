@@ -33,6 +33,12 @@ function puertoLibre(): Promise<number> {
  * desarrollo y corre igual en CI. Se aplican las MISMAS migraciones que en producción.
  */
 export default async function setup(project: TestProject) {
+  // embedded-postgres registra async-exit-hook, que al final llama process.exit(0) y pisa el
+  // código de fallo de vitest: con tests fallando, `npm test` salía con 0 y el CI quedaba verde
+  // (descubierto el 2026-10-24, día 15). Se respeta el código que vitest dejó en exitCode.
+  const salir = process.exit.bind(process);
+  process.exit = ((codigo?: number) => salir(codigo || (process.exitCode as number | undefined) || 0)) as typeof process.exit;
+
   // Contra otro Postgres (p. ej. la versión del servidor): TEST_PG_URL_APP y TEST_PG_URL_ADMIN.
   // La base tiene que estar vacía; se le aplican las migraciones y queda con datos de prueba.
   const externa = { app: process.env.TEST_PG_URL_APP, admin: process.env.TEST_PG_URL_ADMIN };

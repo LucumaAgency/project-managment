@@ -416,7 +416,15 @@ lista de archivos con su huella; guarda 14. La clave va en `PGPASSWORD`, no en l
 comandos (servidor compartido). Restaurar es un comando con `--confirmo` que antes guarda una
 copia de lo actual. Probado de verdad: respaldo → restaurado en otra base → mismos datos, RLS y
 funciones. Como esto vive en el mismo disco, la copia fuera del servidor (base + `privados/`) es
-el gestor de copias de Plesk (10-DESPLIEGUE §5e).
+el gestor de copias de Plesk (10-DESPLIEGUE §5e). Se elige el `pg_dump`/`pg_restore` más
+CERCANO a la versión de la base (la menor ≥ base), no el más nuevo: un `pg_restore` 17 escribe
+`SET transaction_timeout`, que una base 16 no conoce (visto en el CI).
+
+**D-62 · `npm test` sale con el código real** (2026-10-24, día 15)
+`embedded-postgres` registra `async-exit-hook`, que al final llama `process.exit(0)` y pisaba el
+código de fallo de vitest: con un test fallando, `npm test` salía con 0 y el CI quedaba verde.
+Se notó el día 15 (el CI marcó verde con un test rojo). `test/global-setup.ts` respeta ahora el
+`exitCode` que deja vitest. Revisadas las corridas anteriores: ninguna tenía tests fallando.
 
 **D-61 · Carga inicial desde JSON con un comando** (2026-10-24, día 15)
 `cargar:prod -- archivo.json [--probar]` crea proyectos, personas del equipo, listas, tareas

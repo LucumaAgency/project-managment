@@ -597,10 +597,17 @@ Hecho:
 
 Probado:
 
-- 238 tests en verde (respaldo real con pg_dump 16: respaldar, restaurar en otra base y comparar;
+- 239 tests (238 en verde, 1 que solo aplica sin pg_dump; respaldo real con pg_dump 16: respaldar, restaurar en otra base y comparar;
   Sentry contra un servidor falso, sin fugas de query ni correos; carga con validaciones).
 - Recorrido completo en navegador (escritorio y celular) sin errores; la carga en la base local
   se ve bien en Proyectos y Tareas, y correrla dos veces no duplica.
+
+Encontrado y arreglado en el camino:
+
+- **El CI no fallaba con tests rojos** (D-62): `npm test` salía siempre con 0. Arreglado y
+  comprobado (un test que falla ahora da código 1). Las corridas anteriores no tenían fallos.
+- En el CI solo hay `pg_dump` 17: restaurar con él en una base 16 falla. Se usa la herramienta
+  más cercana a la versión de la base, y `base:verificar:prod` avisa si no coincide.
 
 Para desplegar: Git → Desplegar → Reiniciar (sin migración ni dependencias nuevas). Después,
 los pasos de §5e (respaldo), §5f (carga) y §5g (Sentry) de 10-DESPLIEGUE-PLESK.md.

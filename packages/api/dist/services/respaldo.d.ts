@@ -1,5 +1,14 @@
-/** La herramienta más nueva que se encuentre, con su versión mayor. */
-export declare function buscarHerramienta(nombre: 'pg_dump' | 'pg_restore'): Promise<{
+/**
+ * Entre las encontradas, la más cercana a la base: la menor versión que sea >= `minimo`. Una
+ * más nueva de la cuenta también sirve para respaldar, pero su pg_restore escribe ajustes que
+ * una base vieja no conoce (pg 17 → `transaction_timeout` en una 16; visto en el CI). Si
+ * ninguna alcanza, la más nueva (quien llama dice que no sirve).
+ */
+export declare function elegir<T extends {
+    version: number;
+}>(encontradas: T[], minimo: number): T | null;
+/** pg_dump / pg_restore para una base de versión `minimo` (ver `elegir`). */
+export declare function buscarHerramienta(nombre: 'pg_dump' | 'pg_restore', minimo?: number): Promise<{
     ruta: string;
     version: number;
 } | null>;

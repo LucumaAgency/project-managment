@@ -39,22 +39,31 @@ async function candidatos(nombre) {
     }
     return [...new Set(dirs)].map((d) => path.join(d, nombre));
 }
-/** La herramienta más nueva que se encuentre, con su versión mayor. */
-export async function buscarHerramienta(nombre) {
-    let mejor = null;
+/**
+ * Entre las encontradas, la más cercana a la base: la menor versión que sea >= `minimo`. Una
+ * más nueva de la cuenta también sirve para respaldar, pero su pg_restore escribe ajustes que
+ * una base vieja no conoce (pg 17 → `transaction_timeout` en una 16; visto en el CI). Si
+ * ninguna alcanza, la más nueva (quien llama dice que no sirve).
+ */
+export function elegir(encontradas, minimo) {
+    const sirven = encontradas.filter((h) => h.version >= minimo).sort((a, b) => a.version - b.version);
+    return sirven[0] ?? [...encontradas].sort((a, b) => b.version - a.version)[0] ?? null;
+}
+/** pg_dump / pg_restore para una base de versión `minimo` (ver `elegir`). */
+export async function buscarHerramienta(nombre, minimo = 0) {
+    const encontradas = [];
     for (const ruta of await candidatos(nombre)) {
         try {
             await fs.access(ruta, fs.constants.X_OK);
             const { stdout } = await ejecutar(ruta, ['--version'], { timeout: 10_000 });
             const version = Number(/(\d+)(?:\.\d+)?/.exec(stdout)?.[1] ?? 0);
-            if (!mejor || version > mejor.version)
-                mejor = { ruta, version };
+            encontradas.push({ ruta, version });
         }
         catch {
             // No está o no se puede ejecutar: siguiente.
         }
     }
-    return mejor;
+    return elegir(encontradas, minimo);
 }
 /**
  * La URL de Prisma lista para libpq: sin la clave (va en PGPASSWORD, así no se ve en la lista
@@ -82,10 +91,10 @@ export async function hacerRespaldo(opciones = {}) {
     const inicio = Date.now();
     const dir = opciones.dir ?? env.respaldosDir;
     const dia = opciones.dia ?? diaEn('America/Lima');
-    const pgDump = await buscarHerramienta('pg_dump');
+    const servidor = await versionServidor();
+    const pgDump = await buscarHerramienta('pg_dump', servidor);
     if (!pgDump)
         throw new Error('No se encontró pg_dump en el servidor. Si existe en otra carpeta, ponla en PG_BIN_DIR.');
-    const servidor = await versionServidor();
     if (pgDump.version < servidor) {
         throw new Error(`pg_dump ${pgDump.version} es más viejo que la base (PostgreSQL ${servidor}): no puede respaldarla. Pon en PG_BIN_DIR la carpeta de un pg_dump ${servidor} o más nuevo.`);
     }
@@ -195,7 +204,7 @@ export async function restaurarRespaldo(archivo) {
 }
 /** pg_restore de `archivo` en la base de `url` (los tests restauran en una base aparte). */
 export async function restaurarEn(archivo, url) {
-    const pgRestore = await buscarHerramienta('pg_restore');
+    const pgRestore = await buscarHerramienta('pg_restore', await versionServidor());
     if (!pgRestore)
         throw new Error('No se encontró pg_restore en el servidor. Si existe en otra carpeta, ponla en PG_BIN_DIR.');
     const { dbname, password } = conexionPg(url);

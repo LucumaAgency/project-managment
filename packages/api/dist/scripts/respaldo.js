@@ -25,7 +25,8 @@ async function main() {
         return;
     }
     if (accion === 'hacer') {
-        const [herramienta, servidor] = await Promise.all([buscarHerramienta('pg_dump'), versionServidor()]);
+        const servidor = await versionServidor();
+        const herramienta = await buscarHerramienta('pg_dump', servidor);
         console.log(`PostgreSQL del servidor: ${servidor}. pg_dump: ${herramienta ? `${herramienta.version} (${herramienta.ruta})` : 'no encontrado'}.`);
         const r = await hacerRespaldo();
         console.log(`Respaldo hecho: ${r.archivo} (${mb(r.bytes)}, ${r.archivos} archivos en la lista, ${r.ms} ms).`);

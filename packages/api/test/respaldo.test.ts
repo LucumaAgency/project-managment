@@ -10,7 +10,7 @@ import { PrismaClient } from '@prisma/client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { prisma, prismaAdmin } from '../src/db.js';
 import { env } from '../src/env.js';
-import { buscarHerramienta, conexionPg, hacerRespaldo, listarRespaldos, restaurarEn, rotar, versionServidor } from '../src/services/respaldo.js';
+import { buscarHerramienta, conexionPg, elegir, hacerRespaldo, listarRespaldos, restaurarEn, rotar, versionServidor } from '../src/services/respaldo.js';
 import { sembrarCuenta, type Semilla } from './semilla.js';
 
 let A: Semilla;
@@ -19,9 +19,12 @@ const base = `respaldo_prueba_${process.pid}`;
 
 beforeAll(async () => {
   A = await sembrarCuenta('A');
-  const [h, servidor] = await Promise.all([buscarHerramienta('pg_dump'), versionServidor()]);
-  hayPgDump = !!h && h.version >= servidor;
-  if (!hayPgDump) console.warn(`respaldo.test: sin pg_dump >= ${servidor} (${h ? `hay ${h.version}` : 'no hay'}); se salta el respaldo real.`);
+  const servidor = await versionServidor();
+  const h = await buscarHerramienta('pg_dump', servidor);
+  // Misma versión que la base: un pg_restore más nuevo puede escribir ajustes que una base vieja
+  // no conoce (17 → transaction_timeout en una 16; el CI solo trae 17).
+  hayPgDump = !!h && h.version === servidor;
+  if (!hayPgDump) console.warn(`respaldo.test: sin pg_dump ${servidor} (${h ? `hay ${h.version}` : 'no hay'}); se salta el respaldo real.`);
 });
 
 afterAll(async () => {
@@ -35,6 +38,15 @@ describe('piezas', () => {
     const c = conexionPg('postgresql://carlosm_pm_admin:cl%40ve%2Fx@localhost:5432/carlosm_lucuma_pm?schema=public&sslmode=require');
     expect(c.password).toBe('cl@ve/x');
     expect(c.dbname).toBe('postgresql://carlosm_pm_admin@localhost:5432/carlosm_lucuma_pm?sslmode=require');
+  });
+
+  it('elige la herramienta más cercana a la base, no la más nueva', () => {
+    const hay = [{ version: 14 }, { version: 17 }, { version: 16 }, { version: 12 }];
+    expect(elegir(hay, 16)).toEqual({ version: 16 });
+    expect(elegir(hay, 12)).toEqual({ version: 12 });
+    expect(elegir(hay, 13)).toEqual({ version: 14 });
+    expect(elegir([{ version: 11 }, { version: 10 }], 12)).toEqual({ version: 11 }); // no alcanza: la más nueva
+    expect(elegir([], 12)).toBeNull();
   });
 
   it('rota: deja los N más nuevos con su lista de archivos', async () => {
@@ -57,7 +69,7 @@ describe('piezas', () => {
   });
 
   it('sin pg_dump, el motivo es claro', async (ctx) => {
-    if (hayPgDump) return ctx.skip(); // con uno disponible no hay forma limpia de esconderlo
+    if (env.pgBinDir || (await buscarHerramienta('pg_dump'))) return ctx.skip(); // hay alguno: no se puede esconder
     await expect(hacerRespaldo({ dia: '2026-01-01' })).rejects.toThrow(/pg_dump/);
   });
 });

@@ -79,12 +79,14 @@ async function main() {
     }
     // Respaldo diario (D-60): no es una falla de la base, pero sin pg_dump no hay respaldo propio.
     console.log('\nRespaldo');
-    const pgDump = await buscarHerramienta('pg_dump');
     const mayor = Math.floor(app.version / 10_000);
+    const pgDump = await buscarHerramienta('pg_dump', mayor);
     if (!pgDump)
         aviso('no se encontró pg_dump', 'Sin él no hay respaldo diario propio. Buscar dónde está (p. ej. /usr/lib/postgresql/12/bin) y ponerlo en PG_BIN_DIR, o usar solo las copias de Plesk.');
     else if (pgDump.version < mayor)
         aviso(`pg_dump ${pgDump.version} es más viejo que la base (${mayor})`, 'Poner en PG_BIN_DIR la carpeta de un pg_dump igual o más nuevo.');
+    else if (pgDump.version > mayor)
+        aviso(`pg_dump ${pgDump.version} es más nuevo que la base (${mayor})`, `Respalda bien, pero para restaurar en esta misma base conviene un pg_restore ${mayor}: si existe, ponerlo en PG_BIN_DIR.`);
     else
         ok(`pg_dump ${pgDump.version} (${pgDump.ruta})`);
     const respaldos = await listarRespaldos();
