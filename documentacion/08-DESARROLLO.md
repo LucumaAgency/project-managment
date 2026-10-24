@@ -70,11 +70,12 @@ tipos y tests en cada push a `main` y en cada PR.
 | `test/http-contexto.test.ts` | `/yo` y `/mis-cuentas` por HTTP: 200, 400, 401, 403, 404, 410; sesión vencida o inventada; membresía desactivada; cuenta cerrada; subdominio y que con subdominio no se pueda cambiar de cuenta por parámetro |
 | `test/auth.test.ts` | Enlace mágico (queda listo para cuando haya correo) (un uso, vencido, correo inexistente sin aviso, freno de pedidos, enlace armado con el dominio configurado y no con el Host), contraseña (correcta, mismo 401 para todo fallo, bloqueo tras 5 fallos), sesión, sesión que se renueva con el uso (y la vencida no revive), salir invalida la cookie, cookie para todos los subdominios, cambio de contraseña cierra las otras sesiones, rechazo de `text/plain` |
 | `test/invitaciones.test.ts` | Invitaciones: quién invita a quién, proyecto de otra cuenta, reemplazo, enlace de un uso, vencida, renovada, anulada; persona nueva crea su contraseña y entra con el rol y el proyecto; persona existente necesita su sesión (el enlace no da su identidad); no baja el rol de quien ya estaba; desde otra cuenta 404. Límite del plan (cuenta pendientes, no clientes, se revisa al aceptar y al pasar a equipo). Personas: listar, desactivar corta el acceso, reglas de dueño y de uno mismo. Soporte en beta: entra como admin, queda registrado, lista cuentas; con `SOPORTE_BETA=0` no entra. `/config` sin correo |
+| `test/proyectos.test.ts` | Proyectos: quién crea, quién ve (owner todo; equipo y cliente solo los suyos; otra cuenta 404), detalle con permisos y sin correos para el cliente, editar, archivar (solo lectura) y reactivar, papelera y restaurar, límite del plan. Personas del proyecto. Elementos: dónde va cada tipo, posiciones, editar (creador o admin), papelera con lo de adentro y restaurar, eventos. Visibilidad para clientes: no ve lo interno ni por lista, ni por id, ni lo que cuelga de algo interno; lo suyo nace visible; el comentario copia la visibilidad; solo el equipo la cambia |
 | `test/planes.test.ts` | `planPermite()`, excepciones por cuenta (ignora valores raros), plan desconocido, `puedeInvitar()` |
 | `test/host.test.ts` | Lectura del host: subdominio, raíz, reservados, dominios ajenos |
 | `test/semilla.ts` | Crea una cuenta con filas en **todas** las tablas con RLS (un test verifica que ninguna quede vacía) |
 
-Comprobado el 2026-10-24: con el RLS de una sola tabla apagado a propósito, 4 tests fallan.
+Comprobado el 2026-10-24: con el RLS de una sola tabla apagado a propósito, 4 tests fallan; con el filtro de visibilidad para clientes quitado, 3.
 
 **Al agregar una tabla nueva:** si lleva `accountId` o cuelga de un recording, el test de
 estructura falla hasta que tenga su RLS y su política; además hay que sumarla a la semilla.

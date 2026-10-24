@@ -112,7 +112,7 @@ que no ve nada de B. Corre en CI siempre.
 | 2 ✅ | `conCuenta()`, hook de contexto, resolución por subdominio, **test de aislamiento** entre cuentas | Test A/B en verde |
 | 3 ✅ | Login: enlace mágico + contraseña + sesiones (copiar del CRM), selector de cuenta si tiene varias | Entrar y salir |
 | 4 ✅ | Invitaciones por enlace (equipo y cliente-a-proyecto), gestión de personas, `planPermite()` (el `can()` del plan) y límites, soporte en beta, sistema visual del CRM | Invitar a alguien y que entre |
-| 5 | Proyectos (crear, miembros, archivar) + servicio Recording genérico: crear, editar, papelera, restaurar, Event en la misma transacción, `puede()` | Pantalla de proyecto vacía con sus secciones |
+| 5 ✅ | Proyectos (crear, miembros, archivar) + servicio Recording genérico: crear, editar, papelera, restaurar, Event en la misma transacción, `puede()` | Pantalla de proyecto vacía con sus secciones |
 
 ### Semana 2 — contenido
 

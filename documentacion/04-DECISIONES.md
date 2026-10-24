@@ -183,6 +183,37 @@ Soporte entra con permisos de administrador (D-31). El enlace de invitación dur
 sirve una vez (D-34). La contraseña olvidada la restablece soporte de Lucuma por consola (D-32);
 las agencias no generan enlaces de contraseña para su equipo.
 
+**D-40 · Permisos en una función pura, y 404 para lo que no se ve** (2026-10-24, día 5)
+`puede(actor, accion, { proyecto, elemento })` en `services/permisos.ts` no toca la base:
+recibe lo ya cargado (rol, si es miembro del proyecto, estado, visibilidad en cadena) y
+responde sí o no. `exigir()` corta con **404** cuando ni siquiera se puede ver (proyecto ajeno,
+algo interno para un cliente) y con 403 cuando se ve pero no se puede hacer. Así no se revela
+que algo existe. Las rutas solo cargan con `proyectoPara()` / `elementoPara()` y preguntan.
+
+**D-41 · Reglas de proyectos** (2026-10-24, día 5)
+- Crea cualquiera menos el cliente; quien crea queda dentro.
+- Editar nombre y descripción y gestionar personas: owner, admin o el equipo del proyecto.
+- Archivar, reactivar, papelera y restaurar: owner, admin o quien lo creó.
+- Archivado = solo lectura (se ve, no se cambia nada adentro). En papelera = solo lo ven owner
+  y admin, para restaurarlo. Ver C-12.
+- El límite de proyectos del plan cuenta solo los activos; se revisa al crear, reactivar y restaurar.
+- El cliente ve los nombres de la gente del proyecto, no sus correos.
+
+**D-42 · Elementos genéricos: tipos, padres y visibilidad** (2026-10-24, día 5)
+- Dónde va cada tipo: lista en la raíz; tarea dentro de una lista; mensaje en la raíz; carpeta
+  en la raíz o en otra carpeta; archivo en la raíz o en una carpeta; comentario dentro de lista,
+  tarea, mensaje o archivo.
+- Los archivos no se crean por la ruta genérica: nacen al confirmar una subida (día 10).
+- El cliente solo crea tareas, mensajes y comentarios, siempre visibles, y solo dentro de algo
+  que ve.
+- Visibilidad en cadena: un cliente ve algo solo si él y todos sus padres son visibles. Se
+  calcula con una consulta recursiva sobre `parentId`, que también pasa por RLS.
+- Editar o borrar lo ajeno: solo owner y admin (C-13).
+- Papelera: se marca el elemento y lo de adentro deja de verse con él; restaurarlo devuelve
+  todo. La papelera del proyecto muestra solo la raíz de cada borrado.
+- Cada cambio escribe su `Event` en la misma transacción, con la visibilidad efectiva copiada.
+- Hasta el día 6 el cuerpo es texto plano (`bodyText`); el editor agrega el JSON de Tiptap.
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

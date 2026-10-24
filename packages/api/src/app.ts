@@ -4,8 +4,10 @@ import { correoActivo, env } from './env.js';
 import { prisma } from './db.js';
 import { registrarContexto } from './plugins/contexto.js';
 import rutasAuth from './routes/auth.js';
+import rutasElementos from './routes/elementos.js';
 import rutasInvitaciones from './routes/invitaciones.js';
 import rutasPersonas from './routes/personas.js';
+import rutasProyectos from './routes/proyectos.js';
 import rutasYo from './routes/yo.js';
 
 export interface OpcionesApp {
@@ -58,6 +60,8 @@ export async function buildApp(opciones: OpcionesApp = {}) {
   await app.register(rutasYo);
   await app.register(rutasPersonas);
   await app.register(rutasInvitaciones);
+  await app.register(rutasProyectos);
+  await app.register(rutasElementos);
 
   return app;
 }

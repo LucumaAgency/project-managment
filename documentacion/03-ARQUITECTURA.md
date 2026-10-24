@@ -130,8 +130,8 @@ la única forma en que la app toca datos de una cuenta. `conUsuario(userId, …)
 usuario, para el selector de cuentas.
 
 **Dos capas:** RLS cuida la frontera entre cuentas. Dentro de una cuenta, la función
-`puede(ctx, accion, recording)` de `services/permisos.ts` decide por proyecto, rol y
-visibilidad. Las rutas no deciden permisos por su cuenta.
+`puede(actor, accion, { proyecto, elemento })` de `services/permisos.ts` decide por proyecto,
+rol y visibilidad (D-40). Las rutas no deciden permisos por su cuenta.
 
 ## Acceso (login)
 
@@ -216,7 +216,8 @@ SPA React con React Router (`packages/web`), con el sistema visual del CRM (D-33
 
 - **Sin cuenta** (tarjeta centrada, `PaginaAcceso`): Entrar, Canjear enlace, Selector de
   cuentas (con la sección de soporte), Invitación.
-- **Dentro de una cuenta** (`Marco`: menú lateral, barra superior, franja de soporte): Inicio,
+- **Dentro de una cuenta** (`Marco`: menú lateral, barra superior, franja de soporte):
+  Proyectos (activos, archivados, papelera), Proyecto (cabecera, acciones, personas, secciones),
   Personas (clientes no la ven), Mi cuenta. `Marco` carga `/yo` una vez y lo comparte con
   `useYo()`.
 - Componentes: `Icono` (trazos propios, sin librería), `Marca`, `Modal`, `EnlaceCompartir`.
@@ -225,9 +226,31 @@ SPA React con React Router (`packages/web`), con el sistema visual del CRM (D-33
 - En local también se pueden usar subdominios reales con `BASE_DOMAIN=lvh.me`
   (`lucuma.lvh.me:5174`; `lvh.me` apunta a 127.0.0.1).
 
+## Proyectos y elementos
+
+Rutas en `routes/proyectos.ts` y `routes/elementos.ts`; la lógica, en `services/`:
+`proyectos.ts` (cargar con permiso, cupo del plan), `elementos.ts` (crear, editar, papelera,
+restaurar, listar, cadena de padres), `eventos.ts` (actividad) y `permisos.ts`. Reglas en D-41
+y D-42.
+
+| Ruta | Qué hace |
+|---|---|
+| `GET /api/v1/proyectos?estado=active\|archived\|trashed` | Los que puedo ver (papelera: owner/admin) |
+| `POST /api/v1/proyectos` | Crear (quien crea queda dentro) |
+| `GET /api/v1/proyectos/:id` | Detalle, personas, cuántos elementos por sección y mis permisos |
+| `PATCH /api/v1/proyectos/:id` | Nombre y descripción |
+| `POST /api/v1/proyectos/:id/archivar · reactivar · papelera · restaurar` | Cambios de estado |
+| `POST /api/v1/proyectos/:id/personas` · `DELETE …/personas/:userId` | Sumar o quitar a alguien de la cuenta |
+| `GET · POST /api/v1/proyectos/:id/elementos` | Hijos de un padre (`?padre=`, `?tipo=`) o de la raíz; crear |
+| `GET · PATCH /api/v1/elementos/:id` | Ver (con mis permisos) y editar (título, texto, visibilidad, posición) |
+| `POST /api/v1/elementos/:id/papelera · restaurar` | Papelera |
+| `GET /api/v1/proyectos/:id/papelera` | Lo borrado del proyecto (owner/admin) |
+
+Invitar a un cliente directo a un proyecto usa `POST /api/v1/invitaciones` con `projectId`.
+
 ## Visibilidad para clientes
 
-Lógica en `services/visibilidad.ts`:
+Lógica en `services/elementos.ts` (cadena de padres) y `services/permisos.ts` (decisión):
 
 - Un hijo nunca es más visible que su padre: al consultar, un cliente ve un elemento solo si
   él y toda su cadena de padres son visibles.
@@ -236,6 +259,7 @@ Lógica en `services/visibilidad.ts`:
 - `Event.visibleToClients` se copia al crear el evento, para filtrar el feed del cliente sin
   recalcular.
 - Correos, bandeja y búsqueda pasan por el mismo filtro.
+- Lo comprueban los tests de `proyectos.test.ts`; con el filtro quitado a propósito fallan 3.
 
 ## Actividad y notificaciones
 

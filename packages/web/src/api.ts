@@ -119,3 +119,38 @@ export interface InvitacionVista {
   existeUsuario: boolean;
   sesion: { email: string; esLaInvitada: boolean } | null;
 }
+
+export type EstadoProyecto = 'active' | 'archived' | 'trashed';
+export interface ProyectoResumen {
+  id: string;
+  name: string;
+  description: string | null;
+  status: EstadoProyecto;
+  updatedAt: string;
+  archivedAt: string | null;
+  trashedAt: string | null;
+  personas: number;
+  soyMiembro: boolean;
+}
+export interface PersonaProyecto {
+  userId: string;
+  name: string;
+  email: string | null;
+  role: Rol;
+  company: string | null;
+}
+export interface ProyectoDetalle {
+  proyecto: {
+    id: string;
+    name: string;
+    description: string | null;
+    status: EstadoProyecto;
+    createdAt: string;
+    archivedAt: string | null;
+    trashedAt: string | null;
+    soyMiembro: boolean;
+  };
+  personas: PersonaProyecto[];
+  secciones: { tareas: number; mensajes: number; archivos: number };
+  permisos: { editar: boolean; archivar: boolean; papelera: boolean; personas: boolean; verPapelera: boolean };
+}

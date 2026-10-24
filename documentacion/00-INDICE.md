@@ -5,9 +5,9 @@ actualiza aquí y se anota en la bitácora de [09-AVANCE.md](09-AVANCE.md).
 
 ## Estado al 2026-10-24
 
-- **Fase:** construcción del MVP. Días 1 a 4 de 15 terminados.
+- **Fase:** construcción del MVP. Días 1 a 5 de 15 terminados.
 - **Repo:** https://github.com/LucumaAgency/project-managment (público, rama `main`).
-- **Siguiente paso:** día 5: proyectos (crear, miembros, archivar) y el servicio genérico de elementos.
+- **Siguiente paso:** día 6: editor de texto (Tiptap) compartido, con menciones.
 - **Esperando tu confirmación:** ver «Para confirmar» en [09-AVANCE.md](09-AVANCE.md).
 
 ## Documentos

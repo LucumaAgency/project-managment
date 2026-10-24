@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { NOMBRE_ROL, type RolAsignable } from '@lucuma-pm/shared';
 import { api, ErrorApi, type InvitacionCreada, type InvitacionPendiente, type Persona, type Personas as DatosPersonas } from '../api';
-import EnlaceCompartir from '../componentes/EnlaceCompartir';
+import EnlaceCompartir, { mensajeInvitacion } from '../componentes/EnlaceCompartir';
 import Icono from '../componentes/Icono';
 import { iniciales } from '../componentes/Marca';
 import Modal from '../componentes/Modal';
@@ -14,10 +14,6 @@ const DESCRIPCION_ROL: Record<RolAsignable, string> = {
 };
 
 const fecha = (iso: string) => new Date(iso).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
-
-function mensajeInvitacion(cuenta: string, enlace: string) {
-  return `Hola, te invito a ${cuenta} en Lucuma Proyectos. Entra a este enlace para crear tu acceso (vence en 7 días):\n${enlace}`;
-}
 
 /**
  * Personas de la cuenta e invitaciones pendientes. Owner y admin invitan, cambian roles y

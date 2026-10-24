@@ -10,6 +10,7 @@ import Invitacion from './paginas/Invitacion';
 import MiCuenta from './paginas/MiCuenta';
 import Personas from './paginas/Personas';
 import Portada from './paginas/Portada';
+import Proyecto from './paginas/Proyecto';
 import './estilos.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -25,6 +26,7 @@ createRoot(document.getElementById('root')!).render(
           {/* Dentro de una cuenta */}
           <Route element={<Marco />}>
             <Route path="/" element={<Portada />} />
+            <Route path="/proyectos/:id" element={<Proyecto />} />
             <Route path="/personas" element={<Personas />} />
             <Route path="/mi-cuenta" element={<MiCuenta />} />
           </Route>

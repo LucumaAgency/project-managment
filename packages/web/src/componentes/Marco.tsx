@@ -10,7 +10,8 @@ import PaginaAcceso from './PaginaAcceso';
 
 /** Título de la barra superior según la ruta. */
 const TITULOS: [string, string][] = [
-  ['/', 'Inicio'],
+  ['/', 'Proyectos'],
+  ['/proyectos/:id', 'Proyecto'],
   ['/personas', 'Personas'],
   ['/mi-cuenta', 'Mi cuenta'],
 ];
@@ -85,8 +86,8 @@ export default function Marco() {
           <div className="lateral-cuenta" title={yo.cuenta.name}>{yo.cuenta.name}</div>
           <nav className="lateral-nav">
             <div className="nav-seccion">Menú</div>
-            <NavLink to="/" end className={enlace}>
-              <Icono nombre="inicio" />Inicio
+            <NavLink to="/" className={({ isActive }) => (isActive || location.pathname.startsWith('/proyectos') ? 'activo' : '')} end>
+              <Icono nombre="proyectos" />Proyectos
             </NavLink>
             {!esCliente(yo.rol) && (
               <NavLink to="/personas" className={enlace}>

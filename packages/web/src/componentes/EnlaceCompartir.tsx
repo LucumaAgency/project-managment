@@ -51,3 +51,9 @@ export default function EnlaceCompartir({ enlace, mensaje }: { enlace: string; m
     </div>
   );
 }
+
+/** Texto listo para pegar en WhatsApp junto al enlace. */
+export function mensajeInvitacion(cuenta: string, enlace: string, proyecto?: string) {
+  const donde = proyecto ? `al proyecto ${proyecto} de ${cuenta}` : `a ${cuenta}`;
+  return `Hola, te invito ${donde} en Lucuma Proyectos. Entra a este enlace para crear tu acceso (vence en 7 días):\n${enlace}`;
+}

@@ -33,7 +33,9 @@ cómo técnico está en [03-ARQUITECTURA.md](03-ARQUITECTURA.md).
 ### 2. Proyectos
 
 - Crear, renombrar, describir, archivar y mandar a la papelera.
-- Miembros: se agregan y quitan personas de la cuenta.
+- Miembros: se agregan y quitan personas de la cuenta; desde el proyecto se invita a un cliente
+  nuevo directo a él.
+- Archivado = solo lectura. La papelera de proyectos la ven dueño y admin, que pueden restaurar.
 - Dueño y admin ven todos los proyectos sin ser miembros. Equipo y clientes, solo los suyos.
 - Al entrar: secciones Tareas, Mensajes, Archivos y Actividad.
 

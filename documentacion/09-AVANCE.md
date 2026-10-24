@@ -11,8 +11,8 @@ pendientes** del proyecto.
 | 2 | Contexto de cuenta por petición, subdominio, test de aislamiento | ✅ 2026-10-24 |
 | 3 | Login, sesiones, selector de cuenta | ✅ 2026-10-24 |
 | 4 | Invitaciones, personas, planes, soporte en beta, sistema visual del CRM | ✅ 2026-10-24 |
-| 5 | Proyectos y servicio genérico de elementos | Siguiente |
-| 6 | Editor Tiptap | Pendiente |
+| 5 | Proyectos y servicio genérico de elementos | ✅ 2026-10-24 |
+| 6 | Editor Tiptap | Siguiente |
 | 7 | Tareas | Pendiente |
 | 8 | Comentarios, menciones, suscripciones | Pendiente |
 | 9 | Mensajes y actividad | Pendiente |
@@ -225,12 +225,54 @@ Notas:
 | C-10 | Hoy | Enlace de invitación: 7 días, un uso (D-39) |
 | C-11 | Hoy | Contraseña olvidada: la restablece soporte por consola (D-39) |
 
+### 2026-10-24 · Día 5
+
+Hecho:
+
+- **Permisos** (`services/permisos.ts`): `puede()` puro y `exigir()` con 404 para lo que no se ve (D-40).
+- **Proyectos** (`routes/proyectos.ts`, `services/proyectos.ts`): listar por estado, crear,
+  detalle con personas, secciones y permisos, editar, archivar/reactivar, papelera/restaurar,
+  sumar y quitar personas; límite de proyectos del plan (D-41).
+- **Elementos genéricos** (`routes/elementos.ts`, `services/elementos.ts`): crear, listar,
+  ver, editar, papelera, restaurar y papelera del proyecto, para todos los tipos; reglas de
+  padres; visibilidad en cadena para clientes (D-42).
+- **Actividad** (`services/eventos.ts`): cada cambio de proyecto o elemento escribe su evento
+  en la misma transacción.
+- **Web:** Proyectos (pestañas Activos, Archivados y Papelera, tarjetas, nuevo proyecto) y la
+  página del proyecto (acciones, personas con sumar/quitar e invitar cliente al proyecto, y las
+  secciones Tareas, Mensajes y Archivos, todavía vacías).
+
+Probado:
+
+- 109 tests en verde (18 nuevos en `proyectos.test.ts`). Tipos sin errores.
+- Sabotaje: con el filtro de visibilidad para clientes quitado a propósito, fallan 3 tests.
+- Recorrido en navegador real, escritorio y celular: crear proyecto → personas → invitar a un
+  cliente al proyecto → en otro navegador el cliente acepta y ve **solo** ese proyecto, sin menú
+  de acciones → archivar (aviso de solo lectura) → reactivar. Sumar y quitar una persona:
+  2 → 3 → 2. Sin errores de JavaScript ni scroll horizontal.
+
+Problemas encontrados y cómo se resolvieron:
+
+| Problema | Causa | Solución |
+|---|---|---|
+| Crear dentro de algo interno respondía 403 a un cliente (revelaba que existe) | `exigir()` no miraba si el padre se ve | Mira el padre: ahora 404 (lo detectó un test) |
+| Capturas que se colgaban | Esperaban las fuentes de Google, que a veces tardan | Reintentos en el script de capturas (no afecta a la app) |
+
+Notas:
+
+- En la base local quedaron varios proyectos "Web Proba …" y clientes de prueba del recorrido.
+- Capturas en [capturas/](capturas/) (`dia5-*`).
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
-si no hay comentario, quedan así. Las respondidas están arriba, en la bitácora.
+si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
-Nada pendiente por ahora.
+| # | Tema | Lo que hice | Alternativa |
+|---|---|---|---|
+| C-12 | Quién archiva o manda a la papelera un proyecto | Dueño, administrador o quien lo creó | Cualquiera del equipo del proyecto |
+| C-13 | Editar o borrar tareas y mensajes de otros | Solo dueño y administrador (como decía el plan) | **Recomendado para tareas:** que todo el equipo del proyecto pueda editar las tareas de otros (renombrar, cambiar fecha), como en Basecamp. Mensajes y comentarios siguen siendo solo de su autor |
+| C-14 | Lo que ve el cliente de la gente del proyecto | Nombres y rol, sin correos | Ver también los correos |
 
 ## Pendientes
 
