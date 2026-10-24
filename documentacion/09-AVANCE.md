@@ -522,8 +522,10 @@ Probado:
   latido, la bandeja dice "Vence mañana · La tarea «…» vence el domingo, 25 oct." y al tocarlo
   abre la tarea. Sin errores.
 
-**Para desplegar (esta vez SÍ hay migración):** Git → Desplegar → Run script `prisma:deploy`
-→ `base:verificar:prod` → Reiniciar. Después, el latido en cron-job.org
+**Para desplegar (esta vez SÍ hay migración):** Git → Desplegar → Run script `prisma:generate`
+→ `prisma:deploy` → `base:verificar:prod` → Reiniciar. (Faltaba `prisma:generate` en la primera
+versión de este paso; lo notó el usuario. Sin él, el cliente de Prisma del servidor no conoce el
+campo nuevo y los recordatorios fallan.) Después, el latido en cron-job.org
 ([10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md) §5c).
 
 ## Para confirmar

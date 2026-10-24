@@ -97,6 +97,13 @@ mkdir -p tmp && touch tmp/restart.txt
 - `prisma generate` corre siempre en el servidor: descarga el motor de Prisma para ESE sistema.
 - `migrate deploy` solo aplica migraciones ya escritas; nunca borra datos.
 
+### Regla corta
+
+- **Sin migración** (lo dice cada entrega): Desplegar → Reiniciar.
+- **Con migración:** Desplegar → `prisma:generate` → `prisma:deploy` → `base:verificar:prod` →
+  Reiniciar. Los dos de Prisma hacen falta: `generate` actualiza el código que habla con la base
+  (sin él, la app no conoce las columnas nuevas y da 500) y `deploy` cambia la base.
+
 ### Si las acciones adicionales fallan (PATH de Node o shell enjaulado)
 
 Hacerlo a mano en **Node.js**, en este orden:
