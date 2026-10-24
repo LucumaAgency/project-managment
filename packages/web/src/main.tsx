@@ -17,6 +17,7 @@ import Mensaje from './paginas/Mensaje';
 import Actividad from './paginas/Actividad';
 import Archivos from './paginas/Archivos';
 import Archivo from './paginas/Archivo';
+import Bandeja from './paginas/Bandeja';
 import './estilos.css';
 
 // Página de prueba del editor: solo en desarrollo (Vite la quita del build de producción).
@@ -43,6 +44,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/proyectos/:id/archivos" element={<Archivos />} />
             <Route path="/proyectos/:id/archivos/:archivoId" element={<Archivo />} />
             <Route path="/personas" element={<Personas />} />
+            <Route path="/bandeja" element={<Bandeja />} />
             <Route path="/mi-cuenta" element={<MiCuenta />} />
             {PruebaEditor && <Route path="/_editor" element={<Suspense fallback={null}><PruebaEditor /></Suspense>} />}
           </Route>

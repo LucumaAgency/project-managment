@@ -43,9 +43,39 @@ export async function actividadDelProyecto(tx: Tx, actor: Actor, proyecto: Proye
   const pagina = eventos.slice(0, limite);
   const hayMas = eventos.length > limite || masEnBase;
 
+  return {
+    eventos: await presentarEventos(tx, pagina),
+    // Para pedir la página siguiente: ?antes=<siguiente>
+    siguiente: hayMas && pagina.length ? pagina[pagina.length - 1].createdAt.toISOString() : null,
+  };
+}
+
+export const SELECCION_EVENTO = {
+  id: true,
+  action: true,
+  createdAt: true,
+  details: true,
+  recordingId: true,
+  actor: { select: { id: true, name: true } },
+  recording: {
+    select: {
+      id: true,
+      type: true,
+      title: true,
+      status: true,
+      bodyText: true,
+      parent: { select: { id: true, type: true, title: true } },
+    },
+  },
+} as const;
+
+type FilaEvento = Prisma.EventGetPayload<{ select: typeof SELECCION_EVENTO }>;
+
+/** Un evento tal como lo muestra la web (frase, enlace): actividad y bandeja. */
+export async function presentarEventos(tx: Tx, filas: FilaEvento[]) {
   // Nombres de las personas que aparecen en los detalles (asignados, sumados al proyecto).
   const idsPersonas = new Set<string>();
-  for (const e of pagina) {
+  for (const e of filas) {
     const d = (e.details ?? {}) as { userIds?: string[]; userId?: string };
     d.userIds?.forEach((id) => idsPersonas.add(id));
     if (d.userId) idsPersonas.add(d.userId);
@@ -55,8 +85,7 @@ export async function actividadDelProyecto(tx: Tx, actor: Actor, proyecto: Proye
     : [];
   const nombre = new Map(personas.map((p) => [p.id, p.name]));
 
-  return {
-    eventos: pagina.map((e) => {
+  return filas.map((e) => {
       const d = (e.details ?? {}) as Record<string, unknown> & { userIds?: string[]; userId?: string };
       const r = e.recording;
       return {
@@ -82,34 +111,9 @@ export async function actividadDelProyecto(tx: Tx, actor: Actor, proyecto: Proye
           personas: [...(d.userIds ?? []), ...(d.userId ? [d.userId] : [])].map((id) => nombre.get(id) ?? 'alguien'),
         },
       };
-    }),
-    // Para pedir la página siguiente: ?antes=<siguiente>
-    siguiente: hayMas && pagina.length ? pagina[pagina.length - 1].createdAt.toISOString() : null,
-  };
+    });
 }
 
 function buscar(tx: Tx, where: Prisma.EventWhereInput, take: number) {
-  return tx.event.findMany({
-    where,
-    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-    take,
-    select: {
-      id: true,
-      action: true,
-      createdAt: true,
-      details: true,
-      recordingId: true,
-      actor: { select: { id: true, name: true } },
-      recording: {
-        select: {
-          id: true,
-          type: true,
-          title: true,
-          status: true,
-          bodyText: true,
-          parent: { select: { id: true, type: true, title: true } },
-        },
-      },
-    },
-  });
+  return tx.event.findMany({ where, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take, select: SELECCION_EVENTO });
 }

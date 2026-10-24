@@ -37,7 +37,7 @@ export async function registrarEvento(
     visibleToClients?: boolean;
   }
 ) {
-  await tx.event.create({
+  const e = await tx.event.create({
     data: {
       accountId: datos.accountId,
       projectId: datos.projectId,
@@ -49,4 +49,5 @@ export async function registrarEvento(
     },
     select: { id: true },
   });
+  return e.id;
 }

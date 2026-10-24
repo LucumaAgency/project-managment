@@ -6,6 +6,7 @@ import { api, ErrorApi, type ElementoConPermisos } from '../api';
 import Comentarios from '../componentes/Comentarios';
 import Editor, { Contenido } from '../componentes/Editor';
 import { useMencionables } from '../componentes/mencionables';
+import { useLeerAvisosDe } from '../componentes/avisos';
 import Icono from '../componentes/Icono';
 import { iniciales } from '../componentes/Marca';
 import { useYo } from '../contexto';
@@ -25,6 +26,7 @@ export default function Mensaje() {
   const [cuerpo, setCuerpo] = useState<JSONContent | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  useLeerAvisosDe(mensajeId);
   const cargar = useCallback(() => {
     api<ElementoConPermisos>(`/elementos/${mensajeId}`)
       .then((r) => (r.elemento.type === 'message' ? setD(r) : setNoExiste(true)))
