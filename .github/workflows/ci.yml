@@ -21,9 +21,16 @@ jobs:
           DATABASE_ADMIN_URL: postgresql://x@localhost/x
       - run: npm run build -w @lucuma-pm/shared
       - run: npm run typecheck
+      # pg_dump/pg_restore 16 (igual que el Postgres de los tests) para el test de respaldo real.
+      # El runner trae solo la versión más nueva, que no sirve para restaurar en una 16 (D-60).
+      - run: |
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq --no-install-recommends postgresql-client-16
       # Los tests levantan su propio Postgres 16 (embedded-postgres) y aplican las migraciones.
       # Incluyen el test de aislamiento entre cuentas: si falla, no se mergea.
       - run: npm test
+        env:
+          TEST_PG_BIN_DIR: /usr/lib/postgresql/16/bin
 
   # Rama `produccion`: lo mismo que main, más lo compilado (packages/*/dist y public/).
   # El Git de Plesk jala esta rama: el servidor no compila (mismo criterio que el CRM).
