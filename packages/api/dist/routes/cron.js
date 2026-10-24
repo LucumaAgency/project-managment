@@ -1,0 +1,34 @@
+import { timingSafeEqual } from 'node:crypto';
+import { env } from '../env.js';
+import { HttpError } from '../lib/errores.js';
+import { recordatoriosDeTodas } from '../services/recordatorios.js';
+/**
+ * Latido externo (D-54): un servicio de cron de afuera (cron-job.org) llama esta dirección cada
+ * hora y la app crea los recordatorios pendientes de todas las cuentas. Mismo patrón que el CRM:
+ * el cron de Plesk corre enjaulado y no sirve.
+ *
+ * Protegido con CRON_TOKEN (encabezado X-PM-Cron, o ?token= si el servicio no permite
+ * encabezados). Sin CRON_TOKEN configurado responde 503: un latido que cualquiera puede
+ * disparar es una forma gratis de hacer trabajar al servidor.
+ */
+function tokenValido(dado) {
+    if (!env.cronToken || !dado)
+        return false;
+    const a = Buffer.from(dado);
+    const b = Buffer.from(env.cronToken);
+    return a.length === b.length && timingSafeEqual(a, b);
+}
+export default async function rutasCron(app) {
+    const latido = async (req) => {
+        if (!env.cronToken)
+            throw new HttpError(503, 'Falta CRON_TOKEN en el servidor.');
+        const dado = req.headers['x-pm-cron'] ?? req.query.token;
+        if (!tokenValido(dado))
+            throw new HttpError(401, 'Token inválido.');
+        const inicio = Date.now();
+        const r = await recordatoriosDeTodas();
+        return { ok: true, ...r, ms: Date.now() - inicio };
+    };
+    app.get('/api/v1/cron/latido', latido);
+    app.post('/api/v1/cron/latido', latido);
+}

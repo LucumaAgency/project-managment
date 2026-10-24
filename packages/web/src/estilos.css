@@ -114,6 +114,8 @@ h1, h2, h3 { letter-spacing: -0.01em; }
   display: flex; align-items: center; justify-content: center;
 }
 .avatar.gris { background: var(--borde); color: var(--suave); }
+.avatar.ambar { background: var(--ambar-tinte); color: var(--ambar); }
+.avatar.rojo { background: var(--rojo-tinte); color: var(--rojo); }
 .usuario-menu {
   position: absolute; left: 10px; right: 10px; bottom: 66px;
   background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio);

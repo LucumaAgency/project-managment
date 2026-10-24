@@ -42,7 +42,13 @@ export declare function listarBandeja(tx: Tx, actor: Actor, opciones?: {
                 from?: {} | null | undefined;
                 to?: {} | null | undefined;
             };
-        };
+        } | null;
+        recordatorio: {
+            tarea: string | null;
+            dueOn: string | null;
+            tipo: "vencida" | "manana";
+            completada: boolean;
+        } | null;
     }[];
     siguiente: string | null;
 }>;

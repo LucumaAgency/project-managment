@@ -28,6 +28,8 @@ export declare const env: {
      */
     archivosDir: string;
     /** Tamaño máximo de un archivo, en MB. nginx de Plesk tiene su propio tope (client_max_body_size). */
+    /** Clave del latido externo (/api/v1/cron/latido). Sin ella, el latido responde 503. */
+    cronToken: string;
     archivosMaxBytes: number;
 };
 /** Hay correo saliente de verdad. Sin él, la web oculta el acceso por enlace al correo. */

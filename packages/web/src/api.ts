@@ -312,5 +312,7 @@ export interface Aviso {
   createdAt: string;
   abre: string | null;
   proyecto: { id: string; name: string };
-  evento: Evento;
+  /** null en los recordatorios (no salen de un evento). */
+  evento: Evento | null;
+  recordatorio: { tarea: string; dueOn: string | null; tipo: 'manana' | 'vencida'; completada: boolean } | null;
 }

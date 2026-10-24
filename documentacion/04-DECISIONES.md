@@ -342,6 +342,20 @@ solo a personas activas; a un cliente solo si es visible, y la bandeja vuelve a 
 visibilidad de hoy al mostrarla. El aviso abre lo comentado (no el comentario). La bandeja es
 por cuenta; RLS separa cuentas, no personas, así que toda consulta filtra por la persona (test).
 
+**D-54 · Recordatorios: al usar la app y con un latido externo** (2026-10-24, día 12, decidido por el usuario)
+- "Vence mañana" (el día antes) y "venció" (el día después, si sigue abierta) en la bandeja de
+  los responsables, o de quien creó la tarea si no tiene. Al cliente, solo si la tarea es
+  visible. Nada de listas en la papelera ni proyectos archivados. El día se cuenta en la zona
+  horaria de la cuenta (America/Lima).
+- Se calculan por dos vías, las dos a la vez sin problema: (1) **al usar la app**, el contador
+  de la bandeja lo dispara como mucho cada 30 minutos por cuenta, sin hacer esperar a nadie; (2)
+  un **latido externo** (cron-job.org) cada hora a `/api/v1/cron/latido`, protegido con
+  `CRON_TOKEN`. También a mano: `recordatorios:prod`.
+- Cada recordatorio se crea una sola vez: `Notification.dedupeKey` con índice único (migración
+  `aviso_unico`). Si cambia la fecha, es otro recordatorio.
+- Sin resumen diario en la bandeja: la bandeja ya muestra todo lo que sigues; el resumen tiene
+  sentido cuando haya correo. Sin pantalla de preferencias todavía (por la misma razón).
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

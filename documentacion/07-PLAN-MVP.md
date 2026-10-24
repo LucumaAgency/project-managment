@@ -129,7 +129,7 @@ que no ve nada de B. Corre en CI siempre.
 | Día | Qué | Termina con |
 |---|---|---|
 | 11 ✅ | Avisos en la misma transacción (D-53, en vez del job `notify.fanout`): Event → Notification (mencionado, asignado, suscrito). Bandeja con no leídos | Bandeja funcionando |
-| 12 | Recordatorios dentro de la app (D-38): job diario por zona horaria con tareas que vencen mañana y vencidas, y el resumen de lo que sigues, todo en la bandeja; preferencias de aviso | Recordatorios llegando a la bandeja |
+| 12 ✅ | Recordatorios dentro de la app (D-38, D-54): job diario por zona horaria con tareas que vencen mañana y vencidas, y el resumen de lo que sigues, todo en la bandeja; preferencias de aviso | Recordatorios llegando a la bandeja |
 | 13 | Vista del cliente: interruptor "visible para el cliente", herencia de visibilidad, feed filtrado, prueba entrando como cliente | Cliente ve solo lo suyo |
 | 14 | Papelera con purga a 30 días, búsqueda simple (tsvector), responsive móvil, exportar cuenta (ZIP) | Todo usable en celular |
 | 15 | Servidor (Plesk en la beta, D-43), Postgres, cron del worker, R2, Sentry, respaldo diario, carga de Lucuma (Brevo cuando haya correo) | En producción con el equipo dentro |

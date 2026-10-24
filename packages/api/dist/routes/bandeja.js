@@ -3,6 +3,7 @@ import { conCuenta } from '../lib/contexto.js';
 import { HttpError } from '../lib/errores.js';
 import { leer } from '../lib/validar.js';
 import { contarNoLeidos, listarBandeja, marcarLeidos } from '../services/bandeja.js';
+import { dispararRecordatorios } from '../services/recordatorios.js';
 import { exigirCuenta } from '../plugins/contexto.js';
 const pagina = z.object({
     'no-leidos': z.enum(['0', '1']).optional(),
@@ -19,6 +20,8 @@ export default async function rutasBandeja(app) {
     /** Lo pide la web cada tanto para el número del menú: tiene que ser barato. */
     app.get('/api/v1/bandeja/contador', async (req) => {
         const actor = exigirCuenta(req);
+        // Red de seguridad del latido: alguien está usando la app, se revisan los recordatorios.
+        dispararRecordatorios(actor.ctx.accountId, (e) => req.log.error({ err: e }, 'Recordatorios'));
         return { noLeidos: await conCuenta(actor.ctx, (tx) => contarNoLeidos(tx, actor)) };
     });
     app.post('/api/v1/bandeja/:id/leido', async (req) => {

@@ -18,8 +18,8 @@ pendientes** del proyecto.
 | 9 | Mensajes y actividad | ✅ 2026-10-24 |
 | 10 | Archivos | ✅ 2026-10-24 |
 | 11 | Bandeja de notificaciones | ✅ 2026-10-24 |
-| 12 | Recordatorios dentro de la app | Siguiente |
-| 13 | Vista del cliente | Pendiente |
+| 12 | Recordatorios dentro de la app | ✅ 2026-10-24 |
+| 13 | Vista del cliente | Siguiente |
 | 14 | Papelera, búsqueda, celular, exportación | Pendiente |
 | 15 | Servidor y salida a producción | Pendiente |
 
@@ -501,6 +501,30 @@ Probado:
   desarrollo carga cientos de archivos y el navegador se quedaba sin recursos.
 
 Para desplegar: Git → Desplegar y reiniciar. **Sin migraciones** (la tabla de avisos existía).
+
+### 2026-10-24 · Día 12
+
+El usuario aprobó calcular los recordatorios por las dos vías: al usar la app y con un latido
+externo (D-54).
+
+Hecho:
+
+- `services/recordatorios.ts`: "vence mañana" y "venció", una sola vez por tarea, persona, día
+  y tipo (`Notification.dedupeKey`, migración `aviso_unico`).
+- Disparo al usar la app (desde el contador de la bandeja, como mucho cada 30 min por cuenta).
+- `routes/cron.ts`: latido `/api/v1/cron/latido` con `CRON_TOKEN`; comando `recordatorios:prod`.
+- La bandeja muestra avisos sin evento (los recordatorios), con la tarea y la fecha.
+
+Probado:
+
+- 197 tests en verde (8 nuevos en `recordatorios.test.ts`).
+- En navegador real, escritorio y celular: tarea que vence mañana asignada a mí, cálculo del
+  latido, la bandeja dice "Vence mañana · La tarea «…» vence el domingo, 25 oct." y al tocarlo
+  abre la tarea. Sin errores.
+
+**Para desplegar (esta vez SÍ hay migración):** Git → Desplegar → Run script `prisma:deploy`
+→ `base:verificar:prod` → Reiniciar. Después, el latido en cron-job.org
+([10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md) §5c).
 
 ## Para confirmar
 

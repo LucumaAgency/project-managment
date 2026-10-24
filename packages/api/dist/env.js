@@ -21,7 +21,7 @@ catch (e) {
  */
 const VARIABLES = [
     'NODE_ENV', 'PORT', 'DATABASE_URL', 'DATABASE_ADMIN_URL', 'APP_URL', 'SESSION_SECRET', 'BASE_DOMAIN',
-    'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'MAIL_FROM', 'SOPORTE_BETA', 'ARCHIVOS_DIR', 'ARCHIVOS_MAX_MB',
+    'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'MAIL_FROM', 'SOPORTE_BETA', 'ARCHIVOS_DIR', 'ARCHIVOS_MAX_MB', 'CRON_TOKEN',
 ];
 for (const nombre of VARIABLES) {
     const v = process.env[nombre];
@@ -85,6 +85,8 @@ export const env = {
      */
     archivosDir: process.env.ARCHIVOS_DIR || path.resolve(aqui, '../../../privados/archivos'),
     /** Tamaño máximo de un archivo, en MB. nginx de Plesk tiene su propio tope (client_max_body_size). */
+    /** Clave del latido externo (/api/v1/cron/latido). Sin ella, el latido responde 503. */
+    cronToken: process.env.CRON_TOKEN?.trim() || '',
     archivosMaxBytes: Math.max(1, Number(process.env.ARCHIVOS_MAX_MB ?? 50)) * 1024 * 1024,
 };
 /** Hay correo saliente de verdad. Sin él, la web oculta el acceso por enlace al correo. */

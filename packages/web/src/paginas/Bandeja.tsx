@@ -9,13 +9,18 @@ import { iniciales } from '../componentes/Marca';
 function motivo(a: Aviso) {
   if (a.reason === 'mentioned') return 'Te mencionaron';
   if (a.reason === 'assigned') return 'Te asignaron';
-  if (a.reason === 'due_soon') return 'Vence pronto';
-  const e = a.evento;
+  if (a.recordatorio) return a.recordatorio.tipo === 'vencida' ? 'Venció' : 'Vence mañana';
+  const e = a.evento!;
   if (e.elemento?.type === 'comment') return 'Comentario nuevo';
   if (e.action === 'completed') return 'Completada';
   if (e.action === 'version_uploaded') return 'Versión nueva';
   if (e.elemento?.type === 'message' && e.action === 'created') return 'Mensaje nuevo';
   return 'Novedad';
+}
+function diaCorto(dia: string | null) {
+  if (!dia) return '';
+  const [y, m, d] = dia.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'short' });
 }
 const hora = (iso: string) => new Date(iso).toLocaleString('es-PE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
@@ -51,7 +56,7 @@ export default function Bandeja() {
   async function abrir(a: Aviso) {
     if (!a.leido) await api(`/bandeja/${a.id}/leido`, { body: {} }).catch(() => {});
     refrescar();
-    const destino = a.abre ? enlaceDe(a.proyecto.id, a.evento) : null;
+    const destino = !a.abre ? null : a.evento ? enlaceDe(a.proyecto.id, a.evento) : `/proyectos/${a.proyecto.id}/tareas?tarea=${a.abre}`;
     if (destino) navegar(destino);
     else setAvisos((xs) => xs?.map((x) => (x.id === a.id ? { ...x, leido: true } : x)) ?? null);
   }
@@ -97,14 +102,25 @@ export default function Bandeja() {
             <li key={a.id}>
               <button type="button" className={`aviso-fila${a.leido ? '' : ' no-leido'}`} onClick={() => abrir(a)}>
                 <span className="punto" aria-label={a.leido ? undefined : 'No leído'} />
-                <span className="avatar gris">{iniciales(a.evento.actor.name)}</span>
+                {a.evento ? (
+                  <span className="avatar gris">{iniciales(a.evento.actor.name)}</span>
+                ) : (
+                  <span className={`avatar ${a.recordatorio?.tipo === 'vencida' ? 'rojo' : 'ambar'}`}><Icono nombre="calendario" tam={14} /></span>
+                )}
                 <span className="datos">
                   <span className="aviso-cab">
-                    <span className={`chip${a.reason === 'mentioned' || a.reason === 'assigned' ? '' : ' chip-gris'}`}>{motivo(a)}</span>
+                    <span className={`chip${a.reason === 'mentioned' || a.reason === 'assigned' ? '' : a.recordatorio ? (a.recordatorio.tipo === 'vencida' ? ' chip-rojo' : ' chip-alerta') : ' chip-gris'}`}>{motivo(a)}</span>
                     <span className="meta">{a.proyecto.name} · {hora(a.createdAt)}</span>
                   </span>
-                  <span className="aviso-texto"><b>{a.evento.actor.name}</b> {frase(a.evento)}</span>
-                  {a.evento.elemento?.extracto && <span className="meta extracto">“{a.evento.elemento.extracto}”</span>}
+                  {a.evento ? (
+                    <span className="aviso-texto"><b>{a.evento.actor.name}</b> {frase(a.evento)}</span>
+                  ) : (
+                    <span className="aviso-texto">
+                      La tarea <b>«{a.recordatorio?.tarea}»</b> {a.recordatorio?.tipo === 'vencida' ? 'venció' : 'vence'} el {diaCorto(a.recordatorio?.dueOn ?? null)}
+                      {a.recordatorio?.completada ? ' (ya está completada)' : ''}
+                    </span>
+                  )}
+                  {a.evento?.elemento?.extracto && <span className="meta extracto">“{a.evento.elemento.extracto}”</span>}
                   {!a.abre && <span className="meta">Ya no está disponible.</span>}
                 </span>
               </button>

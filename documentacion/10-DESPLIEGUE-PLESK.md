@@ -152,10 +152,23 @@ El primero imprime la contraseña del dueño **una sola vez**. El segundo lo mar
   Configuración de Apache y nginx → Directivas adicionales de nginx, agregar
   `client_max_body_size 64m;`.
 
-## 6. Lo que todavía no hace falta
+## 5c. Latido externo para los recordatorios (desde el día 12)
 
-- **Tarea programada / worker:** no hay cola hasta el día 11. Cuando llegue, mismo esquema que
-  el CRM (`bin/worker.sh` o latido externo si el cron corre enjaulado).
+Los recordatorios de tareas ("vence mañana", "venció") se calculan solos cuando alguien usa la
+app. Para que lleguen a tiempo aunque nadie entre, un servicio externo llama a la app cada hora
+(el cron de Plesk corre enjaulado y no sirve, igual que en el CRM):
+
+1. Agregar al `.env` una clave larga: `CRON_TOKEN=<texto aleatorio largo>` y reiniciar.
+2. En https://cron-job.org (gratis) → crear un cron job:
+   - URL: `https://proyectos.pruebalucuma.site/api/v1/cron/latido`
+   - Cada hora.
+   - En "Advanced" → Headers: `X-PM-Cron` = la misma clave del `.env`.
+3. Probar con "Test run": tiene que responder `{"ok":true,"cuentas":…,"avisos":…}`.
+
+Si responde 503 falta `CRON_TOKEN` en el `.env` (o no se reinició); 401, la clave no coincide.
+A mano, desde Run script: `recordatorios:prod`.
+
+## 6. Lo que todavía no hace falta
 - **Subdominios por cuenta:** con `BASE_DOMAIN` vacío todo vive en un dominio. Para pasar a
   `<cuenta>.dominio` se usa el mismo truco de nginx del CRM (`docs/21-DOS-ORGANIZACIONES-PLESK.md`).
 
