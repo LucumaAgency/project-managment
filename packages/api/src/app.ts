@@ -6,6 +6,7 @@ import fastifyStatic from '@fastify/static';
 import cookie from '@fastify/cookie';
 import { correoActivo, env } from './env.js';
 import { prisma } from './db.js';
+import { HttpError } from './lib/errores.js';
 import { registrarContexto } from './plugins/contexto.js';
 import rutasAuth from './routes/auth.js';
 import rutasElementos from './routes/elementos.js';
@@ -50,6 +51,8 @@ export async function buildApp(opciones: OpcionesApp = {}) {
   // Errores previstos traducidos; el resto se registra entero y sale genérico (no filtrar
   // nombres de tablas o índices al navegador). Mismo criterio que el CRM.
   app.setErrorHandler((err: Error & { code?: string; statusCode?: number; validation?: unknown }, req, reply) => {
+    // Errores que la propia app lanza a propósito (incluido 503): su código y su mensaje.
+    if (err instanceof HttpError) return reply.code(err.statusCode).send({ error: err.message });
     if (err.code === 'P2002') return reply.code(409).send({ error: 'Ya existe un registro con ese valor.' });
     if (err.code === 'P2025') return reply.code(404).send({ error: 'No encontrado.' });
     if (err.validation || err.statusCode === 400) return reply.code(400).send({ error: err.message || 'Datos inválidos.' });

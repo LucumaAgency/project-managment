@@ -7,7 +7,7 @@ actualiza aquí y se anota en la bitácora de [09-AVANCE.md](09-AVANCE.md).
 
 - **Fase:** construcción del MVP. Días 1 a 5 de 15 terminados.
 - **Repo:** https://github.com/LucumaAgency/project-managment (público, rama `main`).
-- **Siguiente paso:** día 6: editor de texto (Tiptap) compartido, con menciones.
+- **Siguiente paso:** subir la beta a Plesk (falta confirmar Postgres en el servidor, C-15) y el día 6: editor de texto (Tiptap) con menciones.
 - **Esperando tu confirmación:** ver «Para confirmar» en [09-AVANCE.md](09-AVANCE.md).
 
 ## Documentos
@@ -22,6 +22,7 @@ actualiza aquí y se anota en la bitácora de [09-AVANCE.md](09-AVANCE.md).
 | 06 | [WhatsApp (futuro)](06-WHATSAPP-FUTURO.md) | Diseño de la integración para la fase 2 y trámites con Meta |
 | 07 | [Plan del MVP](07-PLAN-MVP.md) | Alcance, stack, permisos y cronograma día por día con estado |
 | 08 | [Desarrollo](08-DESARROLLO.md) | Cómo correrlo en local, roles de la base, migraciones, servidor |
+| 10 | [Despliegue en Plesk](10-DESPLIEGUE-PLESK.md) | Requisitos, base, Git de Plesk, variables, primer arranque, verificación |
 | 09 | [Avance](09-AVANCE.md) | Bitácora con fechas, qué se probó, problemas encontrados, **pendientes** |
 
 ## Cómo leerla

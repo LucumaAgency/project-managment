@@ -263,16 +263,35 @@ Notas:
 - En la base local quedaron varios proyectos "Web Proba …" y clientes de prueba del recorrido.
 - Capturas en [capturas/](capturas/) (`dia5-*`).
 
+### 2026-10-24 · Respuestas a C-12 … C-14 y preparación para Plesk
+
+| # | Respuesta | Qué cambió |
+|---|---|---|
+| C-12 | "El admin" | Archivar y papelera de proyectos: solo owner y admin, ya no quien lo creó |
+| C-13 | "El equipo" | Listas y tareas las edita cualquiera del equipo del proyecto; mensajes y comentarios siguen siendo de su autor |
+| C-14 | Sí | El cliente ve nombres y rol, sin correos |
+
+El usuario pidió empezar a subirlo a Plesk con el Git de Plesk. Hecho (D-43):
+
+- CI publica la rama `produccion` con lo compilado cuando los tests pasan en `main`.
+- La API sirve el SPA (rutas internas al recargar) y escribe el log en `logs/app.txt` en producción.
+- `prisma` en `dependencies`; scripts `cuenta:crear:prod` y `usuario:prod` en la raíz.
+- Guía [10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md).
+- Simulacro del despliegue en carpeta limpia y base vacía: todo funcionó (detalle en la guía §7).
+- Encontrado en el simulacro y corregido: errores 503 de la app salían como 500 genérico.
+  Test nuevo en `errores.test.ts`. 113 tests en verde.
+- **Nada tocado en producción todavía**: falta confirmar Postgres en el servidor (C-15) y el
+  dominio (C-16), y la orden de aplicar.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
 si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
-| # | Tema | Lo que hice | Alternativa |
+| # | Tema | Lo que necesito | Por qué |
 |---|---|---|---|
-| C-12 | Quién archiva o manda a la papelera un proyecto | Dueño, administrador o quien lo creó | Cualquiera del equipo del proyecto |
-| C-13 | Editar o borrar tareas y mensajes de otros | Solo dueño y administrador (como decía el plan) | **Recomendado para tareas:** que todo el equipo del proyecto pueda editar las tareas de otros (renombrar, cambiar fecha), como en Basecamp. Mensajes y comentarios siguen siendo solo de su autor |
-| C-14 | Lo que ve el cliente de la gente del proyecto | Nombres y rol, sin correos | Ver también los correos |
+| C-15 | Postgres en el servidor de Plesk | ¿El servidor tiene PostgreSQL (en Plesk → Bases de datos aparece la opción PostgreSQL)? ¿Hay acceso root por SSH para crear dos roles una vez? | Sin Postgres no arranca (MariaDB no sirve). Sin superusuario no se pueden crear los roles con RLS |
+| C-16 | Dominio de la beta | Propongo `proyectos.pruebalucuma.site` | Igual que `crm.pruebalucuma.site` |
 
 ## Pendientes
 

@@ -1,4 +1,4 @@
-/** Error con código HTTP: el manejador de app.ts lo devuelve tal cual (solo códigos < 500). */
+/** Error previsto con código HTTP: el manejador de app.ts devuelve su código y su mensaje tal cual (también 503). */
 export class HttpError extends Error {
   constructor(public statusCode: number, message: string) {
     super(message);

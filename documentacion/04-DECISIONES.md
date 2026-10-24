@@ -85,7 +85,9 @@ Sin permisos de administrador no se puede instalar Postgres en la máquina de de
 paquete trae los binarios. Mismo Postgres 16 que en producción.
 
 **D-19 · Hosting en Vultr + CloudPanel, no Plesk** (2026-10-24)
-El CRM sufrió en Plesk porque el cron no funciona. Aquí el cron es necesario desde el día 1.
+~~El CRM sufrió en Plesk porque el cron no funciona.~~ Para la beta, reemplazada por D-43: el
+usuario quiere empezar en Plesk. Vultr + CloudPanel sigue siendo el destino cuando haga falta
+cron real (el worker llega el día 11) o cuando se venda.
 
 **D-22 · Tests con su propio Postgres** (2026-10-24, día 2)
 Vitest 3.2. Cada corrida levanta un Postgres 16 temporal (embedded-postgres, puerto libre),
@@ -193,7 +195,7 @@ que algo existe. Las rutas solo cargan con `proyectoPara()` / `elementoPara()` y
 **D-41 · Reglas de proyectos** (2026-10-24, día 5)
 - Crea cualquiera menos el cliente; quien crea queda dentro.
 - Editar nombre y descripción y gestionar personas: owner, admin o el equipo del proyecto.
-- Archivar, reactivar, papelera y restaurar: owner, admin o quien lo creó.
+- Archivar, reactivar, papelera y restaurar: solo owner y admin (decidido por el usuario, C-12).
 - Archivado = solo lectura (se ve, no se cambia nada adentro). En papelera = solo lo ven owner
   y admin, para restaurarlo. Ver C-12.
 - El límite de proyectos del plan cuenta solo los activos; se revisa al crear, reactivar y restaurar.
@@ -208,11 +210,21 @@ que algo existe. Las rutas solo cargan con `proyectoPara()` / `elementoPara()` y
   que ve.
 - Visibilidad en cadena: un cliente ve algo solo si él y todos sus padres son visibles. Se
   calcula con una consulta recursiva sobre `parentId`, que también pasa por RLS.
-- Editar o borrar lo ajeno: solo owner y admin (C-13).
+- Editar lo ajeno: listas y tareas, cualquiera del equipo del proyecto; mensajes y comentarios,
+  solo su autor o un owner/admin (decidido por el usuario, C-13). Borrar lo ajeno: solo owner y admin.
 - Papelera: se marca el elemento y lo de adentro deja de verse con él; restaurarlo devuelve
   todo. La papelera del proyecto muestra solo la raíz de cada borrado.
 - Cada cambio escribe su `Event` en la misma transacción, con la visibilidad efectiva copiada.
 - Hasta el día 6 el cuerpo es texto plano (`bodyText`); el editor agrega el JSON de Tiptap.
+
+**D-43 · Beta en Plesk, con lo compilado en una rama aparte** (2026-10-24, decidido por el usuario)
+Se despliega con el Git de Plesk, como el CRM: GitHub compila y el servidor solo hace pull
+(no compila, no instala devDependencies). A diferencia del CRM, lo compilado no se commitea en
+`main`: CI lo publica en la rama `produccion` (historia lineal armada con `commit-tree`), que
+es la que jala Plesk. Así `main` queda limpio y nunca hay conflictos por `dist/`. La CLI de
+Prisma pasó a `dependencies`. La API sirve el SPA para las rutas internas y escribe el log en
+`logs/app.txt`. Guía: [10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md). Requisito: Postgres
+con acceso de superusuario una vez (C-15).
 
 ## Operación
 

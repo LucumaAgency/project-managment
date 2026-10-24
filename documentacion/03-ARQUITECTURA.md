@@ -13,7 +13,7 @@
 | Miniaturas | sharp (imágenes) + pdftoppm (PDF), en job | Día 10 |
 | Correo | Brevo | Día 12 |
 | Errores | Sentry | Día 15 |
-| Hosting | Vultr + CloudPanel, cron real | Día 15 |
+| Hosting | Plesk en la beta (D-43, guía en 10-DESPLIEGUE-PLESK.md); Vultr + CloudPanel con cron real después | Desde ya |
 | Postgres local | `embedded-postgres` (solo desarrollo) | Instalado (día 1) |
 
 Monorepo con npm workspaces, igual que el CRM:

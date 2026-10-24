@@ -36,7 +36,7 @@ cobros, onboarding de prueba, app móvil.
 | Archivos | Cloudflare R2 + URL firmada + Uppy | El archivo no pasa por el servidor |
 | Miniaturas | sharp (imágenes) + pdftoppm (PDF) en job | |
 | Correo | Brevo | En espera: el MVP no envía correos (D-32) |
-| Hosting | Vultr + CloudPanel | Cron real desde el día 1 |
+| Hosting | Plesk en la beta (D-43); Vultr + CloudPanel cuando haga falta cron real | Guía en [10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md) |
 | Errores | Sentry | |
 
 Del CRM se copia: login (enlace mágico + scrypt), sesiones, `lib/env.ts`, worker de jobs, envío
@@ -132,7 +132,7 @@ que no ve nada de B. Corre en CI siempre.
 | 12 | Recordatorios dentro de la app (D-38): job diario por zona horaria con tareas que vencen mañana y vencidas, y el resumen de lo que sigues, todo en la bandeja; preferencias de aviso | Recordatorios llegando a la bandeja |
 | 13 | Vista del cliente: interruptor "visible para el cliente", herencia de visibilidad, feed filtrado, prueba entrando como cliente | Cliente ve solo lo suyo |
 | 14 | Papelera con purga a 30 días, búsqueda simple (tsvector), responsive móvil, exportar cuenta (ZIP) | Todo usable en celular |
-| 15 | Servidor Vultr + CloudPanel, Postgres, cron del worker, R2, Sentry, respaldo diario, carga de Lucuma (Brevo cuando haya correo) | En producción con el equipo dentro |
+| 15 | Servidor (Plesk en la beta, D-43), Postgres, cron del worker, R2, Sentry, respaldo diario, carga de Lucuma (Brevo cuando haya correo) | En producción con el equipo dentro |
 
 ## 7. Riesgos
 

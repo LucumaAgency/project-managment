@@ -140,7 +140,8 @@ migración. Consulta: `WHERE search @@ plainto_tsquery('simple', $1)`.
 
 ## Servidor (una vez, antes del primer despliegue)
 
-Como superusuario de Postgres, con contraseñas reales:
+Guía completa de Plesk en [10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md). Como superusuario de
+Postgres, con contraseñas reales:
 
 ```sql
 CREATE ROLE pm_admin LOGIN PASSWORD '...' BYPASSRLS;
