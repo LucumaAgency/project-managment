@@ -29,12 +29,22 @@ export async function listarBandeja(tx: Tx, actor: Actor, opciones: { soloNoLeid
       readAt: true,
       createdAt: true,
       recordingId: true,
-      recording: { select: { status: true } },
+      dedupeKey: true,
+      recording: {
+        select: {
+          status: true,
+          title: true,
+          type: true,
+          project: { select: { id: true, name: true } },
+          todo: { select: { dueOn: true, completedAt: true } },
+        },
+      },
       event: { select: { ...SELECCION_EVENTO, project: { select: { id: true, name: true, status: true } } } },
     },
   });
   const hayMas = filas.length > limite;
-  let pagina = filas.slice(0, limite).filter((f) => f.event);
+  // Los recordatorios no salen de un evento: traen la tarea en vez de la frase.
+  let pagina = filas.slice(0, limite).filter((f) => f.event || (f.reason === 'due_soon' && f.recording));
 
   // Con la visibilidad de HOY: si algo pasó a interno o se borró, el aviso ya no se muestra
   // a un cliente. Al equipo se le muestra sin enlace.
@@ -42,17 +52,31 @@ export async function listarBandeja(tx: Tx, actor: Actor, opciones: { soloNoLeid
     const ok = await visiblesParaCliente(tx, pagina.map((f) => f.recordingId!).filter(Boolean));
     pagina = pagina.filter((f) => f.recordingId && ok.has(f.recordingId));
   }
-  const eventos = await presentarEventos(tx, pagina.map((f) => f.event!));
+  const conEvento = pagina.filter((f) => f.event);
+  const eventos = await presentarEventos(tx, conEvento.map((f) => f.event!));
+  const eventoDe = new Map(conEvento.map((f, i) => [f.id, eventos[i]]));
   return {
-    avisos: pagina.map((f, i) => ({
-      id: f.id,
-      reason: f.reason,
-      leido: !!f.readAt,
-      createdAt: f.createdAt,
-      abre: f.recordingId && f.recording?.status === 'active' ? f.recordingId : null,
-      proyecto: { id: f.event!.project.id, name: f.event!.project.name },
-      evento: eventos[i],
-    })),
+    avisos: pagina.map((f) => {
+      const proyecto = f.event ? f.event.project : f.recording!.project;
+      return {
+        id: f.id,
+        reason: f.reason,
+        leido: !!f.readAt,
+        createdAt: f.createdAt,
+        abre: f.recordingId && f.recording?.status === 'active' ? f.recordingId : null,
+        proyecto: { id: proyecto.id, name: proyecto.name },
+        evento: eventoDe.get(f.id) ?? null,
+        recordatorio:
+          f.reason === 'due_soon' && f.recording
+            ? {
+                tarea: f.recording.title,
+                dueOn: f.recording.todo?.dueOn?.toISOString().slice(0, 10) ?? null,
+                tipo: f.dedupeKey?.endsWith(':vencida') ? ('vencida' as const) : ('manana' as const),
+                completada: !!f.recording.todo?.completedAt,
+              }
+            : null,
+      };
+    }),
     siguiente: hayMas && pagina.length ? filas[limite - 1].createdAt.toISOString() : null,
   };
 }

@@ -27,7 +27,8 @@
     "usuario": "npm run usuario -w @lucuma-pm/api --",
     "usuario:prod": "node packages/api/dist/scripts/usuario.js",
     "base:verificar": "npm run base:verificar -w @lucuma-pm/api",
-    "base:verificar:prod": "node packages/api/dist/scripts/verificar-base.js"
+    "base:verificar:prod": "node packages/api/dist/scripts/verificar-base.js",
+    "recordatorios:prod": "node packages/api/dist/scripts/recordatorios.js"
   },
   "devDependencies": {
     "embedded-postgres": "16.14.0-beta.17",

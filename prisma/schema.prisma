@@ -458,6 +458,10 @@ model Notification {
   readAt      DateTime?
   /// Cuándo salió por correo (inmediato o dentro del resumen). Null = aún no.
   emailedAt   DateTime?
+  /// Para avisos que no salen de un evento (recordatorios): una clave que hace que el mismo
+  /// recordatorio no se cree dos veces aunque lo calculen dos procesos a la vez.
+  /// Formato: `vence:<tarea>:<persona>:<AAAA-MM-DD>:<manana|vencida>`.
+  dedupeKey   String?            @unique
   createdAt   DateTime           @default(now())
 
   @@index([userId, accountId, readAt])

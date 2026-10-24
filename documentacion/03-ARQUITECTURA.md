@@ -337,17 +337,16 @@ de quienes deben enterarse (`services/avisos.ts`, D-53). La bandeja: `services/b
 Web: "Bandeja" en el menú con el número de no leídos (también en el título de la pestaña),
 `paginas/Bandeja.tsx`, `componentes/avisos.tsx` (contador y `useLeerAvisosDe`).
 
-## Cola de trabajos
+## Recordatorios y latido
 
-- Tabla `jobs` (tipo, payload, estado, intentos, `runAt`, bloqueo). Mismo patrón que el CRM.
-- El worker toma lotes con `FOR UPDATE SKIP LOCKED`: varios workers no toman el mismo job.
-- Reintentos con espera creciente (1 min, 5 min, 15 min, 1 h, 6 h, 24 h).
-- Si el job tiene `accountId`, el worker fija esa cuenta antes de ejecutarlo; los que recorren
-  cuentas (resumen diario, purgas) usan `pm_admin`.
-- Lo dispara un cron real en el servidor (Vultr + CloudPanel). En Plesk el cron no funcionaba
-  y fue un problema del CRM; por eso el hosting cambia.
-- Tipos previstos: `email.send`, `notify.fanout`, `digest.daily`, `due.reminders`,
-  `blob.preview`, `trash.purge`, `account.export`, `account.purge`.
+`services/recordatorios.ts`, `routes/cron.ts` (D-54). No hay cola de trabajos todavía: los
+avisos se crean en la misma transacción (D-53) y los recordatorios por el latido o al usar la
+app. La tabla `jobs` queda lista para cuando haga falta (correos, exportación).
+
+| Ruta / comando | Qué hace |
+|---|---|
+| `GET · POST /api/v1/cron/latido` (encabezado `X-PM-Cron` o `?token=`) | Recordatorios pendientes de todas las cuentas. 503 sin `CRON_TOKEN`, 401 con token incorrecto |
+| `npm run recordatorios:prod` | Lo mismo, a mano |
 
 ## Archivos
 
