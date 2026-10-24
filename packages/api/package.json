@@ -11,7 +11,8 @@
     "cuenta:crear": "tsx src/scripts/crear-cuenta.ts",
     "cuenta:crear:prod": "node dist/scripts/crear-cuenta.js",
     "usuario": "tsx src/scripts/usuario.ts",
-    "usuario:prod": "node dist/scripts/usuario.js"
+    "usuario:prod": "node dist/scripts/usuario.js",
+    "base:verificar": "tsx src/scripts/verificar-base.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.1.3",

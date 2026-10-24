@@ -15,7 +15,6 @@ const SIN_RLS = new Set(['users', 'login_tokens', 'sessions', 'jobs', '_prisma_m
 interface InfoTabla {
   tabla: string;
   rls: boolean;
-  forzado: boolean;
   politicas: number;
   tieneAccountId: boolean;
   tieneRecordingId: boolean;
@@ -49,7 +48,6 @@ beforeAll(async () => {
   tablas = await prismaAdmin.$queryRaw<InfoTabla[]>`
     SELECT c.relname AS tabla,
            c.relrowsecurity AS rls,
-           c.relforcerowsecurity AS forzado,
            (SELECT count(*)::int FROM pg_policy p WHERE p.polrelid = c.oid) AS politicas,
            EXISTS (SELECT 1 FROM information_schema.columns k
                    WHERE k.table_schema = 'public' AND k.table_name = c.relname AND k.column_name = 'accountId') AS "tieneAccountId",
@@ -67,12 +65,32 @@ afterAll(async () => {
 const conRls = () => tablas.filter((t) => !SIN_RLS.has(t.tabla));
 
 describe('estructura', () => {
-  it('toda tabla (salvo las exentas) tiene RLS activado, forzado y con política', () => {
+  it('toda tabla (salvo las exentas) tiene RLS activado y con política', () => {
     const fallas = conRls()
-      .filter((t) => !t.rls || !t.forzado || t.politicas === 0)
-      .map((t) => `${t.tabla}: rls=${t.rls} forzado=${t.forzado} políticas=${t.politicas}`);
-    // Si esto falla tras agregar una tabla: falta su ENABLE/FORCE ROW LEVEL SECURITY y su política.
+      .filter((t) => !t.rls || t.politicas === 0)
+      .map((t) => `${t.tabla}: rls=${t.rls} políticas=${t.politicas}`);
+    // Si esto falla tras agregar una tabla: falta su ENABLE ROW LEVEL SECURITY y su política.
     expect(fallas).toEqual([]);
+  });
+
+  it('las tablas son de pm_admin y pm_app no hereda nada de él (sin FORCE, eso es lo que aísla)', async () => {
+    // D-44: el dueño salta RLS por serlo. Si pm_app fuera dueño de una tabla, o miembro de
+    // pm_admin, también la saltaría.
+    const [r] = await prismaAdmin.$queryRaw<{ ajenas: string[]; deApp: number; miembro: boolean; forzadas: number }[]>`
+      SELECT
+        coalesce(array_agg(c.relname) FILTER (WHERE pg_get_userbyid(c.relowner) <> 'pm_admin'), '{}') AS ajenas,
+        count(*) FILTER (WHERE pg_get_userbyid(c.relowner) = 'pm_app')::int AS "deApp",
+        pg_has_role('pm_app', 'pm_admin', 'MEMBER') AS miembro,
+        count(*) FILTER (WHERE c.relforcerowsecurity)::int AS forzadas
+      FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'public' AND c.relkind = 'r'`;
+    expect(r).toEqual({ ajenas: [], deApp: 0, miembro: false, forzadas: 0 });
+  });
+
+  it('pm_admin no tiene BYPASSRLS ni es superusuario (como en Plesk): ve todo solo por ser dueño', async () => {
+    const [r] = await prismaAdmin.$queryRaw<{ bypass: boolean; superuser: boolean }[]>`
+      SELECT rolbypassrls AS bypass, rolsuper AS superuser FROM pg_roles WHERE rolname = 'pm_admin'`;
+    expect(r).toEqual({ bypass: false, superuser: false });
   });
 
   it('las tablas exentas siguen siendo solo las previstas', () => {

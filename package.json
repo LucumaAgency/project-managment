@@ -25,7 +25,9 @@
     "cuenta:crear": "npm run cuenta:crear -w @lucuma-pm/api --",
     "cuenta:crear:prod": "node packages/api/dist/scripts/crear-cuenta.js",
     "usuario": "npm run usuario -w @lucuma-pm/api --",
-    "usuario:prod": "node packages/api/dist/scripts/usuario.js"
+    "usuario:prod": "node packages/api/dist/scripts/usuario.js",
+    "base:verificar": "npm run base:verificar -w @lucuma-pm/api",
+    "base:verificar:prod": "node packages/api/dist/scripts/verificar-base.js"
   },
   "devDependencies": {
     "embedded-postgres": "16.14.0-beta.17",
