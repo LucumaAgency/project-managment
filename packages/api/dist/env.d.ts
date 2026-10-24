@@ -22,6 +22,13 @@ export declare const env: {
      * SOPORTE_BETA=0. Se apaga al salir de la beta (ver documentacion/03-ARQUITECTURA.md).
      */
     soporteBeta: boolean;
+    /**
+     * Archivos subidos (D-46): en el disco del servidor, FUERA del docroot (public/). Por defecto
+     * <raíz>/privados/archivos. nginx no los publica: solo la API los entrega, a quien puede verlos.
+     */
+    archivosDir: string;
+    /** Tamaño máximo de un archivo, en MB. nginx de Plesk tiene su propio tope (client_max_body_size). */
+    archivosMaxBytes: number;
 };
 /** Hay correo saliente de verdad. Sin él, la web oculta el acceso por enlace al correo. */
 export declare const correoActivo: () => boolean;

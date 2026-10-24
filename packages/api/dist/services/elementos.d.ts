@@ -47,7 +47,8 @@ export declare function elementoPara(tx: Tx, actor: Actor, id: string, accion: A
     elemento: ElementoCargado;
 }>;
 export interface DatosNuevo {
-    type: TipoCreable;
+    /** `upload` solo lo usa services/archivos.ts, al confirmar una subida. */
+    type: TipoCreable | 'upload';
     parentId?: string | null;
     title?: string;
     /** Documento del editor (JSON de Tiptap). El servidor arma el HTML y el texto. */

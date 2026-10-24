@@ -21,7 +21,8 @@ export type AccionEvento =
   | 'reopened'
   | 'assigned'
   | 'unassigned'
-  | 'due_changed';
+  | 'due_changed'
+  | 'version_uploaded';
 
 export async function registrarEvento(
   tx: Tx,

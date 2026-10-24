@@ -16,8 +16,8 @@ pendientes** del proyecto.
 | 7 | Tareas | ✅ 2026-10-24 |
 | 8 | Comentarios, menciones, suscripciones | ✅ 2026-10-24 |
 | 9 | Mensajes y actividad | ✅ 2026-10-24 |
-| 10 | Archivos | Siguiente |
-| 11 | Bandeja de notificaciones | Pendiente |
+| 10 | Archivos | ✅ 2026-10-24 |
+| 11 | Bandeja de notificaciones | Siguiente |
 | 12 | Recordatorios dentro de la app | Pendiente |
 | 13 | Vista del cliente | Pendiente |
 | 14 | Papelera, búsqueda, celular, exportación | Pendiente |
@@ -444,6 +444,38 @@ Problemas encontrados y cómo se resolvieron:
 | "@Luc" elegía a "Equipo Lucuma" antes que a "Lucía" | Se filtraba por "contiene" en orden alfabético | Orden por parecido (empieza con, palabra que empieza con, contiene) |
 
 Para desplegar: Git → Desplegar y reiniciar. Sin migraciones.
+
+### 2026-10-24 · Día 10
+
+Hecho:
+
+- `lib/almacen.ts` (disco, escritura atómica, tope de tamaño que descarta el resto) y
+  `lib/tipos-archivo.ts` (tipo por firma, nombre limpio).
+- `services/archivos.ts` + `routes/archivos.ts`: subir, nueva versión, listar carpetas y
+  archivos con migas y espacio usado, detalle con versiones, entregar el archivo (D-52).
+- Permisos: el cliente puede subir (nace visible); carpetas y archivos los edita el equipo.
+- Web: página Archivos (carpetas, subir con botón o arrastrando, avance por archivo, "lo que suba
+  ahora, visible para el cliente", miniaturas de imágenes) y página Archivo (vista previa de
+  imagen o PDF, descargar, nueva versión con nota, renombrar, visibilidad, papelera, versiones,
+  comentarios). La actividad enlaza archivos y carpetas.
+
+Probado:
+
+- 178 tests en verde (12 nuevos en `archivos.test.ts`).
+- En navegador real, escritorio y celular: crear una carpeta interna y una visible, subir PNG,
+  PDF y XLSX, ver la miniatura y la vista previa, subir una versión nueva con nota (queda v2 y
+  v1 bajable), el PDF se entrega como PDF. La cliente ve solo la carpeta visible y sus archivos,
+  con miniatura. Sin errores ni scroll horizontal.
+
+Problemas encontrados y cómo se resolvieron:
+
+| Problema | Causa | Solución |
+|---|---|---|
+| Subir algo más grande que el máximo dejaba la petición colgada | Se cortaba la entrada a la mitad y la respuesta 413 no llegaba | Se descarta el resto y se responde 413; si el tamaño viene declarado, se rechaza antes de leer |
+
+Para desplegar: Git → Desplegar y reiniciar. **Sin migraciones** (las tablas de archivos
+existían desde el día 1) y sin dependencias nuevas de la API. Ver la sección de archivos en
+[10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md).
 
 ## Para confirmar
 

@@ -12,9 +12,9 @@ import { esCliente, veTodosLosProyectos } from '@lucuma-pm/shared';
 import { HttpError } from '../lib/errores.js';
 const gestiona = (rol) => veTodosLosProyectos(rol); // owner y admin
 /** Tipos que edita cualquiera del equipo del proyecto, no solo quien los creó. */
-export const DEL_EQUIPO = ['todolist', 'todo'];
+export const DEL_EQUIPO = ['todolist', 'todo', 'folder', 'upload'];
 /** Qué tipos puede crear un cliente. Lo que crea nace visible para clientes. */
-export const TIPOS_DE_CLIENTE = ['todo', 'message', 'comment'];
+export const TIPOS_DE_CLIENTE = ['todo', 'message', 'comment', 'upload'];
 export function puede(actor, accion, sobre = {}) {
     const { rol } = actor;
     const cliente = esCliente(rol);
@@ -60,7 +60,8 @@ export function puede(actor, accion, sobre = {}) {
     const esCreador = e.creatorId === actor.ctx.userId;
     switch (accion) {
         case 'elemento.editar':
-            // Listas y tareas son del equipo: cualquiera del proyecto (no clientes) las edita.
+            // Listas, tareas, carpetas y archivos son del equipo: cualquiera del proyecto (no
+            // clientes) los edita y sube versiones.
             // Mensajes y comentarios son de quien los escribió.
             return e.status === 'active' && (gestiona(rol) || esCreador || (!cliente && p.esMiembro && DEL_EQUIPO.includes(e.type)));
         case 'elemento.papelera':

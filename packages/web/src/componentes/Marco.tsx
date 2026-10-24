@@ -15,6 +15,8 @@ const TITULOS: [string, string][] = [
   ['/proyectos/:id/mensajes/:mensajeId', 'Mensaje'],
   ['/proyectos/:id/mensajes', 'Mensajes'],
   ['/proyectos/:id/actividad', 'Actividad'],
+  ['/proyectos/:id/archivos/:archivoId', 'Archivo'],
+  ['/proyectos/:id/archivos', 'Archivos'],
   ['/proyectos/:id', 'Proyecto'],
   ['/personas', 'Personas'],
   ['/mi-cuenta', 'Mi cuenta'],

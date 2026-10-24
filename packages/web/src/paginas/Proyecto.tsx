@@ -15,7 +15,7 @@ const fecha = (iso: string) => new Date(iso).toLocaleDateString('es-PE', { day: 
 const SECCIONES: { clave: keyof ProyectoDetalle['secciones']; nombre: string; icono: NombreIcono; vacia: string; uno: string; varios: string; ruta?: string }[] = [
   { clave: 'tareas', nombre: 'Tareas', icono: 'tareas', vacia: 'Las listas de tareas del proyecto aparecerán aquí.', uno: 'lista', varios: 'listas', ruta: 'tareas' },
   { clave: 'mensajes', nombre: 'Mensajes', icono: 'mensajes', vacia: 'Anuncios y temas para conversar con el equipo y el cliente.', uno: 'mensaje', varios: 'mensajes', ruta: 'mensajes' },
-  { clave: 'archivos', nombre: 'Archivos', icono: 'archivo', vacia: 'Entregables, briefs y documentos, con sus versiones.', uno: 'elemento', varios: 'elementos' },
+  { clave: 'archivos', nombre: 'Archivos', icono: 'archivo', vacia: 'Entregables, briefs y documentos, con sus versiones.', uno: 'elemento', varios: 'elementos', ruta: 'archivos' },
 ];
 
 /** Página de un proyecto: cabecera, personas, acciones y sus secciones. */

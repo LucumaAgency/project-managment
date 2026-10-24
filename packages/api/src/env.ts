@@ -22,7 +22,7 @@ try {
  */
 const VARIABLES = [
   'NODE_ENV', 'PORT', 'DATABASE_URL', 'DATABASE_ADMIN_URL', 'APP_URL', 'SESSION_SECRET', 'BASE_DOMAIN',
-  'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'MAIL_FROM', 'SOPORTE_BETA',
+  'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'MAIL_FROM', 'SOPORTE_BETA', 'ARCHIVOS_DIR', 'ARCHIVOS_MAX_MB',
 ];
 for (const nombre of VARIABLES) {
   const v = process.env[nombre];
@@ -81,6 +81,13 @@ export const env = {
    * SOPORTE_BETA=0. Se apaga al salir de la beta (ver documentacion/03-ARQUITECTURA.md).
    */
   soporteBeta: process.env.SOPORTE_BETA !== '0',
+  /**
+   * Archivos subidos (D-46): en el disco del servidor, FUERA del docroot (public/). Por defecto
+   * <raíz>/privados/archivos. nginx no los publica: solo la API los entrega, a quien puede verlos.
+   */
+  archivosDir: process.env.ARCHIVOS_DIR || path.resolve(aqui, '../../../privados/archivos'),
+  /** Tamaño máximo de un archivo, en MB. nginx de Plesk tiene su propio tope (client_max_body_size). */
+  archivosMaxBytes: Math.max(1, Number(process.env.ARCHIVOS_MAX_MB ?? 50)) * 1024 * 1024,
 };
 
 /** Hay correo saliente de verdad. Sin él, la web oculta el acceso por enlace al correo. */

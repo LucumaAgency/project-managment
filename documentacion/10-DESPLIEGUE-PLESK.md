@@ -139,6 +139,19 @@ El primero imprime la contraseña del dueño **una sola vez**. El segundo lo mar
 - Recargar la página dentro de un proyecto (`/proyectos/…`): debe abrir, no dar 404.
 - `logs/app.txt` (raíz, fuera del docroot) tiene las peticiones y los errores.
 
+## 5b. Archivos subidos (desde el día 10)
+
+- Se guardan en `privados/archivos/` dentro de la raíz de la aplicación (fuera de `public/`):
+  nginx no los publica; solo la API los entrega a quien puede verlos. La carpeta se crea sola.
+  Otra ubicación: variable `ARCHIVOS_DIR` en el `.env`.
+- El Git de Plesk no la toca (no está en el repo, igual que el `.env`).
+- **Respaldo:** entra en el respaldo de la suscripción de Plesk junto con el resto de la raíz.
+  Restaurar la base sin esta carpeta deja archivos que no abren.
+- **Tamaño máximo:** 50 MB por archivo (`ARCHIVOS_MAX_MB` para cambiarlo). Si los archivos
+  grandes fallan con un 413 que no dice "supera el máximo de…", el tope es de nginx: en Plesk →
+  Configuración de Apache y nginx → Directivas adicionales de nginx, agregar
+  `client_max_body_size 64m;`.
+
 ## 6. Lo que todavía no hace falta
 
 - **Tarea programada / worker:** no hay cola hasta el día 11. Cuando llegue, mismo esquema que

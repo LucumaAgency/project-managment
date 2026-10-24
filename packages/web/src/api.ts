@@ -235,3 +235,72 @@ export interface Evento {
   } | null;
   detalles: { to?: unknown; from?: unknown; name?: unknown; title?: unknown; personas: string[] };
 }
+
+export interface VersionArchivo {
+  version: number;
+  nota: string | null;
+  createdAt: string;
+  uploadedBy: { id: string; name: string };
+  blobId: string;
+  filename: string;
+  contentType: string;
+  bytes: number;
+  enLinea: boolean;
+}
+export interface ListadoArchivos {
+  ruta: { id: string; title: string }[];
+  carpetas: { id: string; title: string; visibleToClients: boolean; elementos: number }[];
+  archivos: { id: string; title: string; visibleToClients: boolean; updatedAt: string; versiones: number; comentarios: number; actual: VersionArchivo }[];
+  permisos: { subir: boolean; crearCarpeta: boolean };
+  almacenamiento: { usados: number; maximo: number | null; maxArchivo: number };
+}
+export interface DetalleArchivo {
+  archivo: { id: string; title: string; carpetaId: string | null; visibleToClients: boolean; createdAt: string; creator: { id: string; name: string }; versiones: VersionArchivo[] };
+  permisos: { nuevaVersion: boolean; renombrar: boolean; papelera: boolean; cambiarVisibilidad: boolean; mover: boolean };
+}
+
+/**
+ * Dirección de un archivo para <img>, <iframe> o un enlace. Esas peticiones no llevan el
+ * encabezado X-Cuenta, así que sin subdominios la cuenta va en ?cuenta= (la API la acepta igual).
+ */
+export function urlArchivo(blobId: string, descargar = false) {
+  const q = new URLSearchParams();
+  const cuenta = cuentaLocal();
+  if (cuenta) q.set('cuenta', cuenta);
+  if (descargar) q.set('descargar', '1');
+  const s = q.toString();
+  return `/api/v1/blobs/${blobId}/contenido${s ? `?${s}` : ''}`;
+}
+
+/** Sube un archivo como cuerpo binario, con avance (fetch no informa el avance de subida). */
+export function subirBinario<T>(ruta: string, archivo: File, alAvanzar?: (fraccion: number) => void): Promise<T> {
+  return new Promise((ok, mal) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `/api/v1${ruta}`);
+    xhr.setRequestHeader('content-type', 'application/octet-stream');
+    const cuenta = cuentaLocal();
+    if (cuenta) xhr.setRequestHeader('x-cuenta', cuenta);
+    xhr.withCredentials = true;
+    xhr.upload.onprogress = (e) => e.lengthComputable && alAvanzar?.(e.loaded / e.total);
+    xhr.onload = () => {
+      let datos: unknown = {};
+      try {
+        datos = JSON.parse(xhr.responseText);
+      } catch {
+        /* respuesta sin JSON (p. ej. 413 de nginx) */
+      }
+      if (xhr.status >= 200 && xhr.status < 300) return ok(datos as T);
+      const msj = (datos as { error?: string }).error ?? (xhr.status === 413 ? 'El archivo es demasiado grande para el servidor.' : 'No se pudo subir.');
+      mal(new ErrorApi(xhr.status, msj));
+    };
+    xhr.onerror = () => mal(new ErrorApi(0, 'Se cortó la conexión mientras subía.'));
+    xhr.send(archivo);
+  });
+}
+
+export function tamano(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 ** 2) return `${Math.round(bytes / 1024)} KB`;
+  if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1).replace('.0', '')} MB`;
+  return `${(bytes / 1024 ** 3).toFixed(1).replace('.0', '')} GB`;
+}
