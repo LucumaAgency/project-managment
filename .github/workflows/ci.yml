@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tipos-y-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://x@localhost/x
+          DATABASE_ADMIN_URL: postgresql://x@localhost/x
+      - run: npm run build -w @lucuma-pm/shared
+      - run: npm run typecheck
+      # Los tests levantan su propio Postgres 16 (embedded-postgres) y aplican las migraciones.
+      # Incluyen el test de aislamiento entre cuentas: si falla, no se mergea.
+      - run: npm test
+
+  # Rama `produccion`: lo mismo que main, más lo compilado (packages/*/dist y public/).
+  # El Git de Plesk jala esta rama: el servidor no compila (mismo criterio que el CRM).
+  # Se arma con commit-tree sobre el commit anterior de `produccion`, así la historia es
+  # lineal y el pull de Plesk siempre avanza sin conflictos. main nunca lleva dist.
+  produccion:
+    needs: tipos-y-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: produccion
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://x@localhost/x
+          DATABASE_ADMIN_URL: postgresql://x@localhost/x
+      - run: npm run build
+      - name: Publicar en la rama produccion
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --depth=1 origin +refs/heads/produccion:refs/remotes/origin/produccion || true
+          git add -f packages/shared/dist packages/api/dist public
+          ARBOL=$(git write-tree)
+          PADRE=$(git rev-parse -q --verify origin/produccion || true)
+          if [ -n "$PADRE" ] && [ "$(git rev-parse "$PADRE^{tree}")" = "$ARBOL" ]; then
+            echo "Sin cambios respecto a produccion"; exit 0
+          fi
+          MENSAJE="Build de ${GITHUB_SHA::7}: $(git log -1 --format=%s)"
+          COMMIT=$(git commit-tree "$ARBOL" ${PADRE:+-p "$PADRE"} -m "$MENSAJE")
+          git push origin "$COMMIT:refs/heads/produccion"

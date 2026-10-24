@@ -1,0 +1,30 @@
+{
+  "name": "@lucuma-pm/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "cuenta:crear": "tsx src/scripts/crear-cuenta.ts",
+    "cuenta:crear:prod": "node dist/scripts/crear-cuenta.js",
+    "usuario": "tsx src/scripts/usuario.ts",
+    "usuario:prod": "node dist/scripts/usuario.js"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.1.3",
+    "@fastify/static": "^8.3.0",
+    "@lucuma-pm/shared": "*",
+    "@prisma/client": "6.19.3",
+    "fastify": "^5.6.0",
+    "nodemailer": "^7.0.13",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/nodemailer": "^8.0.2",
+    "vitest": "^3.2.7"
+  }
+}

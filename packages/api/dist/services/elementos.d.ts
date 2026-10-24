@@ -1,0 +1,157 @@
+import type { RecordingType } from '@prisma/client';
+import type { Tx } from '../lib/contexto.js';
+import { type Accion, type Actor, type ElementoCargado, type ProyectoCargado } from './permisos.js';
+/** Dentro de qué puede ir cada tipo. `null` = en la raíz del proyecto. */
+export declare const PADRES: Record<RecordingType, (RecordingType | null)[]>;
+/** Los archivos se crean al confirmar una subida (día 10), no por la ruta genérica. */
+export declare const TIPOS_CREABLES: readonly ["todolist", "todo", "message", "folder", "comment"];
+export type TipoCreable = (typeof TIPOS_CREABLES)[number];
+/** Columnas que se devuelven a la web. */
+export declare const SELECCION: {
+    readonly id: true;
+    readonly projectId: true;
+    readonly type: true;
+    readonly parentId: true;
+    readonly title: true;
+    readonly bodyText: true;
+    readonly visibleToClients: true;
+    readonly status: true;
+    readonly position: true;
+    readonly createdAt: true;
+    readonly updatedAt: true;
+    readonly trashedAt: true;
+    readonly creator: {
+        readonly select: {
+            readonly id: true;
+            readonly name: true;
+        };
+    };
+};
+/**
+ * Carga un elemento con su proyecto y corta si la acción no se permite. Lo que no existe y lo
+ * que no puedes ver (p. ej. algo interno, si eres cliente) responden igual: 404.
+ */
+export declare function elementoPara(tx: Tx, actor: Actor, id: string, accion: Accion, mensaje?: string): Promise<{
+    proyecto: ProyectoCargado & {
+        name: string;
+        id: string;
+        createdAt: Date;
+        status: import("@prisma/client").$Enums.ProjectStatus;
+        description: string | null;
+        createdById: string;
+        archivedAt: Date | null;
+        trashedAt: Date | null;
+    };
+    elemento: ElementoCargado;
+}>;
+export interface DatosNuevo {
+    type: TipoCreable;
+    parentId?: string | null;
+    title?: string;
+    bodyText?: string;
+    visibleToClients?: boolean;
+}
+export declare function crearElemento(tx: Tx, actor: Actor, projectId: string, datos: DatosNuevo): Promise<{
+    id: string;
+    createdAt: Date;
+    status: import("@prisma/client").$Enums.RecordingStatus;
+    projectId: string;
+    updatedAt: Date;
+    trashedAt: Date | null;
+    type: import("@prisma/client").$Enums.RecordingType;
+    parentId: string | null;
+    title: string | null;
+    bodyText: string | null;
+    visibleToClients: boolean;
+    position: number;
+    creator: {
+        name: string;
+        id: string;
+    };
+}>;
+export interface DatosEdicion {
+    title?: string;
+    bodyText?: string | null;
+    visibleToClients?: boolean;
+    position?: number;
+}
+export declare function editarElemento(tx: Tx, actor: Actor, id: string, datos: DatosEdicion): Promise<{
+    id: string;
+    createdAt: Date;
+    status: import("@prisma/client").$Enums.RecordingStatus;
+    projectId: string;
+    updatedAt: Date;
+    trashedAt: Date | null;
+    type: import("@prisma/client").$Enums.RecordingType;
+    parentId: string | null;
+    title: string | null;
+    bodyText: string | null;
+    visibleToClients: boolean;
+    position: number;
+    creator: {
+        name: string;
+        id: string;
+    };
+}>;
+/** A la papelera: deja de verse con todo lo que tiene dentro. Se purga a los 30 días (día 14). */
+export declare function papeleraElemento(tx: Tx, actor: Actor, id: string): Promise<{
+    id: string;
+    createdAt: Date;
+    status: import("@prisma/client").$Enums.RecordingStatus;
+    projectId: string;
+    updatedAt: Date;
+    trashedAt: Date | null;
+    type: import("@prisma/client").$Enums.RecordingType;
+    parentId: string | null;
+    title: string | null;
+    bodyText: string | null;
+    visibleToClients: boolean;
+    position: number;
+    creator: {
+        name: string;
+        id: string;
+    };
+}>;
+export declare function restaurarElemento(tx: Tx, actor: Actor, id: string): Promise<{
+    id: string;
+    createdAt: Date;
+    status: import("@prisma/client").$Enums.RecordingStatus;
+    projectId: string;
+    updatedAt: Date;
+    trashedAt: Date | null;
+    type: import("@prisma/client").$Enums.RecordingType;
+    parentId: string | null;
+    title: string | null;
+    bodyText: string | null;
+    visibleToClients: boolean;
+    position: number;
+    creator: {
+        name: string;
+        id: string;
+    };
+}>;
+/**
+ * Hijos activos de un padre (o de la raíz del proyecto), en orden. Para un cliente, solo los
+ * visibles, y solo si el padre (con su cadena) también lo es.
+ */
+export declare function listarElementos(tx: Tx, actor: Actor, proyecto: ProyectoCargado, filtro: {
+    parentId: string | null;
+    type?: RecordingType;
+}): Promise<{
+    id: string;
+    createdAt: Date;
+    status: import("@prisma/client").$Enums.RecordingStatus;
+    projectId: string;
+    updatedAt: Date;
+    trashedAt: Date | null;
+    type: import("@prisma/client").$Enums.RecordingType;
+    parentId: string | null;
+    title: string | null;
+    bodyText: string | null;
+    visibleToClients: boolean;
+    position: number;
+    creator: {
+        name: string;
+        id: string;
+    };
+}[]>;
