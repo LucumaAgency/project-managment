@@ -283,15 +283,30 @@ El usuario pidió empezar a subirlo a Plesk con el Git de Plesk. Hecho (D-43):
 - **Nada tocado en producción todavía**: falta confirmar Postgres en el servidor (C-15) y el
   dominio (C-16), y la orden de aplicar.
 
+### 2026-10-24 · Respuestas a C-15 y C-16: Plesk sin root
+
+El usuario confirmó: hay PostgreSQL en el servidor, **no hay root**, y el dominio será
+`proyectos.pruebalucuma.site`.
+
+- Sin root no se puede dar BYPASSRLS. Se cambió el modelo (D-44): migración `rls_por_dueno`
+  (sin FORCE); `pm_admin` ve todo por ser dueño; `pm_app` sigue sujeto a RLS.
+- En local y en los tests `pm_admin` ya no tiene BYPASSRLS: los tests corren como en Plesk.
+- 2 tests nuevos (dueño de las tablas, `pm_app` no miembro de `pm_admin`, `pm_admin` sin
+  BYPASSRLS). 115 en verde.
+- Sabotaje: con `pm_app` miembro de `pm_admin`, pasa de ver 0 proyectos a ver 8. El test nuevo
+  y el verificador lo detectan.
+- Comando `base:verificar:prod` (Run script en Plesk): revisa la base sin cambiar nada.
+- Guía [10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md) con los pasos del panel (sin SSH).
+- Nada tocado en producción.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
 si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
-| # | Tema | Lo que necesito | Por qué |
+| # | Tema | Lo que hice | Alternativa |
 |---|---|---|---|
-| C-15 | Postgres en el servidor de Plesk | ¿El servidor tiene PostgreSQL (en Plesk → Bases de datos aparece la opción PostgreSQL)? ¿Hay acceso root por SSH para crear dos roles una vez? | Sin Postgres no arranca (MariaDB no sirve). Sin superusuario no se pueden crear los roles con RLS |
-| C-16 | Dominio de la beta | Propongo `proyectos.pruebalucuma.site` | Igual que `crm.pruebalucuma.site` |
+| C-17 | Rubros (verticales, como el CRM) | Por ahora no: el producto es para agencias y todo el texto está pensado para ellas | Agregar `vertical` por cuenta cuando haya un segundo rubro concreto que lo pida |
 
 ## Pendientes
 

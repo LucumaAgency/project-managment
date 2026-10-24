@@ -96,7 +96,7 @@ Nunca importar `prismaAdmin` en una ruta de usuario.
 
 | Rol | Quién lo usa | RLS |
 |---|---|---|
-| `pm_admin` | Migraciones, worker que recorre varias cuentas, scripts de consola, superadmin | No (BYPASSRLS, dueño de las tablas) |
+| `pm_admin` | Migraciones, worker que recorre varias cuentas, scripts de consola, superadmin | No: es el dueño de las tablas, que no tienen FORCE (D-44). Sin BYPASSRLS, como en Plesk |
 | `pm_app` | La API, en cada petición | Sí: solo ve la cuenta fijada en la transacción |
 
 En el código: `prisma` (pm_app) para las rutas y `prismaAdmin` (pm_admin) para lo demás
@@ -136,18 +136,13 @@ migración. Consulta: `WHERE search @@ plainto_tsquery('simple', $1)`.
 - Las migraciones escritas a mano hasta hoy: `rls_busqueda`, `busqueda_por_trigger`, `resolver_cuenta`.
 - Políticas, triggers y permisos van en SQL a mano dentro de una migración (`--create-only`).
   Las tablas nuevas heredan los permisos de `pm_app`, pero **RLS no**: cada tabla nueva con
-  `accountId` necesita sus `ENABLE/FORCE ROW LEVEL SECURITY` y su política.
+  `accountId` necesita su `ENABLE ROW LEVEL SECURITY` y su política. **Sin FORCE** (D-44): si una
+  tabla tuviera FORCE, `pm_admin` dejaría de verla y fallarían los scripts y la semilla de tests.
 
 ## Servidor (una vez, antes del primer despliegue)
 
-Guía completa de Plesk en [10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md). Como superusuario de
-Postgres, con contraseñas reales:
-
-```sql
-CREATE ROLE pm_admin LOGIN PASSWORD '...' BYPASSRLS;
-CREATE ROLE pm_app LOGIN PASSWORD '...' NOBYPASSRLS;
-CREATE DATABASE lucuma_pm OWNER pm_admin;
-```
-
-Luego `npm run prisma:deploy` con `DATABASE_ADMIN_URL` apuntando a `pm_admin`.
+Guía completa de Plesk en [10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md). No hace falta
+superusuario: una base con dos usuarios comunes, `pm_admin` (dueño de la base) y `pm_app`.
+Luego `npm run prisma:deploy` con `DATABASE_ADMIN_URL` apuntando a `pm_admin`, y
+`npm run base:verificar:prod` para confirmar que quedó bien.
 `pm_admin` en el servidor no necesita CREATEDB: `migrate deploy` no usa base temporal.

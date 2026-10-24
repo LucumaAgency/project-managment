@@ -87,7 +87,11 @@ aunque el código tenga un error.
 | Rol | Uso | Row Level Security |
 |---|---|---|
 | `pm_app` | La API en cada petición | Aplica: solo ve la cuenta fijada |
-| `pm_admin` | Migraciones, worker que recorre cuentas, scripts, superadmin | No aplica (BYPASSRLS, dueño de las tablas) |
+| `pm_admin` | Migraciones, worker que recorre cuentas, scripts, superadmin | No aplica: es el **dueño** de las tablas y las tablas no tienen FORCE (D-44). Sin BYPASSRLS ni superusuario |
+
+**Por qué `pm_app` no puede saltarse RLS:** no es superusuario, no tiene BYPASSRLS, no es
+dueño de ninguna tabla y no es miembro de `pm_admin` (si lo fuera, heredaría el salto del
+dueño: probado a propósito, pasa a ver todo). Lo comprueban un test y `base:verificar:prod`.
 
 **Cómo se fija la cuenta:** cada petición corre en una transacción que empieza con
 `set_config('app.account_id', …, true)` y `set_config('app.user_id', …, true)`. Las políticas

@@ -2,7 +2,8 @@
 // la base del proyecto. Lo usan `db-local.mjs` (desarrollo) y el arranque de los tests.
 //
 // Roles (igual que en el servidor, ver documentacion/08-DESARROLLO.md):
-//   pm_admin → dueño de las tablas, BYPASSRLS. Migraciones, worker, superadmin.
+//   pm_admin → dueño de las tablas (por eso ve todo, D-44). Migraciones, worker, consola.
+//              Sin BYPASSRLS, igual que en Plesk, donde no hay superusuario para darlo.
 //   pm_app   → la API. Sin privilegios: Row Level Security aplica a todas sus consultas.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -41,8 +42,12 @@ export async function levantarPostgres({ dataDir, puerto, base, persistente = tr
   const existe = async (sql, v) => (await cliente.query(sql, v)).rowCount > 0;
 
   if (!(await existe('SELECT 1 FROM pg_roles WHERE rolname = $1', ['pm_admin']))) {
-    await cliente.query(`CREATE ROLE pm_admin LOGIN PASSWORD 'pm_admin_dev' BYPASSRLS CREATEDB`);
+    // CREATEDB solo en local: `prisma migrate dev` usa una base temporal para comparar.
+    await cliente.query(`CREATE ROLE pm_admin LOGIN PASSWORD 'pm_admin_dev' CREATEDB`);
   }
+  // Bases locales creadas antes del 2026-10-24 tenían BYPASSRLS: se quita para que local se
+  // comporte como el servidor.
+  await cliente.query(`ALTER ROLE pm_admin NOBYPASSRLS`);
   if (!(await existe('SELECT 1 FROM pg_roles WHERE rolname = $1', ['pm_app']))) {
     await cliente.query(`CREATE ROLE pm_app LOGIN PASSWORD 'pm_app_dev' NOBYPASSRLS`);
   }

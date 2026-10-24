@@ -6,7 +6,7 @@ import { env } from './env.js';
  *
  *  - `prisma`: rol pm_app. Es la ÚNICA que usan las rutas. Row Level Security aplica a
  *    todas sus consultas: sin cuenta fijada en la transacción, no ve ninguna fila.
- *  - `prismaAdmin`: rol pm_admin (BYPASSRLS). Solo para el worker cuando recorre varias
+ *  - `prismaAdmin`: rol pm_admin (dueño de las tablas: no lo frena RLS, D-44). Solo para el worker cuando recorre varias
  *    cuentas (resumen diario, purgas), los scripts de consola y el superadmin. Nunca se
  *    importa desde una ruta de usuario.
  */

@@ -226,6 +226,16 @@ Prisma pasó a `dependencies`. La API sirve el SPA para las rutas internas y esc
 `logs/app.txt`. Guía: [10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md). Requisito: Postgres
 con acceso de superusuario una vez (C-15).
 
+**D-44 · RLS sin superusuario: el dueño de las tablas es el que ve todo** (2026-10-24)
+En Plesk no hay root, así que nadie puede dar BYPASSRLS. Se usa la regla de fábrica de
+Postgres: el dueño de una tabla no está sujeto a sus políticas salvo con FORCE. Migración
+`rls_por_dueno` quita FORCE; `pm_admin` (corre las migraciones, por eso es dueño) ve todo y
+`pm_app` sigue sujeto a RLS. Para `pm_app` no cambia nada. Condiciones que se vigilan con un test
+y con `base:verificar:prod`: `pm_app` no es dueño de ninguna tabla, ni miembro de `pm_admin`
+(probado: si lo fuera, vería todo), ni superusuario. En local y en los tests `pm_admin` ya no
+tiene BYPASSRLS, para comportarse igual que el servidor. Descartado: pedir al hosting un
+superusuario solo para esto.
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)
