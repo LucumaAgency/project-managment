@@ -307,6 +307,27 @@ Los avisos a los mencionados llegan con la bandeja (día 11).
   la visibilidad (antes se volvía a pedir al marcar "visible" y quien escribía rápido no veía
   al cliente). Ordena por parecido: primero quien empieza con lo escrito.
 
+**D-52 · Archivos: cómo se suben, se guardan y se entregan** (2026-10-24, día 10)
+- En el disco del servidor (D-46), en `privados/archivos/<cuenta>/<año>/<mes>/<id>`, fuera del
+  docroot: nginx no los publica. Detrás de `lib/almacen.ts` para poder pasar a R2 sin tocar
+  el resto. La clave nunca lleva el nombre original.
+- Subida: el cuerpo de la petición es el archivo (`application/octet-stream`, nombre en
+  `?nombre=`). Sin multipart ni dependencias nuevas. Se escribe a un `.parcial` y se renombra
+  al terminar; si algo falla, no queda nada. Máximo por archivo `ARCHIVOS_MAX_MB` (50 por
+  defecto); si se pasa, se descarta el resto y responde 413 con mensaje. Respeta el espacio del
+  plan (cuentan todas las versiones).
+- Entrega solo por la API (`/blobs/:id/contenido`) y solo si la persona ve el archivo con toda su
+  cadena: un cliente no baja algo de una carpeta interna ni con el enlace. El tipo se reconoce
+  por los primeros bytes, no por la extensión: solo imágenes (PNG, JPEG, GIF, WebP) y PDF se
+  muestran en el navegador; todo lo demás se descarga. Nunca HTML ni SVG en línea. `nosniff` y
+  una política de contenido cerrada.
+- Versiones: subir una nueva no borra la anterior. El nombre del archivo sigue a la última.
+- Carpetas, archivos y versiones nuevas son del equipo del proyecto (D-41, D-49); el cliente
+  sube en lo que ve (nace visible) pero no sube versiones de lo ajeno ni crea carpetas.
+- Sin miniaturas generadas: la imagen misma se achica en pantalla. Generarlas (y la primera
+  página de los PDF) queda para cuando haga falta; necesita herramientas del sistema.
+- Archivos en la papelera: se ocultan; borrarlos del disco llega con la purga (día 14).
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

@@ -58,10 +58,10 @@ export type Accion =
 const gestiona = (rol: Rol) => veTodosLosProyectos(rol); // owner y admin
 
 /** Tipos que edita cualquiera del equipo del proyecto, no solo quien los creó. */
-export const DEL_EQUIPO: RecordingType[] = ['todolist', 'todo'];
+export const DEL_EQUIPO: RecordingType[] = ['todolist', 'todo', 'folder', 'upload'];
 
 /** Qué tipos puede crear un cliente. Lo que crea nace visible para clientes. */
-export const TIPOS_DE_CLIENTE: RecordingType[] = ['todo', 'message', 'comment'];
+export const TIPOS_DE_CLIENTE: RecordingType[] = ['todo', 'message', 'comment', 'upload'];
 
 export function puede(
   actor: Actor,
@@ -116,7 +116,8 @@ export function puede(
   const esCreador = e.creatorId === actor.ctx.userId;
   switch (accion) {
     case 'elemento.editar':
-      // Listas y tareas son del equipo: cualquiera del proyecto (no clientes) las edita.
+      // Listas, tareas, carpetas y archivos son del equipo: cualquiera del proyecto (no
+      // clientes) los edita y sube versiones.
       // Mensajes y comentarios son de quien los escribió.
       return e.status === 'active' && (gestiona(rol) || esCreador || (!cliente && p.esMiembro && DEL_EQUIPO.includes(e.type)));
     case 'elemento.papelera':

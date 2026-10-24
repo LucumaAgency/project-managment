@@ -28,6 +28,10 @@ export function enlaceDe(projectId: string, e: Evento): string | null {
       return `/proyectos/${projectId}/tareas?tarea=${destino.id}`;
     case 'todolist':
       return `/proyectos/${projectId}/tareas`;
+    case 'upload':
+      return `/proyectos/${projectId}/archivos/${destino.id}`;
+    case 'folder':
+      return `/proyectos/${projectId}/archivos?carpeta=${destino.id}`;
     default:
       return null;
   }
@@ -59,7 +63,8 @@ export function frase(e: Evento): string {
   }
   const algo = `${QUE[el.type] ?? ''} ${nombre(el.title)}`.trim();
   switch (e.action) {
-    case 'created': return el.type === 'message' ? `publicó ${algo}` : el.type === 'todo' ? `agregó ${algo}` : `creó ${algo}`;
+    case 'created': return el.type === 'message' ? `publicó ${algo}` : el.type === 'todo' ? `agregó ${algo}` : el.type === 'upload' ? `subió ${algo}` : `creó ${algo}`;
+    case 'version_uploaded': return `subió una versión nueva de ${algo}`;
     case 'updated': return `editó ${algo}`;
     case 'completed': return `completó ${algo}`;
     case 'reopened': return `reabrió ${algo}`;

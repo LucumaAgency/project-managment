@@ -9,3 +9,5 @@ dist/
 /public/
 # Log de la API en producción (logs/app.txt)
 logs/
+# Archivos subidos (día 10, D-46): fuera del docroot, se sirven solo por la API
+privados/

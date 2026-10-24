@@ -356,15 +356,22 @@ cambio del usuario ──(misma transacción)──> Event
 
 ## Archivos
 
-```
-navegador ── pide subir ──> API: valida permiso y cuota, crea Blob(pending), firma URL de R2
-navegador ── sube directo ──> R2 (el archivo no pasa por el servidor)
-navegador ── confirma ──> API: Blob(ready), crea UploadVersion o adjunto, encola blob.preview
-worker ── blob.preview ──> miniatura en R2, Blob.previewKey
-```
+`lib/almacen.ts` (disco), `lib/tipos-archivo.ts` (tipo real, nombre limpio),
+`services/archivos.ts`, `routes/archivos.ts` (D-46, D-52). `Blob` es el archivo físico;
+`UploadVersion` dice qué versión de qué archivo (`upload`) es.
 
-- Descargas con URL firmada que vence.
-- La cuota del plan se calcula sumando `Blob.byteSize` de la cuenta.
+| Ruta | Qué hace |
+|---|---|
+| `POST /api/v1/proyectos/:id/archivos?nombre=&carpeta=&visible=1` | Subir (cuerpo = el archivo) |
+| `POST /api/v1/archivos/:id/versiones?nombre=&nota=` | Nueva versión |
+| `GET /api/v1/proyectos/:id/archivos?carpeta=` | Carpetas y archivos, ruta (migas), permisos, espacio usado |
+| `GET /api/v1/archivos/:id` | Detalle con todas las versiones |
+| `GET /api/v1/blobs/:id/contenido[?descargar=1]` | Entrega el archivo (en línea solo imágenes y PDF) |
+
+Carpetas, renombrar, mover, papelera, visibilidad y comentarios: rutas genéricas de elementos.
+Web: `paginas/Archivos.tsx` (subir con botón o arrastrando, con avance) y `paginas/Archivo.tsx`
+(vista previa, versiones, comentarios). `<img>` e `<iframe>` no mandan `X-Cuenta`: sin
+subdominios, la dirección lleva `?cuenta=` (`urlArchivo()`).
 
 ## Búsqueda
 
