@@ -324,6 +324,51 @@ textarea { resize: vertical; line-height: 1.45; }
 .sumar { display: flex; gap: 8px; margin-top: 8px; }
 .sumar select { flex: 1; min-width: 0; }
 
+/* --- Texto con formato (editor y contenido guardado) ------------------- */
+.prosa { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.prosa > :first-child { margin-top: 0; }
+.prosa > :last-child { margin-bottom: 0; }
+.prosa p { margin: 0 0 8px; }
+.prosa h2 { font-size: 17px; margin: 14px 0 6px; }
+.prosa h3 { font-size: 15px; margin: 12px 0 6px; }
+.prosa ul, .prosa ol { margin: 0 0 8px; padding-left: 22px; }
+.prosa li > p { margin: 0 0 2px; }
+.prosa blockquote { margin: 0 0 8px; padding: 2px 0 2px 12px; border-left: 3px solid var(--borde); color: var(--suave); }
+.prosa code { font-family: ui-monospace, monospace; font-size: 12.5px; background: #F0F2F6; padding: 1px 5px; border-radius: 4px; }
+.prosa pre { background: #F0F2F6; padding: 10px 12px; border-radius: 8px; overflow-x: auto; }
+.prosa pre code { background: none; padding: 0; }
+.prosa hr { border: 0; border-top: 1px solid var(--borde); margin: 12px 0; }
+.prosa a { text-decoration: underline; }
+.mencion { color: var(--azul); background: var(--azul-tinte); border-radius: 4px; padding: 0 3px; font-weight: 600; white-space: nowrap; }
+
+.editor { border: 1px solid var(--borde); border-radius: 8px; background: var(--blanco); }
+.editor:focus-within { border-color: var(--azul); box-shadow: 0 0 0 3px var(--azul-tinte); }
+.barra-editor {
+  display: flex; flex-wrap: wrap; gap: 2px; padding: 4px; border-bottom: 1px solid var(--borde-suave);
+}
+.barra-editor button {
+  width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 6px; background: none; color: var(--suave); font-size: 13px;
+}
+.barra-editor button:hover { background: var(--fondo); color: var(--texto); }
+.barra-editor button.activo { background: var(--azul-tinte); color: var(--azul); }
+.barra-editor .separador { width: 1px; margin: 4px 3px; background: var(--borde); }
+.editor-area { min-height: 110px; padding: 10px 12px; outline: none; }
+/* Texto de ayuda del editor vacío (Placeholder de Tiptap). */
+.editor-area p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder); color: var(--tenue); float: left; height: 0; pointer-events: none;
+}
+.sugerencias {
+  background: var(--blanco); border: 1px solid var(--borde); border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(16,21,28,.14); padding: 4px; width: 240px; max-height: 230px; overflow-y: auto;
+}
+.sugerencias button {
+  display: block; width: 100%; text-align: left; border: 0; background: none; padding: 7px 9px;
+  border-radius: 6px; font-size: 13px; color: var(--texto); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sugerencias button.activa, .sugerencias button:hover { background: var(--azul-tinte); color: var(--azul); }
+.sugerencias .vacia { padding: 7px 9px; font-size: 12.5px; color: var(--tenue); }
+
 /* --- Modal --------------------------------------------------------------- */
 .modal-fondo {
   position: fixed; inset: 0; z-index: 40; background: rgba(16,21,28,.5);

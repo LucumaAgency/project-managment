@@ -1,4 +1,4 @@
-import type { RecordingType } from '@prisma/client';
+import { Prisma, type RecordingType } from '@prisma/client';
 import type { Tx } from '../lib/contexto.js';
 import { type Accion, type Actor, type ElementoCargado, type ProyectoCargado } from './permisos.js';
 /** Dentro de qué puede ir cada tipo. `null` = en la raíz del proyecto. */
@@ -14,6 +14,8 @@ export declare const SELECCION: {
     readonly parentId: true;
     readonly title: true;
     readonly bodyText: true;
+    readonly bodyHtml: true;
+    readonly body: true;
     readonly visibleToClients: true;
     readonly status: true;
     readonly position: true;
@@ -48,10 +50,14 @@ export interface DatosNuevo {
     type: TipoCreable;
     parentId?: string | null;
     title?: string;
+    /** Documento del editor (JSON de Tiptap). El servidor arma el HTML y el texto. */
+    body?: unknown;
+    /** Alternativa: texto plano (se convierte a párrafos). Si viene `body`, manda `body`. */
     bodyText?: string;
     visibleToClients?: boolean;
 }
 export declare function crearElemento(tx: Tx, actor: Actor, projectId: string, datos: DatosNuevo): Promise<{
+    mencionados: string[];
     id: string;
     createdAt: Date;
     status: import("@prisma/client").$Enums.RecordingStatus;
@@ -61,6 +67,8 @@ export declare function crearElemento(tx: Tx, actor: Actor, projectId: string, d
     type: import("@prisma/client").$Enums.RecordingType;
     parentId: string | null;
     title: string | null;
+    body: Prisma.JsonValue;
+    bodyHtml: string | null;
     bodyText: string | null;
     visibleToClients: boolean;
     position: number;
@@ -71,11 +79,13 @@ export declare function crearElemento(tx: Tx, actor: Actor, projectId: string, d
 }>;
 export interface DatosEdicion {
     title?: string;
+    body?: unknown;
     bodyText?: string | null;
     visibleToClients?: boolean;
     position?: number;
 }
 export declare function editarElemento(tx: Tx, actor: Actor, id: string, datos: DatosEdicion): Promise<{
+    mencionados: string[];
     id: string;
     createdAt: Date;
     status: import("@prisma/client").$Enums.RecordingStatus;
@@ -85,6 +95,8 @@ export declare function editarElemento(tx: Tx, actor: Actor, id: string, datos: 
     type: import("@prisma/client").$Enums.RecordingType;
     parentId: string | null;
     title: string | null;
+    body: Prisma.JsonValue;
+    bodyHtml: string | null;
     bodyText: string | null;
     visibleToClients: boolean;
     position: number;
@@ -104,6 +116,8 @@ export declare function papeleraElemento(tx: Tx, actor: Actor, id: string): Prom
     type: import("@prisma/client").$Enums.RecordingType;
     parentId: string | null;
     title: string | null;
+    body: Prisma.JsonValue;
+    bodyHtml: string | null;
     bodyText: string | null;
     visibleToClients: boolean;
     position: number;
@@ -122,6 +136,8 @@ export declare function restaurarElemento(tx: Tx, actor: Actor, id: string): Pro
     type: import("@prisma/client").$Enums.RecordingType;
     parentId: string | null;
     title: string | null;
+    body: Prisma.JsonValue;
+    bodyHtml: string | null;
     bodyText: string | null;
     visibleToClients: boolean;
     position: number;
@@ -147,6 +163,8 @@ export declare function listarElementos(tx: Tx, actor: Actor, proyecto: Proyecto
     type: import("@prisma/client").$Enums.RecordingType;
     parentId: string | null;
     title: string | null;
+    body: Prisma.JsonValue;
+    bodyHtml: string | null;
     bodyText: string | null;
     visibleToClients: boolean;
     position: number;

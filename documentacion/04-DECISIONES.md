@@ -245,6 +245,32 @@ tests corren siempre con usuarios `plesk_…` para cubrir el prefijo, y aceptan 
 `TEST_PG_URL_APP` / `TEST_PG_URL_ADMIN`. La suite completa pasó en PostgreSQL 12.22 con la base
 a nombre del servidor (el caso más restrictivo). El piso de versión pasa de 13 a 12.
 
+**D-46 · Archivos en el propio servidor, Node 21 y contraseñas actuales** (2026-10-24, decidido por el usuario)
+- Los archivos (día 10) se guardan en el disco del servidor de Plesk, en una carpeta **fuera**
+  del docroot (como `privados/` del CRM), y se sirven solo por la API a quien puede verlos. R2
+  queda para después; el código de archivos se escribe detrás de una interfaz de almacenamiento
+  para poder cambiar sin tocar el resto. Los archivos entran en el respaldo de la suscripción.
+- Node se queda en 21.7.3: la suscripción no ofrece otra. La app ya funciona con ella
+  (`arranque.cjs`, variables sin comillas).
+- Las contraseñas de la base no se cambian por ahora.
+
+**D-47 · Editor: el navegador manda JSON, el servidor arma el HTML** (2026-10-24, día 6)
+Tiptap 2.27 (MIT) en la web; en el servidor, un procesador propio (`lib/documento.ts`, sin
+dependencias) recorre el JSON con una lista cerrada de nodos y formatos: párrafo, título (2 y
+3), listas, cita, código, separador, salto de línea, negrita, cursiva, tachado, código, enlace
+y mención. Lo desconocido (imágenes, iframes, estilos) da 400; un enlace que no sea http(s) o
+mailto se descarta y queda el texto. De ahí salen las tres formas del cuerpo (`body`,
+`bodyHtml`, `bodyText`). Descartado: sanear HTML del navegador con una librería (más superficie
+de ataque) y `@tiptap/html` en el servidor (necesita un DOM simulado). Imágenes dentro del texto
+llegan con los archivos (día 10).
+
+**D-48 · Menciones: solo quien puede ver lo que se escribió** (2026-10-24, día 6)
+Las menciones salen del documento procesado en el servidor, nunca de una lista del navegador.
+Se guardan solo las de personas activas que ven el proyecto (owner/admin, o miembros del
+proyecto) y, si el elemento es interno, nunca las de clientes. Editar el texto o cambiar la
+visibilidad las recalcula. La lista del @ (`/proyectos/:id/mencionables`) sigue la misma regla.
+Los avisos a los mencionados llegan con la bandeja (día 11).
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

@@ -12,8 +12,8 @@ pendientes** del proyecto.
 | 3 | Login, sesiones, selector de cuenta | ✅ 2026-10-24 |
 | 4 | Invitaciones, personas, planes, soporte en beta, sistema visual del CRM | ✅ 2026-10-24 |
 | 5 | Proyectos y servicio genérico de elementos | ✅ 2026-10-24 |
-| 6 | Editor Tiptap | Siguiente |
-| 7 | Tareas | Pendiente |
+| 6 | Editor Tiptap | ✅ 2026-10-24 |
+| 7 | Tareas | Siguiente |
 | 8 | Comentarios, menciones, suscripciones | Pendiente |
 | 9 | Mensajes y actividad | Pendiente |
 | 10 | Archivos | Pendiente |
@@ -334,6 +334,31 @@ archivo de inicio `arranque.cjs`.
 Para tener en cuenta en cada despliegue: Git → Desplegar; si cambió `package.json`, NPM
 install; si hay migraciones nuevas, Run script `prisma:deploy`; y reiniciar.
 
+### 2026-10-24 · Día 6
+
+Decisiones del usuario antes de empezar (D-46): las contraseñas de la base no se cambian por
+ahora, Node se queda en 21.7.3 y los archivos se guardarán en el propio servidor.
+
+Hecho:
+
+- `lib/documento.ts`: JSON del editor → HTML seguro, texto plano y menciones, con lista cerrada
+  de formatos y límites (D-47).
+- `services/menciones.ts` y la ruta `/proyectos/:id/mencionables`: menciones válidas (D-48).
+- Elementos: aceptan `body` (editor) o `bodyText`; devuelven `bodyHtml`, `body` y `mencionados`.
+  Editar el texto o la visibilidad recalcula las menciones.
+- Web: `componentes/Editor.tsx` (Tiptap 2.27 con negrita, cursiva, tachado, título, listas,
+  cita, enlace y @mención con teclado) y `Contenido`. Página de prueba `/_editor` solo en desarrollo.
+
+Probado:
+
+- 136 tests en verde (20 nuevos: 12 del procesador, 8 por HTTP).
+- En navegador real (escritorio y celular): escribir, mencionar con @ eligiendo con Enter,
+  negrita, lista, enlace automático, `<script>` escrito a propósito; Ctrl+Enter guarda. El
+  servidor devolvió el HTML con formato, la mención y el `<script>` como texto. Sin errores.
+- El build de producción no incluye la página de prueba (Tiptap entra con las tareas, día 7).
+
+Para desplegar: Git → Desplegar y reiniciar. Sin migraciones ni dependencias nuevas de la API.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -348,9 +373,8 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 ### MVP (en orden)
 
 - [ ] Días 5 a 15 según [07-PLAN-MVP.md](07-PLAN-MVP.md).
-- [ ] Cambiar las contraseñas de `carlosm_pm_admin` y `carlosm_pm_app` (quedaron en el chat) y actualizar el `.env`.
-- [ ] Pedir Node 22 al hosting (la 21 ya no recibe parches de seguridad).
-- [ ] Antes del día 10: bucket R2 para archivos. Antes del día 15: Sentry, respaldo diario de la base.
+- [ ] Más adelante: cambiar las contraseñas de la base (quedaron en el chat; el usuario decidió no hacerlo todavía, D-46).
+- [ ] Antes del día 15: Sentry, respaldo diario de la base y de la carpeta de archivos.
 
 ### Decisiones abiertas
 
