@@ -10,9 +10,11 @@
  *  - Un comentario copia la visibilidad de lo que comenta.
  */
 import { esCliente } from '@lucuma-pm/shared';
-import type { RecordingType } from '@prisma/client';
+import { Prisma, type RecordingType } from '@prisma/client';
 import type { Tx } from '../lib/contexto.js';
+import { documentoDesdeTexto, documentoVacio, procesarDocumento, type DocumentoProcesado } from '../lib/documento.js';
 import { HttpError } from '../lib/errores.js';
+import { guardarMenciones } from './menciones.js';
 import { registrarEvento } from './eventos.js';
 import { exigir, type Accion, type Actor, type ElementoCargado, type ProyectoCargado } from './permisos.js';
 import { proyectoPara } from './proyectos.js';
@@ -41,6 +43,8 @@ export const SELECCION = {
   parentId: true,
   title: true,
   bodyText: true,
+  bodyHtml: true,
+  body: true,
   visibleToClients: true,
   status: true,
   position: true,
@@ -109,8 +113,28 @@ export interface DatosNuevo {
   type: TipoCreable;
   parentId?: string | null;
   title?: string;
+  /** Documento del editor (JSON de Tiptap). El servidor arma el HTML y el texto. */
+  body?: unknown;
+  /** Alternativa: texto plano (se convierte a párrafos). Si viene `body`, manda `body`. */
   bodyText?: string;
   visibleToClients?: boolean;
+}
+
+/** Cuerpo del elemento desde el documento o el texto plano. null = sin cuerpo. */
+function cuerpo(datos: { body?: unknown; bodyText?: string | null }): DocumentoProcesado | null {
+  if (datos.body !== undefined && datos.body !== null) {
+    const d = procesarDocumento(datos.body);
+    return documentoVacio(d) ? null : d;
+  }
+  const t = datos.bodyText?.trim();
+  return t ? procesarDocumento(documentoDesdeTexto(t)) : null;
+}
+
+/** Columnas de cuerpo para guardar (las tres formas del mismo texto). */
+function columnasCuerpo(d: DocumentoProcesado | null) {
+  return d
+    ? { body: d.json as object, bodyHtml: d.html, bodyText: d.texto }
+    : { body: Prisma.DbNull, bodyHtml: null, bodyText: null };
 }
 
 export async function crearElemento(tx: Tx, actor: Actor, projectId: string, datos: DatosNuevo) {
@@ -131,9 +155,9 @@ export async function crearElemento(tx: Tx, actor: Actor, projectId: string, dat
     throw new HttpError(400, `Un elemento de tipo ${datos.type} no puede ir ${tipoPadre ? `dentro de ${tipoPadre}` : 'en la raíz'}.`);
   }
   const title = datos.title?.trim() || null;
-  const bodyText = datos.bodyText?.trim() || null;
+  const doc = cuerpo(datos);
   if (LLEVA_TITULO.includes(datos.type) && !title) throw new HttpError(400, 'Falta el título.');
-  if (datos.type === 'comment' && !bodyText) throw new HttpError(400, 'El comentario está vacío.');
+  if (datos.type === 'comment' && !doc) throw new HttpError(400, 'El comentario está vacío.');
 
   // Visibilidad: el cliente crea visible; el comentario copia la de su padre; el resto elige.
   const visibleToClients =
@@ -155,26 +179,37 @@ export async function crearElemento(tx: Tx, actor: Actor, projectId: string, dat
       parentId,
       creatorId: actor.ctx.userId,
       title: datos.type === 'comment' ? null : title,
-      bodyText,
+      ...columnasCuerpo(doc),
       visibleToClients,
       position: (ultimo._max.position ?? 0) + 1,
     },
     select: SELECCION,
   });
+  const visibleEnCadena = visibleToClients && (padre?.visible ?? true);
+  const mencionados = doc
+    ? await guardarMenciones(tx, {
+        accountId: actor.ctx.accountId,
+        projectId,
+        recordingId: creado.id,
+        ids: doc.menciones,
+        visibleParaClientes: visibleEnCadena,
+      })
+    : [];
   await registrarEvento(tx, {
     accountId: actor.ctx.accountId,
     projectId,
     recordingId: creado.id,
     actorId: actor.ctx.userId,
     action: 'created',
-    details: { type: creado.type },
-    visibleToClients: visibleToClients && (padre?.visible ?? true),
+    details: { type: creado.type, ...(mencionados.length ? { mencionados } : {}) },
+    visibleToClients: visibleEnCadena,
   });
-  return creado;
+  return { ...creado, mencionados };
 }
 
 export interface DatosEdicion {
   title?: string;
+  body?: unknown;
   bodyText?: string | null;
   visibleToClients?: boolean;
   position?: number;
@@ -184,17 +219,18 @@ export async function editarElemento(tx: Tx, actor: Actor, id: string, datos: Da
   const { proyecto, elemento } = await elementoPara(tx, actor, id, 'elemento.editar', 'Solo quien lo creó o un administrador puede editarlo.');
   const actual = await tx.recording.findUniqueOrThrow({ where: { id }, select: { title: true, bodyText: true, visibleToClients: true } });
 
-  const cambios: { title?: string; bodyText?: string | null; visibleToClients?: boolean; position?: number } = {};
+  const cambios: Prisma.RecordingUpdateInput = {};
+  let doc: DocumentoProcesado | null | undefined; // undefined = el cuerpo no cambia
   if (datos.title !== undefined) {
     if (!LLEVA_TITULO.includes(elemento.type)) throw new HttpError(400, 'Este elemento no lleva título.');
     const t = datos.title.trim();
     if (!t) throw new HttpError(400, 'Falta el título.');
     cambios.title = t;
   }
-  if (datos.bodyText !== undefined) {
-    const b = datos.bodyText?.trim() || null;
-    if (elemento.type === 'comment' && !b) throw new HttpError(400, 'El comentario está vacío.');
-    cambios.bodyText = b;
+  if (datos.body !== undefined || datos.bodyText !== undefined) {
+    doc = cuerpo(datos);
+    if (elemento.type === 'comment' && !doc) throw new HttpError(400, 'El comentario está vacío.');
+    Object.assign(cambios, columnasCuerpo(doc));
   }
   if (datos.position !== undefined) cambios.position = datos.position;
   if (datos.visibleToClients !== undefined && datos.visibleToClients !== actual.visibleToClients) {
@@ -205,19 +241,35 @@ export async function editarElemento(tx: Tx, actor: Actor, id: string, datos: Da
 
   const editado = await tx.recording.update({ where: { id }, data: cambios, select: SELECCION });
   const visible = await visibleEfectivo(tx, id);
+  let mencionados: string[] = [];
+  if (doc !== undefined || cambios.visibleToClients !== undefined) {
+    // Si cambió el texto o la visibilidad, las menciones se recalculan (un cliente deja de
+    // contar como mencionado si el elemento pasa a interno).
+    const actualDoc = doc !== undefined ? doc : editado.body ? procesarDocumento(editado.body) : null;
+    mencionados = await guardarMenciones(tx, {
+      accountId: actor.ctx.accountId,
+      projectId: proyecto.id,
+      recordingId: id,
+      ids: actualDoc?.menciones ?? [],
+      visibleParaClientes: visible,
+    });
+  }
   const base = { accountId: actor.ctx.accountId, projectId: proyecto.id, recordingId: id, actorId: actor.ctx.userId };
   if (cambios.visibleToClients !== undefined) {
     await registrarEvento(tx, { ...base, action: 'visibility_changed', details: { to: cambios.visibleToClients }, visibleToClients: visible });
   }
-  if (cambios.title !== undefined || cambios.bodyText !== undefined) {
+  if (cambios.title !== undefined || doc !== undefined) {
     await registrarEvento(tx, {
       ...base,
       action: 'updated',
-      details: cambios.title !== undefined && cambios.title !== actual.title ? { title: { from: actual.title, to: cambios.title } } : {},
+      details: {
+        ...(cambios.title !== undefined && cambios.title !== actual.title ? { title: { from: actual.title, to: cambios.title } } : {}),
+        ...(mencionados.length ? { mencionados } : {}),
+      },
       visibleToClients: visible,
     });
   }
-  return editado;
+  return { ...editado, mencionados };
 }
 
 /** A la papelera: deja de verse con todo lo que tiene dentro. Se purga a los 30 días (día 14). */

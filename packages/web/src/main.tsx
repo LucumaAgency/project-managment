@@ -1,4 +1,4 @@
-import { StrictMode } from 'react';
+import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Marco from './componentes/Marco';
@@ -12,6 +12,9 @@ import Personas from './paginas/Personas';
 import Portada from './paginas/Portada';
 import Proyecto from './paginas/Proyecto';
 import './estilos.css';
+
+// Página de prueba del editor: solo en desarrollo (Vite la quita del build de producción).
+const PruebaEditor = import.meta.env.DEV ? lazy(() => import('./paginas/PruebaEditor')) : null;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -29,6 +32,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/proyectos/:id" element={<Proyecto />} />
             <Route path="/personas" element={<Personas />} />
             <Route path="/mi-cuenta" element={<MiCuenta />} />
+            {PruebaEditor && <Route path="/_editor" element={<Suspense fallback={null}><PruebaEditor /></Suspense>} />}
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

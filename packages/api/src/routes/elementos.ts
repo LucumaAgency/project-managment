@@ -12,6 +12,7 @@ import {
   SELECCION,
   TIPOS_CREABLES,
 } from '../services/elementos.js';
+import { mencionables } from '../services/menciones.js';
 import { puede } from '../services/permisos.js';
 import { proyectoPara } from '../services/proyectos.js';
 import { exigirCuenta } from '../plugins/contexto.js';
@@ -19,20 +20,25 @@ import { exigirCuenta } from '../plugins/contexto.js';
 /**
  * Rutas genéricas de elementos. Las pantallas de tareas, mensajes y archivos (días 7 a 10)
  * las usan tal cual o con rutas propias que llaman al mismo servicio.
- * Por ahora el cuerpo es texto plano; el editor (día 6) agrega el JSON de Tiptap.
+ * El cuerpo llega como documento del editor (`body`, JSON de Tiptap) o como texto plano
+ * (`bodyText`). El servidor arma el HTML seguro y saca las menciones (lib/documento.ts).
  */
 const titulo = z.string().max(300, 'Máximo 300 caracteres.');
 const texto = z.string().max(50_000, 'El texto es demasiado largo.');
 const id = z.string().min(1).max(40);
+/** Documento del editor: se valida a fondo en procesarDocumento (tipos, formatos, tamaño). */
+const documento = z.record(z.unknown()).nullable();
 const nuevo = z.object({
   type: z.enum(TIPOS_CREABLES),
   parentId: id.nullable().optional(),
   title: titulo.optional(),
+  body: documento.optional(),
   bodyText: texto.optional(),
   visibleToClients: z.boolean().optional(),
 });
 const edicion = z.object({
   title: titulo.optional(),
+  body: documento.optional(),
   bodyText: texto.nullable().optional(),
   visibleToClients: z.boolean().optional(),
   position: z.number().finite().optional(),
@@ -50,6 +56,19 @@ export default async function rutasElementos(app: FastifyInstance) {
     return conCuenta(actor.ctx, async (tx) => {
       const proyecto = await proyectoPara(tx, actor, req.params.id, 'proyecto.ver');
       return { elementos: await listarElementos(tx, actor, proyecto, { parentId: f.padre ?? null, type: f.tipo }) };
+    });
+  });
+
+  /**
+   * A quién se puede mencionar en el proyecto (la lista del @ en el editor). Con
+   * ?interno=1 (elemento no visible para clientes) los clientes no aparecen.
+   */
+  app.get<{ Params: { id: string }; Querystring: { interno?: string } }>('/api/v1/proyectos/:id/mencionables', async (req) => {
+    const actor = exigirCuenta(req);
+    return conCuenta(actor.ctx, async (tx) => {
+      const proyecto = await proyectoPara(tx, actor, req.params.id, 'proyecto.ver');
+      const personas = await mencionables(tx, actor.ctx.accountId, proyecto.id, { incluirClientes: req.query.interno !== '1' });
+      return { personas };
     });
   });
 

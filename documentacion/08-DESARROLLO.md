@@ -47,6 +47,12 @@ npm run usuario -- soporte tu@correo.com --quitar # le quita la marca
 En el servidor, con la API compilada: `npm run usuario:prod -- …` y `npm run cuenta:crear:prod -- …`.
 Soporte entra a cualquier cuenta como admin mientras `SOPORTE_BETA` no sea `0` (D-31).
 
+## Probar el editor en local
+
+Con la API y la web corriendo, entrar y abrir http://localhost:5174/_editor?cuenta=lucuma: guarda
+un mensaje de prueba en el primer proyecto y muestra el HTML que armó el servidor. Esa página
+solo existe en desarrollo (no llega al build de producción).
+
 ## Invitar en local
 
 Personas → Invitar → copiar el enlace y abrirlo en otra ventana privada (o en otro navegador):
@@ -73,6 +79,8 @@ tipos y tests en cada push a `main` y en cada PR.
 | `test/auth.test.ts` | Enlace mágico (queda listo para cuando haya correo) (un uso, vencido, correo inexistente sin aviso, freno de pedidos, enlace armado con el dominio configurado y no con el Host), contraseña (correcta, mismo 401 para todo fallo, bloqueo tras 5 fallos), sesión, sesión que se renueva con el uso (y la vencida no revive), salir invalida la cookie, cookie para todos los subdominios, cambio de contraseña cierra las otras sesiones, rechazo de `text/plain` |
 | `test/invitaciones.test.ts` | Invitaciones: quién invita a quién, proyecto de otra cuenta, reemplazo, enlace de un uso, vencida, renovada, anulada; persona nueva crea su contraseña y entra con el rol y el proyecto; persona existente necesita su sesión (el enlace no da su identidad); no baja el rol de quien ya estaba; desde otra cuenta 404. Límite del plan (cuenta pendientes, no clientes, se revisa al aceptar y al pasar a equipo). Personas: listar, desactivar corta el acceso, reglas de dueño y de uno mismo. Soporte en beta: entra como admin, queda registrado, lista cuentas; con `SOPORTE_BETA=0` no entra. `/config` sin correo |
 | `test/proyectos.test.ts` | Proyectos: quién crea, quién ve (owner todo; equipo y cliente solo los suyos; otra cuenta 404), detalle con permisos y sin correos para el cliente, editar, archivar (solo lectura) y reactivar, papelera y restaurar, límite del plan. Personas del proyecto. Elementos: dónde va cada tipo, posiciones, editar (creador o admin), papelera con lo de adentro y restaurar, eventos. Visibilidad para clientes: no ve lo interno ni por lista, ni por id, ni lo que cuelga de algo interno; lo suyo nace visible; el comentario copia la visibilidad; solo el equipo la cambia |
+| `test/documento.test.ts` | Procesador del editor: HTML y texto de un documento normal, escape de `<script>` y comillas, enlaces `javascript:`/`data:` descartados, `href` y etiqueta de mención escapados, nodos y formatos desconocidos rechazados, atributos inventados ignorados, límites de anidado y tamaño |
+| `test/editor.test.ts` | Cuerpo con el editor por HTTP (HTML seguro, búsqueda, documento inválido no guarda nada, texto plano compatible, comentario vacío) y menciones (solo quien ve el proyecto, nunca un cliente en algo interno, editar y cambiar visibilidad las recalculan, lista del @) |
 | `test/planes.test.ts` | `planPermite()`, excepciones por cuenta (ignora valores raros), plan desconocido, `puedeInvitar()` |
 | `test/host.test.ts` | Lectura del host: subdominio, raíz, reservados, dominios ajenos |
 | `test/semilla.ts` | Crea una cuenta con filas en **todas** las tablas con RLS (un test verifica que ninguna quede vacía) |

@@ -252,6 +252,16 @@ y D-42.
 
 Invitar a un cliente directo a un proyecto usa `POST /api/v1/invitaciones` con `projectId`.
 
+## Texto con formato y menciones
+
+- **Web:** `componentes/Editor.tsx` (Tiptap) con barra de formato, lista del @ y Ctrl+Enter;
+  `Contenido` muestra el `bodyHtml` que devuelve la API. Solo se usa con HTML de la API.
+- **API:** los elementos aceptan `body` (JSON del editor) o `bodyText` (texto plano, se
+  convierte a párrafos). `lib/documento.ts` arma `bodyHtml` y `bodyText` y extrae las
+  menciones (D-47); `services/menciones.ts` guarda solo las válidas (D-48).
+- `GET /api/v1/proyectos/:id/mencionables[?interno=1]`: la lista del @.
+- La búsqueda usa `bodyText`, así que encuentra también lo escrito con el editor.
+
 ## Visibilidad para clientes
 
 Lógica en `services/elementos.ts` (cadena de padres) y `services/permisos.ts` (decisión):

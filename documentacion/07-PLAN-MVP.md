@@ -32,7 +32,7 @@ cobros, onboarding de prueba, app móvil.
 | Web | React + Vite (SPA), CSS propio con el sistema visual del CRM | Igual que el CRM (D-33) |
 | Base | **PostgreSQL 16** + Prisma | Distinto del CRM (MariaDB): RLS y búsqueda |
 | Cola | Tabla `jobs` + worker con `SKIP LOCKED` | Patrón del CRM. Sin Redis: sin chat no hay tiempo real |
-| Editor | Tiptap (+ extensión Mention) | MIT |
+| Editor | Tiptap 2.27 (+ Mention, Link, Placeholder) | MIT. HTML armado en el servidor (D-47) |
 | Archivos | Cloudflare R2 + URL firmada + Uppy | El archivo no pasa por el servidor |
 | Miniaturas | sharp (imágenes) + pdftoppm (PDF) en job | |
 | Correo | Brevo | En espera: el MVP no envía correos (D-32) |
@@ -118,7 +118,7 @@ que no ve nada de B. Corre en CI siempre.
 
 | Día | Qué | Termina con |
 |---|---|---|
-| 6 | Editor Tiptap compartido: JSON → HTML sanitizado + texto plano en el servidor; extracción de menciones | Componente `<Editor>` reutilizable |
+| 6 ✅ | Editor Tiptap compartido: JSON → HTML sanitizado + texto plano en el servidor; extracción de menciones | Componente `<Editor>` reutilizable |
 | 7 | Tareas: listas, crear, ordenar (position), asignar, fecha, completar/reabrir | Lista de tareas usable |
 | 8 | Comentarios genéricos (cualquier recording) + menciones + suscripciones automáticas | Comentar en una tarea y mencionar |
 | 9 | Mensajes (listado + detalle + comentarios) y feed de actividad del proyecto | Proyecto con tareas, mensajes y actividad |
