@@ -15,7 +15,13 @@ export type AccionEvento =
   | 'unarchived'
   | 'visibility_changed'
   | 'member_added'
-  | 'member_removed';
+  | 'member_removed'
+  | 'moved'
+  | 'completed'
+  | 'reopened'
+  | 'assigned'
+  | 'unassigned'
+  | 'due_changed';
 
 export async function registrarEvento(
   tx: Tx,

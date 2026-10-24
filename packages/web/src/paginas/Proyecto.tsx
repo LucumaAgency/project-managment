@@ -10,8 +10,8 @@ import { useYo } from '../contexto';
 
 const fecha = (iso: string) => new Date(iso).toLocaleDateString('es-PE', { day: 'numeric', month: 'long' });
 
-const SECCIONES: { clave: keyof ProyectoDetalle['secciones']; nombre: string; icono: NombreIcono; vacia: string; uno: string; varios: string }[] = [
-  { clave: 'tareas', nombre: 'Tareas', icono: 'tareas', vacia: 'Las listas de tareas del proyecto aparecerán aquí.', uno: 'lista', varios: 'listas' },
+const SECCIONES: { clave: keyof ProyectoDetalle['secciones']; nombre: string; icono: NombreIcono; vacia: string; uno: string; varios: string; ruta?: string }[] = [
+  { clave: 'tareas', nombre: 'Tareas', icono: 'tareas', vacia: 'Las listas de tareas del proyecto aparecerán aquí.', uno: 'lista', varios: 'listas', ruta: 'tareas' },
   { clave: 'mensajes', nombre: 'Mensajes', icono: 'mensajes', vacia: 'Anuncios y temas para conversar con el equipo y el cliente.', uno: 'mensaje', varios: 'mensajes' },
   { clave: 'archivos', nombre: 'Archivos', icono: 'archivo', vacia: 'Entregables, briefs y documentos, con sus versiones.', uno: 'elemento', varios: 'elementos' },
 ];
@@ -141,15 +141,20 @@ export default function Proyecto() {
       <div className="secciones">
         {SECCIONES.map((s) => {
           const n = d.secciones[s.clave];
-          return (
-            <section key={s.clave} className="seccion" aria-label={s.nombre}>
+          const interior = (
+            <>
               <div className="seccion-cab">
                 <Icono nombre={s.icono} />
                 {s.nombre}
                 {n > 0 && <span className="cuenta">{n} {n === 1 ? s.uno : s.varios}</span>}
               </div>
-              <div className="vacia">{n === 0 ? s.vacia : 'Muy pronto vas a poder abrir esta sección.'}</div>
-            </section>
+              <div className="vacia">{s.ruta ? (n === 0 ? s.vacia : 'Abrir las listas de tareas') : n === 0 ? s.vacia : 'Muy pronto vas a poder abrir esta sección.'}</div>
+            </>
+          );
+          return s.ruta ? (
+            <Link key={s.clave} to={`/proyectos/${p.id}/${s.ruta}`} className="seccion seccion-enlace" aria-label={s.nombre}>{interior}</Link>
+          ) : (
+            <section key={s.clave} className="seccion" aria-label={s.nombre}>{interior}</section>
           );
         })}
       </div>

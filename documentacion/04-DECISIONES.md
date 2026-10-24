@@ -271,6 +271,18 @@ proyecto) y, si el elemento es interno, nunca las de clientes. Editar el texto o
 visibilidad las recalcula. La lista del @ (`/proyectos/:id/mencionables`) sigue la misma regla.
 Los avisos a los mencionados llegan con la bandeja (día 11).
 
+**D-49 · Tareas: quién hace qué** (2026-10-24, día 7)
+- Crear listas: el equipo. Crear tareas: el equipo y el cliente (en listas que ve; nacen visibles).
+- Editar título y notas: cualquiera del equipo del proyecto (D-41); el cliente, solo las suyas.
+- Responsables y fecha: solo el equipo. Responsable solo puede ser alguien que ve la tarea; si la
+  tarea pasa a interna, los clientes dejan de ser responsables.
+- Completar y reabrir: cualquiera del equipo; el cliente, las que creó o le asignaron.
+- Ordenar y pasar a otra lista: el equipo (arrastrando en escritorio; flechas y selector de
+  lista en el detalle, que es lo que funciona en celular).
+- Cada cambio queda en la actividad: creada, completada, reabierta, asignada, desasignada,
+  cambio de fecha, movida.
+- Fecha sin hora (`AAAA-MM-DD`): "para el viernes" no depende de la zona horaria.
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

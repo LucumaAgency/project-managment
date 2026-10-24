@@ -222,6 +222,7 @@ SPA React con React Router (`packages/web`), con el sistema visual del CRM (D-33
   cuentas (con la sección de soporte), Invitación.
 - **Dentro de una cuenta** (`Marco`: menú lateral, barra superior, franja de soporte):
   Proyectos (activos, archivados, papelera), Proyecto (cabecera, acciones, personas, secciones),
+  Tareas (listas, agregar rápido, completar, arrastrar, detalle con notas, responsables y fecha),
   Personas (clientes no la ven), Mi cuenta. `Marco` carga `/yo` una vez y lo comparte con
   `useYo()`.
 - Componentes: `Icono` (trazos propios, sin librería), `Marca`, `Modal`, `EnlaceCompartir`.
@@ -251,6 +252,23 @@ y D-42.
 | `GET /api/v1/proyectos/:id/papelera` | Lo borrado del proyecto (owner/admin) |
 
 Invitar a un cliente directo a un proyecto usa `POST /api/v1/invitaciones` con `projectId`.
+
+## Tareas
+
+`services/tareas.ts` + `routes/tareas.ts` (reglas en D-49). Una lista es un elemento
+`todolist`; una tarea, un `todo` dentro de ella con su `TodoDetail` (fecha, completada por y
+cuándo) y sus `TodoAssignee`. Ordenar usa el movimiento genérico de elementos.
+
+| Ruta | Qué hace |
+|---|---|
+| `GET /api/v1/proyectos/:id/tareas` | Listas con sus tareas y lo que puedo hacer en cada una |
+| `POST /api/v1/proyectos/:id/listas` | Crear lista |
+| `POST /api/v1/listas/:id/tareas` | Crear tarea (título, notas, fecha, responsables, visible) |
+| `GET · PATCH /api/v1/tareas/:id` | Detalle (con el documento de las notas) y editar |
+| `POST /api/v1/tareas/:id/completar · reabrir` | Completar y reabrir |
+| `POST /api/v1/elementos/:id/mover` | Ordenar (`despuesDe`) o pasar a otra lista (`parentId`); renumera si el hueco se agota |
+
+Listas: renombrar y papelera con las rutas genéricas de elementos.
 
 ## Texto con formato y menciones
 

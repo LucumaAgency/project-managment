@@ -154,3 +154,38 @@ export interface ProyectoDetalle {
   secciones: { tareas: number; mensajes: number; archivos: number };
   permisos: { editar: boolean; archivar: boolean; papelera: boolean; personas: boolean; verPapelera: boolean };
 }
+
+export interface Tarea {
+  id: string;
+  listaId: string;
+  title: string;
+  bodyHtml: string | null;
+  tieneNotas: boolean;
+  body?: unknown;
+  visibleToClients: boolean;
+  position: number;
+  createdAt: string;
+  creator: { id: string; name: string };
+  dueOn: string | null;
+  completedAt: string | null;
+  completedBy: { id: string; name: string } | null;
+  assignees: { userId: string; name: string }[];
+}
+export interface ListaTareas {
+  id: string;
+  title: string;
+  bodyHtml: string | null;
+  body: unknown;
+  visibleToClients: boolean;
+  position: number;
+  permisos: { editar: boolean; papelera: boolean; agregar: boolean; mover: boolean };
+  tareas: Tarea[];
+}
+export interface TareasProyecto {
+  listas: ListaTareas[];
+  permisos: { crearLista: boolean; completarCualquiera: boolean; asignar: boolean };
+}
+export interface TareaDetalle {
+  tarea: Tarea;
+  permisos: { editar: boolean; completar: boolean; asignar: boolean; papelera: boolean; cambiarVisibilidad: boolean; mover: boolean };
+}
