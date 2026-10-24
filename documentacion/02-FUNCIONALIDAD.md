@@ -73,10 +73,12 @@ cómo técnico está en [03-ARQUITECTURA.md](03-ARQUITECTURA.md).
 ### 7. Notificaciones
 
 - **Bandeja** en la app con todo lo que te toca, con contador de no leídos.
-- **Correo inmediato** solo cuando te mencionan o te asignan algo.
-- **Resumen diario** por correo con el resto (comentarios en lo que sigues), a la hora local
+- En el MVP no hay correo: todo llega a la bandeja (D-32, D-38).
+- **Recordatorio** en la bandeja de tareas tuyas que vencen mañana o ya vencieron.
+- **Resumen diario** en la bandeja con el resto (comentarios en lo que sigues), a la hora local
   de cada persona.
-- **Recordatorio** de tareas tuyas que vencen mañana.
+- Cuando haya correo: inmediato solo cuando te mencionan o te asignan algo, y el resumen diario
+  también por correo.
 - Preferencia por cuenta: inmediato, solo resumen o nunca.
 - Regla: si cada comentario manda un correo, la gente apaga todo. Por defecto, poco correo.
 

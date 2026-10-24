@@ -18,7 +18,7 @@ pendientes** del proyecto.
 | 9 | Mensajes y actividad | Pendiente |
 | 10 | Archivos | Pendiente |
 | 11 | Bandeja de notificaciones | Pendiente |
-| 12 | Correos, resumen diario, recordatorios | En espera (sin correo en el MVP, C-8) |
+| 12 | Recordatorios dentro de la app | Pendiente |
 | 13 | Vista del cliente | Pendiente |
 | 14 | Papelera, búsqueda, celular, exportación | Pendiente |
 | 15 | Servidor y salida a producción | Pendiente |
@@ -215,24 +215,28 @@ Notas:
   de prueba en `lucuma`; `dev@lucumaagency.com` es soporte. Solo existen en esta máquina.
 - Capturas en [capturas/](capturas/) (`dia4-*`).
 
+### 2026-10-24 · Respuestas del usuario a C-3 y C-8 … C-11
+
+| # | Respuesta | Qué cambió |
+|---|---|---|
+| C-3 | Sí, que se renueve con el uso | Hecho: la sesión vence tras 30 días sin entrar (D-37). 3 tests nuevos, 91 en total |
+| C-8 | "Claro que sea dentro de la app" | El día 12 pasa a recordatorios en la bandeja (D-38) |
+| C-9 | Lo de hoy está bien | Soporte sigue con permisos de admin (D-39) |
+| C-10 | Hoy | Enlace de invitación: 7 días, un uso (D-39) |
+| C-11 | Hoy | Contraseña olvidada: la restablece soporte por consola (D-39) |
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
 si no hay comentario, quedan así. Las respondidas están arriba, en la bitácora.
 
-| # | Tema | Lo que hice | Alternativa |
-|---|---|---|---|
-| C-3 | Duración de la sesión | 30 días fijos desde que se entra; al día 31 pide la contraseña aunque se use a diario | **Recomendado:** que se renueve con el uso (vence solo tras 30 días **sin** entrar) |
-| C-8 | Día 12 (correos) sin correo | En espera. La bandeja del día 11 cubre los avisos dentro de la app | Usar ese día para recordatorios de vencimiento dentro de la app, o adelantar el día 13 (vista del cliente) |
-| C-9 | Qué puede hacer soporte en una cuenta ajena | Todo lo de un administrador (invitar, cambiar roles) | Solo mirar (lectura) |
-| C-10 | Vigencia del enlace de invitación | 7 días, un uso | Más días (14 o 30) |
-| C-11 | Contraseña olvidada | Solo soporte de Lucuma, por consola (`npm run usuario -- clave`) | Que el dueño o admin genere un enlace para crear contraseña nueva a su equipo (solo para personas que estén únicamente en su cuenta) |
+Nada pendiente por ahora.
 
 ## Pendientes
 
 ### MVP (en orden)
 
-- [ ] Días 5 a 15 según [07-PLAN-MVP.md](07-PLAN-MVP.md) (el 12 en espera, C-8).
+- [ ] Días 5 a 15 según [07-PLAN-MVP.md](07-PLAN-MVP.md).
 - [ ] Antes del día 15: contratar el servidor Vultr, crear el bucket R2, cuenta de Sentry, dominio de la app.
 
 ### Decisiones abiertas

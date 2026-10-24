@@ -168,6 +168,21 @@ Owner y admin cambian rol, desactivan y reactivan. El dueño no cambia por esta 
 transferencia de dueño llega aparte) y nadie se cambia a sí mismo, para no quedarse fuera por
 error. Desactivar corta el acceso en la petición siguiente; no borra nada de lo que hizo.
 
+**D-37 · La sesión se renueva con el uso** (2026-10-24, decidido por el usuario, C-3)
+Vence tras 30 días **sin** entrar, no 30 días desde el login. Cada petición con una sesión
+renovada hace más de un día corre su vencimiento a 30 días y repone la cookie; así se escribe
+en la base como mucho una vez al día por sesión. Una sesión vencida no revive.
+
+**D-38 · Día 12: recordatorios dentro de la app, no correos** (2026-10-24, decidido por el usuario, C-8)
+Sin correo en el MVP (D-32), el día 12 se usa para avisos en la bandeja: tareas que vencen
+mañana, tareas vencidas y lo que hoy iría al resumen diario. Un job diario los genera según la
+zona horaria de cada persona. Cuando haya correo, el mismo job también lo envía.
+
+**D-39 · Se quedan como están: soporte admin, enlace de 7 días, contraseña por soporte** (2026-10-24, decidido por el usuario, C-9 a C-11)
+Soporte entra con permisos de administrador (D-31). El enlace de invitación dura 7 días y
+sirve una vez (D-34). La contraseña olvidada la restablece soporte de Lucuma por consola (D-32);
+las agencias no generan enlaces de contraseña para su equipo.
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

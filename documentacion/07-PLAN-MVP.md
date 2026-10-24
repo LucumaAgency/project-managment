@@ -15,7 +15,7 @@ Entra:
 4. Mensajes: anuncios o temas del proyecto
 5. Archivos: subida directa a R2, vista previa, versiones
 6. Comentarios y @menciones en todo
-7. Notificaciones: bandeja (correo y resumen diario en espera: no hay correo en el MVP, ver C-8)
+7. Notificaciones: bandeja y recordatorios dentro de la app (sin correo en el MVP, D-32 y D-38)
 8. Vista del cliente: solo ve lo marcado como visible
 9. Actividad y papelera (30 días)
 
@@ -129,7 +129,7 @@ que no ve nada de B. Corre en CI siempre.
 | Día | Qué | Termina con |
 |---|---|---|
 | 11 | Job `notify.fanout`: Event → Notification (mencionado, asignado, suscrito). Bandeja con no leídos | Bandeja funcionando |
-| 12 ⏸ | ~~Correo inmediato, resumen diario, recordatorio de vencimiento, preferencias~~ En espera: sin correo en el MVP (D-32). Qué hacer con este día: C-8 | — |
+| 12 | Recordatorios dentro de la app (D-38): job diario por zona horaria con tareas que vencen mañana y vencidas, y el resumen de lo que sigues, todo en la bandeja; preferencias de aviso | Recordatorios llegando a la bandeja |
 | 13 | Vista del cliente: interruptor "visible para el cliente", herencia de visibilidad, feed filtrado, prueba entrando como cliente | Cliente ve solo lo suyo |
 | 14 | Papelera con purga a 30 días, búsqueda simple (tsvector), responsive móvil, exportar cuenta (ZIP) | Todo usable en celular |
 | 15 | Servidor Vultr + CloudPanel, Postgres, cron del worker, R2, Sentry, respaldo diario, carga de Lucuma (Brevo cuando haya correo) | En producción con el equipo dentro |

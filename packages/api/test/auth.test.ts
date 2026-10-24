@@ -155,6 +155,40 @@ describe('sesión', () => {
   });
 });
 
+describe('sesión que se renueva con el uso', () => {
+  const DIA = 86_400_000;
+  async function sesionQueVence(enDias: number) {
+    const token = `renovable-${sufijo()}${sufijo()}`;
+    const fila = await prismaAdmin.session.create({
+      data: { userId: A.ownerId, tokenHash: hashToken(token), expiresAt: new Date(Date.now() + enDias * DIA) },
+    });
+    return { token, id: fila.id };
+  }
+
+  it('si se usa, vuelve a durar 30 días y la cookie se repone', async () => {
+    const { token, id } = await sesionQueVence(3);
+    const r = await app.inject({ url: '/api/v1/auth/sesion', headers: conCookie(token) });
+    expect(r.statusCode).toBe(200);
+    const vence = (await prismaAdmin.session.findUniqueOrThrow({ where: { id } })).expiresAt.getTime();
+    expect(vence).toBeGreaterThan(Date.now() + 29 * DIA);
+    const cookie = cookieDe(r)!;
+    expect(cookie.value).toBe(token);
+    expect(new Date(cookie.expires!).getTime()).toBeGreaterThan(Date.now() + 29 * DIA);
+  });
+
+  it('recién renovada no vuelve a escribir (máximo una vez al día)', async () => {
+    const { token } = await sesionQueVence(29.9);
+    const r = await app.inject({ url: '/api/v1/auth/sesion', headers: conCookie(token) });
+    expect(r.statusCode).toBe(200);
+    expect(cookieDe(r)).toBeUndefined();
+  });
+
+  it('vencida no revive aunque se use', async () => {
+    const { token } = await sesionQueVence(-0.01);
+    expect((await app.inject({ url: '/api/v1/auth/sesion', headers: conCookie(token) })).statusCode).toBe(401);
+  });
+});
+
 describe('cambiar contraseña', () => {
   it('exige la actual, cierra las otras sesiones y deja viva esta', async () => {
     const D = await sembrarCuenta('D');

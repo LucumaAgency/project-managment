@@ -5,7 +5,7 @@ import { conCuenta, type Contexto } from '../lib/contexto.js';
 import { cuentaPorSlug, type CuentaResuelta } from '../lib/cuenta.js';
 import { HttpError } from '../lib/errores.js';
 import { destinoDesdeHost } from '../lib/host.js';
-import { COOKIE_SESION, usuarioDeSesion, type UsuarioSesion } from '../lib/sesion.js';
+import { COOKIE_SESION, ponerCookieSesion, usuarioDeSesion, type UsuarioSesion } from '../lib/sesion.js';
 
 export interface ConfigApp {
   baseDomain: string;
@@ -51,14 +51,23 @@ export function registrarContexto(app: FastifyInstance, config: ConfigApp) {
   app.decorateRequest('usuario', null);
   app.decorateRequest('miembro', null);
 
-  app.addHook('onRequest', async (req) => {
+  app.addHook('onRequest', async (req, reply) => {
     req.slugPedido = slugDePeticion(req, baseDomain);
     const [cuenta, usuario] = await Promise.all([
       req.slugPedido ? cuentaPorSlug(req.slugPedido) : null,
       usuarioDeSesion(req.cookies?.[COOKIE_SESION]),
     ]);
     req.cuenta = cuenta;
-    req.usuario = usuario;
+    if (usuario?.renovadaHasta) {
+      // Sesión renovada con el uso: la cookie también corre su vencimiento.
+      ponerCookieSesion(reply, req.cookies[COOKIE_SESION]!, usuario.renovadaHasta, baseDomain);
+    }
+    if (usuario) {
+      const { renovadaHasta: _, ...resto } = usuario;
+      req.usuario = resto;
+    } else {
+      req.usuario = null;
+    }
 
     if (cuenta && usuario && !cuenta.cerrada) {
       // La membresía también pasa por RLS: se lee con la cuenta ya fijada.

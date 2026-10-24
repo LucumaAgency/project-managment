@@ -150,8 +150,10 @@ se entra con correo y contraseña. Rutas en `routes/auth.ts`:
 
 - **Contraseñas:** las del dueño las genera `cuenta:crear`; las de invitados las elige la
   persona al aceptar; si alguien la olvida, soporte genera otra con `npm run usuario -- clave`.
-- **Cookie** `pm_sesion`: HttpOnly, SameSite=Lax, Secure en producción, 30 días desde que se
-  entra (ver C-3). Con dominio base va a `.dominio`: una sesión sirve para todas las cuentas.
+- **Cookie** `pm_sesion`: HttpOnly, SameSite=Lax, Secure en producción. Se renueva con el uso
+  (D-37): vence tras 30 días sin entrar; se corre como mucho una vez al día en el hook de
+  contexto, que repone la cookie. Con dominio base va a `.dominio`: una sesión sirve para todas
+  las cuentas.
 - **Enlaces** (correo e invitaciones, `lib/enlaces.ts`): se arman solo con el dominio
   configurado (o `APP_URL`), nunca con el Host de la petición. Si no, alguien podría hacer que
   el enlace de otra persona apunte a su sitio (lo prueba un test).
