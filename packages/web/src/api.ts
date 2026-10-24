@@ -319,3 +319,28 @@ export interface Aviso {
   evento: Evento | null;
   recordatorio: { tarea: string; dueOn: string | null; tipo: 'manana' | 'vencida'; completada: boolean } | null;
 }
+
+// ── Búsqueda (día 14) ────────────────────────────────────────────────────────
+export type Marcas = [number, number][];
+export interface ResultadoBusqueda {
+  id: string;
+  type: 'todolist' | 'todo' | 'message' | 'folder' | 'upload' | 'comment';
+  titulo: { texto: string; marcas: Marcas };
+  fragmento: { texto: string; marcas: Marcas } | null;
+  proyecto: { id: string; name: string; archivado: boolean };
+  abre: { id: string; type: string };
+  completada?: boolean;
+  autor: { id: string; name: string };
+  updatedAt: string;
+}
+export interface Busqueda {
+  terminos: string[];
+  proyectos: { id: string; name: string; archivado: boolean; marcas: Marcas }[];
+  resultados: ResultadoBusqueda[];
+}
+
+/** Descarga de la exportación de la cuenta (la cuenta va en la URL, como los archivos). */
+export function urlExportar() {
+  const cuenta = cuentaLocal();
+  return `/api/v1/cuenta/exportar${cuenta ? `?cuenta=${encodeURIComponent(cuenta)}` : ''}`;
+}

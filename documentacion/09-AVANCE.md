@@ -554,6 +554,33 @@ Probado:
 
 Para desplegar: Git → Desplegar y reiniciar. Sin migraciones.
 
+### 2026-10-24 · Día 14
+
+Hecho:
+
+- **Papelera que se vacía sola** (D-56): a los 30 días se borra de verdad, con lo de adentro y
+  los archivos del disco. Corre con el latido (la respuesta ahora trae `purga`) y al usar la
+  app; a mano, `purgar:prod`. Pantalla nueva por proyecto: menú ··· → **Ver lo borrado**, con
+  la fecha en que se borra cada cosa y **Restaurar**.
+- **Búsqueda** (D-57): en el menú lateral, la lupa de arriba en celular, o la tecla `/`. Sin
+  tildes ni mayúsculas, encuentra palabras a medio escribir, resalta lo encontrado y un
+  comentario abre la tarea o el mensaje comentado. El cliente solo encuentra lo que ve.
+- **Exportar la cuenta** (D-58): Mi cuenta → Descargar ZIP (solo el dueño).
+- **Repaso en celular** (390 px) de las 16 pantallas: ninguna se sale de ancho, sin errores. Solo
+  se quitó la ayuda "Ctrl + Enter para enviar" en celular.
+
+Probado:
+
+- 224 tests en verde (21 nuevos: purga, búsqueda, exportación; la búsqueda se sumó al test de
+  fugas del cliente).
+- En navegador real (web compilada), escritorio y celular: búsqueda escribiendo con resaltado y
+  clic al resultado; restaurar desde la papelera y verlo de vuelta en Mensajes; descarga del ZIP
+  desde Mi cuenta (181 entradas con la cuenta local).
+
+Para desplegar (**con migración y con dependencia nueva**): Git → Desplegar → **NPM install** →
+`prisma:deploy` → `base:verificar:prod` → Reiniciar. (`prisma:generate` no hace falta esta vez:
+la migración solo cambia funciones de la base, no el schema; correrlo igual no hace daño.)
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -567,7 +594,7 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
 ### MVP (en orden)
 
-- [ ] Días 5 a 15 según [07-PLAN-MVP.md](07-PLAN-MVP.md).
+- [ ] Día 15 según [07-PLAN-MVP.md](07-PLAN-MVP.md): Sentry, respaldo diario (base + `privados/`), cargar los proyectos reales de Lucuma.
 - [ ] Más adelante: cambiar las contraseñas de la base (quedaron en el chat; el usuario decidió no hacerlo todavía, D-46).
 - [ ] Antes del día 15: Sentry, respaldo diario de la base y de la carpeta de archivos.
 

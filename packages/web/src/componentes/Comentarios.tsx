@@ -145,7 +145,7 @@ export default function Comentarios({ elementoId, projectId, interno, onCambio }
             onEnviar={comentar}
           />
           <div className="acciones" style={{ margin: '8px 0 0', justifyContent: 'flex-end' }}>
-            <span className="ayuda" style={{ marginRight: 'auto', marginTop: 0 }}>Ctrl + Enter para enviar</span>
+            <span className="ayuda" style={{ marginRight: 'auto', marginTop: 0 }}><span className="solo-escritorio">Ctrl + Enter para enviar</span></span>
             <button type="button" className="btn" disabled={!nuevo || nuevo.vacio || enviando} onClick={comentar}>
               {enviando ? 'Enviando…' : 'Comentar'}
             </button>

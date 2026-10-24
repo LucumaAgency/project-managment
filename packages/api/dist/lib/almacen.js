@@ -68,6 +68,7 @@ export function almacenEnDisco(raiz) {
         borrar: async (clave) => {
             await fs.rm(ruta(clave), { force: true });
         },
+        existe: (clave) => fs.access(ruta(clave)).then(() => true, () => false),
     };
 }
 let actual = null;

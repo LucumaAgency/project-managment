@@ -27,6 +27,7 @@ export interface Almacen {
   guardar(accountId: string, entrada: Readable, maxBytes: number): Promise<Guardado>;
   leer(clave: string): Readable;
   borrar(clave: string): Promise<void>;
+  existe(clave: string): Promise<boolean>;
 }
 
 const CABECERA = 32;
@@ -80,6 +81,11 @@ export function almacenEnDisco(raiz: string): Almacen {
     borrar: async (clave) => {
       await fs.rm(ruta(clave), { force: true });
     },
+    existe: (clave) =>
+      fs.access(ruta(clave)).then(
+        () => true,
+        () => false
+      ),
   };
 }
 

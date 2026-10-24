@@ -3,6 +3,7 @@ import { conCuenta } from '../lib/contexto.js';
 import { leer } from '../lib/validar.js';
 import { crearElemento, editarElemento, elementoPara, listarElementos, moverElemento, papeleraElemento, restaurarElemento, SELECCION, TIPOS_CREABLES, } from '../services/elementos.js';
 import { mencionables } from '../services/menciones.js';
+import { DIAS_PAPELERA } from '../services/purga.js';
 import { puede } from '../services/permisos.js';
 import { proyectoPara } from '../services/proyectos.js';
 import { exigirCuenta } from '../plugins/contexto.js';
@@ -100,7 +101,7 @@ export default async function rutasElementos(app) {
     });
     /**
      * Papelera del proyecto (owner/admin): lo borrado cuyo padre sigue activo. Al restaurar
-     * algo, vuelve con todo lo que tenía dentro.
+     * algo, vuelve con todo lo que tenía dentro. A los 30 días se borra solo (purga.ts).
      */
     app.get('/api/v1/proyectos/:id/papelera', async (req) => {
         const actor = exigirCuenta(req);
@@ -112,10 +113,12 @@ export default async function rutasElementos(app) {
                     status: 'trashed',
                     OR: [{ parentId: null }, { parent: { status: 'active' } }],
                 },
-                select: { ...SELECCION, trashedBy: { select: { id: true, name: true } } },
+                select: { ...SELECCION, trashedBy: { select: { id: true, name: true } }, parent: { select: { type: true, title: true } } },
                 orderBy: { trashedAt: 'desc' },
             });
-            return { elementos };
+            // Cuándo lo borra la purga (services/purga.ts).
+            const seBorraEl = (d) => (d ? new Date(d.getTime() + DIAS_PAPELERA * 86_400_000) : null);
+            return { elementos: elementos.map((e) => ({ ...e, seBorraEl: seBorraEl(e.trashedAt) })), dias: DIAS_PAPELERA };
         });
     });
 }

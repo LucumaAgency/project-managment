@@ -1,10 +1,12 @@
 import { timingSafeEqual } from 'node:crypto';
 import { env } from '../env.js';
 import { HttpError } from '../lib/errores.js';
+import { purgarTodas } from '../services/purga.js';
 import { recordatoriosDeTodas } from '../services/recordatorios.js';
 /**
  * Latido externo (D-54): un servicio de cron de afuera (cron-job.org) llama esta dirección cada
- * hora y la app crea los recordatorios pendientes de todas las cuentas. Mismo patrón que el CRM:
+ * hora y la app crea los recordatorios pendientes de todas las cuentas y purga la papelera
+ * (lo que lleva más de 30 días). Mismo patrón que el CRM:
  * el cron de Plesk corre enjaulado y no sirve.
  *
  * Protegido con CRON_TOKEN (encabezado X-PM-Cron, o ?token= si el servicio no permite
@@ -27,7 +29,8 @@ export default async function rutasCron(app) {
             throw new HttpError(401, 'Token inválido.');
         const inicio = Date.now();
         const r = await recordatoriosDeTodas();
-        return { ok: true, ...r, ms: Date.now() - inicio };
+        const purga = await purgarTodas(new Date(), (e) => app.log.error({ err: e }, 'Purga de papelera'));
+        return { ok: true, ...r, purga, ms: Date.now() - inicio };
     };
     app.get('/api/v1/cron/latido', latido);
     app.post('/api/v1/cron/latido', latido);
