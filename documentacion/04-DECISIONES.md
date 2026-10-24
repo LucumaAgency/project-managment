@@ -245,6 +245,15 @@ tests corren siempre con usuarios `plesk_…` para cubrir el prefijo, y aceptan 
 `TEST_PG_URL_APP` / `TEST_PG_URL_ADMIN`. La suite completa pasó en PostgreSQL 12.22 con la base
 a nombre del servidor (el caso más restrictivo). El piso de versión pasa de 13 a 12.
 
+**D-46 · Archivos en el propio servidor, Node 21 y contraseñas actuales** (2026-10-24, decidido por el usuario)
+- Los archivos (día 10) se guardan en el disco del servidor de Plesk, en una carpeta **fuera**
+  del docroot (como `privados/` del CRM), y se sirven solo por la API a quien puede verlos. R2
+  queda para después; el código de archivos se escribe detrás de una interfaz de almacenamiento
+  para poder cambiar sin tocar el resto. Los archivos entran en el respaldo de la suscripción.
+- Node se queda en 21.7.3: la suscripción no ofrece otra. La app ya funciona con ella
+  (`arranque.cjs`, variables sin comillas).
+- Las contraseñas de la base no se cambian por ahora.
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

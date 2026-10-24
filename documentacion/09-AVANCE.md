@@ -348,9 +348,8 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 ### MVP (en orden)
 
 - [ ] Días 5 a 15 según [07-PLAN-MVP.md](07-PLAN-MVP.md).
-- [ ] Cambiar las contraseñas de `carlosm_pm_admin` y `carlosm_pm_app` (quedaron en el chat) y actualizar el `.env`.
-- [ ] Pedir Node 22 al hosting (la 21 ya no recibe parches de seguridad).
-- [ ] Antes del día 10: bucket R2 para archivos. Antes del día 15: Sentry, respaldo diario de la base.
+- [ ] Más adelante: cambiar las contraseñas de la base (quedaron en el chat; el usuario decidió no hacerlo todavía, D-46).
+- [ ] Antes del día 15: Sentry, respaldo diario de la base y de la carpeta de archivos.
 
 ### Decisiones abiertas
 
