@@ -4,18 +4,22 @@ import { fileURLToPath } from 'node:url';
 // lanza un cron que no corre necesariamente desde la raíz. Las variables ya presentes en el
 // entorno ganan sobre el archivo, así que en el servidor manda el panel.
 const aqui = path.dirname(fileURLToPath(import.meta.url));
+const rutaEnv = path.resolve(aqui, '../../../.env');
+/** Qué pasó con el .env: se dice en el error si falta una variable (diagnóstico en Plesk). */
+let estadoEnv = 'cargado';
 try {
-    process.loadEnvFile(path.resolve(aqui, '../../../.env'));
+    process.loadEnvFile(rutaEnv);
 }
-catch {
-    /* sin .env: solo variables del entorno */
+catch (e) {
+    // Sin .env: solo variables del entorno (panel de Plesk, CI, tests).
+    estadoEnv = e.code === 'ENOENT' ? 'no existe' : `no se pudo leer (${e.message})`;
 }
 const nodeEnv = process.env.NODE_ENV ?? 'development';
 const isProd = nodeEnv === 'production';
 function req(nombre) {
     const v = process.env[nombre];
     if (!v)
-        throw new Error(`Falta la variable de entorno ${nombre}`);
+        throw new Error(`Falta la variable de entorno ${nombre}. Archivo ${rutaEnv}: ${estadoEnv}.`);
     return v;
 }
 /** En producción no acepta el valor de desarrollo: un secreto público que llega a producción no rompe nada visible. */
