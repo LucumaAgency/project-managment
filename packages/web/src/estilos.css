@@ -365,6 +365,19 @@ label.casilla { display: flex; align-items: center; gap: 8px; font-weight: 500; 
 .modal:has(.detalle-tarea) { max-width: 640px; }
 @media (hover: none) { .tarea .asa { display: none; } }
 
+/* --- Comentarios ----------------------------------------------------------- */
+.comentarios { border-top: 1px solid var(--borde); margin-top: 18px; padding-top: 14px; }
+.comentarios-cab { align-items: baseline; flex-wrap: wrap; }
+.lista-comentarios { list-style: none; padding: 0; margin: 10px 0 0; }
+.comentario { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--borde-suave); }
+.comentario .avatar { width: 28px; height: 28px; font-size: 11px; }
+.comentario-cuerpo { flex: 1; min-width: 0; }
+.comentario-cab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; font-size: 13px; margin-bottom: 2px; }
+.comentario-acciones { display: flex; gap: 14px; margin-top: 4px; font-size: 12px; }
+.nuevo-comentario { margin-top: 12px; }
+.nuevo-comentario .editor-area, .comentario .editor-area { min-height: 70px; }
+.con-icono { display: inline-flex; align-items: center; gap: 3px; }
+
 /* --- Texto con formato (editor y contenido guardado) ------------------- */
 .prosa { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
 .prosa > :first-child { margin-top: 0; }

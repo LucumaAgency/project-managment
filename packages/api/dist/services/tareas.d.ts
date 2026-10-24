@@ -72,6 +72,7 @@ export declare function listarTareas(tx: Tx, actor: Actor, proyecto: ProyectoCar
             mover: boolean;
         };
         tareas: {
+            comentarios: number;
             visibleToClients: boolean;
             position: number;
             createdAt: Date;

@@ -270,6 +270,20 @@ cuándo) y sus `TodoAssignee`. Ordenar usa el movimiento genérico de elementos.
 
 Listas: renombrar y papelera con las rutas genéricas de elementos.
 
+## Comentarios y seguir
+
+`services/comentarios.ts`, `services/suscripciones.ts`, `routes/comentarios.ts` (D-50).
+
+| Ruta | Qué hace |
+|---|---|
+| `GET /api/v1/elementos/:id/comentarios` | Comentarios en orden, con qué puedo hacer en cada uno, si sigo el elemento y quiénes lo siguen |
+| `POST /api/v1/elementos/:id/comentarios` | Comentar (documento del editor) |
+| `POST /api/v1/elementos/:id/seguir · dejar-de-seguir` | Seguir a mano |
+
+Editar y borrar un comentario usan las rutas genéricas de elementos. El listado de tareas trae
+cuántos comentarios tiene cada una. Web: `componentes/Comentarios.tsx`, hoy dentro del detalle
+de una tarea; los mensajes (día 9) lo usan igual.
+
 ## Texto con formato y menciones
 
 - **Web:** `componentes/Editor.tsx` (Tiptap) con barra de formato, lista del @ y Ctrl+Enter;

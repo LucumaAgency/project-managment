@@ -120,7 +120,7 @@ que no ve nada de B. Corre en CI siempre.
 |---|---|---|
 | 6 ✅ | Editor Tiptap compartido: JSON → HTML sanitizado + texto plano en el servidor; extracción de menciones | Componente `<Editor>` reutilizable |
 | 7 ✅ | Tareas: listas, crear, ordenar (position), asignar, fecha, completar/reabrir | Lista de tareas usable |
-| 8 | Comentarios genéricos (cualquier recording) + menciones + suscripciones automáticas | Comentar en una tarea y mencionar |
+| 8 ✅ | Comentarios genéricos (cualquier recording) + menciones + suscripciones automáticas | Comentar en una tarea y mencionar |
 | 9 | Mensajes (listado + detalle + comentarios) y feed de actividad del proyecto | Proyecto con tareas, mensajes y actividad |
 | 10 | Archivos en el disco del servidor (D-46), subida, carpetas, versiones, miniaturas, límite de almacenamiento | Subir un PDF y verlo sin descargar |
 

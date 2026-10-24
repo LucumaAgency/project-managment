@@ -14,8 +14,8 @@ pendientes** del proyecto.
 | 5 | Proyectos y servicio genérico de elementos | ✅ 2026-10-24 |
 | 6 | Editor Tiptap | ✅ 2026-10-24 |
 | 7 | Tareas | ✅ 2026-10-24 |
-| 8 | Comentarios, menciones, suscripciones | Siguiente |
-| 9 | Mensajes y actividad | Pendiente |
+| 8 | Comentarios, menciones, suscripciones | ✅ 2026-10-24 |
+| 9 | Mensajes y actividad | Siguiente |
 | 10 | Archivos | Pendiente |
 | 11 | Bandeja de notificaciones | Pendiente |
 | 12 | Recordatorios dentro de la app | Pendiente |
@@ -390,6 +390,29 @@ Problemas encontrados y cómo se resolvieron:
 | Las tareas completadas no quedaban alineadas | No llevan el asa de arrastre | Sangría igual al asa |
 
 Para desplegar: Git → Desplegar y reiniciar. Sin migraciones (las tablas de tareas existían).
+
+### 2026-10-24 · Día 8
+
+Hecho:
+
+- `services/comentarios.ts` + `routes/comentarios.ts`: listar con permisos, comentar, seguir y
+  dejar de seguir (D-50).
+- `services/suscripciones.ts`: siguen solos quien crea, quien comenta, los mencionados y los
+  asignados (enganchado en crear y editar elementos y en asignar tareas).
+- El listado de tareas trae cuántos comentarios tiene cada tarea.
+- Web: `componentes/Comentarios.tsx` (lista, editar el propio, borrar, nuevo con el editor y
+  @menciones, Ctrl+Enter, seguir) dentro del detalle de la tarea; contador en la fila.
+- Detalle de tarea: quien no puede cambiar la fecha la ve como texto, no como campo bloqueado.
+
+Probado:
+
+- 159 tests en verde (9 nuevos en `comentarios.test.ts`).
+- En navegador real, escritorio y celular: el equipo comenta una tarea visible mencionando a la
+  cliente (eligiéndola con @), edita su comentario, deja de seguir y vuelve a seguir; la cliente
+  entra, ve el comentario y responde, sin poder editar el ajeno; la fila muestra 2 comentarios.
+  Sin errores.
+
+Para desplegar: Git → Desplegar y reiniciar. Sin migraciones.
 
 ## Para confirmar
 

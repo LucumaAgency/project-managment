@@ -14,6 +14,7 @@ import { Prisma } from '@prisma/client';
 import { documentoDesdeTexto, documentoVacio, procesarDocumento } from '../lib/documento.js';
 import { HttpError } from '../lib/errores.js';
 import { guardarMenciones } from './menciones.js';
+import { suscribir } from './suscripciones.js';
 import { registrarEvento } from './eventos.js';
 import { exigir } from './permisos.js';
 import { proyectoPara } from './proyectos.js';
@@ -160,6 +161,12 @@ export async function crearElemento(tx, actor, projectId, datos) {
             visibleParaClientes: visibleEnCadena,
         })
         : [];
+    // Siguen lo creado: quien lo crea y los mencionados. En un comentario, lo comentado.
+    await suscribir(tx, {
+        accountId: actor.ctx.accountId,
+        recordingId: datos.type === 'comment' ? parentId : creado.id,
+        userIds: [actor.ctx.userId, ...mencionados],
+    });
     await registrarEvento(tx, {
         accountId: actor.ctx.accountId,
         projectId,
@@ -211,6 +218,12 @@ export async function editarElemento(tx, actor, id, datos) {
             recordingId: id,
             ids: actualDoc?.menciones ?? [],
             visibleParaClientes: visible,
+        });
+        const fila = await tx.recording.findUniqueOrThrow({ where: { id }, select: { type: true, parentId: true } });
+        await suscribir(tx, {
+            accountId: actor.ctx.accountId,
+            recordingId: fila.type === 'comment' && fila.parentId ? fila.parentId : id,
+            userIds: mencionados,
         });
     }
     const base = { accountId: actor.ctx.accountId, projectId: proyecto.id, recordingId: id, actorId: actor.ctx.userId };
