@@ -170,6 +170,8 @@ export interface Tarea {
   completedAt: string | null;
   completedBy: { id: string; name: string } | null;
   assignees: { userId: string; name: string }[];
+  /** Solo en el listado de tareas. */
+  comentarios?: number;
 }
 export interface ListaTareas {
   id: string;

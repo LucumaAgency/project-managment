@@ -9,6 +9,7 @@ import { HttpError } from '../lib/errores.js';
 import { crearElemento, editarElemento, elementoPara } from './elementos.js';
 import { registrarEvento } from './eventos.js';
 import { mencionables } from './menciones.js';
+import { suscribir } from './suscripciones.js';
 import { exigir, puede, type Actor, type ElementoCargado, type ProyectoCargado } from './permisos.js';
 
 const SELECCION_TAREA = {
@@ -84,6 +85,14 @@ export async function listarTareas(tx: Tx, actor: Actor, proyecto: ProyectoCarga
     orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
   })) as FilaTarea[];
 
+  // Cuántos comentarios tiene cada tarea (los que la persona puede ver).
+  const conteos = await tx.recording.groupBy({
+    by: ['parentId'],
+    where: { type: 'comment', status: 'active', parentId: { in: tareas.map((t) => t.id) }, ...visibles },
+    _count: { _all: true },
+  });
+  const comentariosDe = new Map(conteos.map((c) => [c.parentId, c._count._all]));
+
   const permisoLista = (l: (typeof listas)[number]) => {
     const elemento: ElementoCargado = {
       id: l.id,
@@ -110,7 +119,7 @@ export async function listarTareas(tx: Tx, actor: Actor, proyecto: ProyectoCarga
       visibleToClients: l.visibleToClients,
       position: l.position,
       permisos: permisoLista(l),
-      tareas: tareas.filter((t) => t.parentId === l.id).map((t) => aTarea(t)),
+      tareas: tareas.filter((t) => t.parentId === l.id).map((t) => ({ ...aTarea(t), comentarios: comentariosDe.get(t.id) ?? 0 })),
     })),
     permisos: {
       crearLista: puede(actor, 'elemento.crear', { proyecto, tipo: 'todolist' }),
@@ -166,6 +175,8 @@ async function fijarResponsables(
   if (salen.length) await tx.todoAssignee.deleteMany({ where: { recordingId: datos.tareaId, userId: { in: salen } } });
   if (entran.length) {
     await tx.todoAssignee.createMany({ data: entran.map((userId) => ({ accountId: actor.ctx.accountId, recordingId: datos.tareaId, userId })) });
+    // A quien asignan, sigue la tarea.
+    await suscribir(tx, { accountId: actor.ctx.accountId, recordingId: datos.tareaId, userIds: entran });
   }
   const base = { accountId: actor.ctx.accountId, projectId: datos.projectId, recordingId: datos.tareaId, actorId: actor.ctx.userId, visibleToClients: datos.visibleParaClientes };
   if (entran.length) await registrarEvento(tx, { ...base, action: 'assigned', details: { userIds: entran } });

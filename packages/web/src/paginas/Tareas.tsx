@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { esCliente } from '@lucuma-pm/shared';
 import type { JSONContent } from '@tiptap/react';
 import { api, ErrorApi, type ListaTareas, type Tarea, type TareaDetalle, type TareasProyecto } from '../api';
+import Comentarios from '../componentes/Comentarios';
 import Editor, { Contenido, type PersonaMencionable } from '../componentes/Editor';
 import Icono from '../componentes/Icono';
 import Modal from '../componentes/Modal';
@@ -289,6 +290,7 @@ function FilaTarea({ t, lista, esCliente: cliente, puedeCompletar, sobre, onAbri
           {t.assignees.length > 0 && <span>{t.assignees.map((a) => a.name.split(' ')[0]).join(', ')}</span>}
           {t.dueOn && <span className={`chip ${claseFecha(t)}`}>{fechaCorta(t.dueOn)}</span>}
           {t.tieneNotas && <Icono nombre="notas" tam={13} />}
+          {!!t.comentarios && <span className="con-icono" title={`${t.comentarios} comentarios`}><Icono nombre="mensajes" tam={13} />{t.comentarios}</span>}
           {!cliente && t.visibleToClients && <span title="Visible para el cliente"><Icono nombre="ojo" tam={13} /></span>}
           {t.completedBy && <span>Hecha por {t.completedBy.name.split(' ')[0]}</span>}
         </span>
@@ -437,7 +439,11 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
         <div className="rejilla-2">
           <div>
             <label htmlFor="t-dia">Fecha de entrega</label>
-            <input id="t-dia" type="date" value={dia} disabled={!permisos.asignar} onChange={(e) => setDia(e.target.value)} />
+            {permisos.asignar ? (
+              <input id="t-dia" type="date" value={dia} onChange={(e) => setDia(e.target.value)} />
+            ) : (
+              <p className="meta" id="t-dia">{t.dueOn ? fechaCorta(t.dueOn) : 'Sin fecha'}</p>
+            )}
           </div>
           {permisos.cambiarVisibilidad && (
             <div>
@@ -514,6 +520,7 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
           )}
         </div>
       </form>
+      <Comentarios elementoId={t.id} projectId={projectId} interno={!(t.visibleToClients && lista?.visibleToClients)} onCambio={onCambio} />
     </Modal>
   );
 }

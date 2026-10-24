@@ -283,6 +283,17 @@ Los avisos a los mencionados llegan con la bandeja (día 11).
   cambio de fecha, movida.
 - Fecha sin hora (`AAAA-MM-DD`): "para el viernes" no depende de la zona horaria.
 
+**D-50 · Comentarios y quién sigue cada cosa** (2026-10-24, día 8)
+- Se comenta en listas, tareas, mensajes y archivos; no en otro comentario (sin hilos) ni en
+  carpetas. El comentario copia la visibilidad de lo comentado.
+- Editar un comentario: solo quien lo escribió (owner y admin no editan palabras ajenas).
+  Borrar: quien lo escribió, owner o admin.
+- Se **sigue** lo comentado, no el comentario. Siguen solos: quien crea algo, quien comenta, a
+  quien mencionan y a quien asignan. Se puede seguir y dejar de seguir a mano; dejar de seguir
+  no impide volver a quedar siguiendo al comentar o ser mencionado.
+- En algo interno, un cliente mencionado no pasa a seguir (la mención ya no se guarda, D-48).
+- Los seguidores son a quienes llegarán los avisos de comentarios nuevos (día 11).
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)
