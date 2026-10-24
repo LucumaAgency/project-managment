@@ -1,4 +1,6 @@
-# Lucuma Proyectos — plan del MVP
+# 07. Plan del MVP
+
+> Parte de la [documentación](00-INDICE.md). Estado y pendientes: [09-AVANCE.md](09-AVANCE.md).
 
 Herramienta tipo Basecamp para agencias, con portal de clientes. Primero la usa Lucuma; después se vende.
 Fecha del plan: 2026-10-24. Nombre de trabajo; se cambia cuando haya marca.
@@ -42,7 +44,7 @@ Brevo, estructura de monorepo `packages/shared|api|web`, multi-cuenta por subdom
 
 ## 3. Modelo de datos (resumen)
 
-Archivo completo: `prisma/schema.prisma`. Aislamiento y búsqueda: migraciones `rls_busqueda` y `busqueda_por_trigger` en `prisma/migrations/`.
+Archivo completo: `../prisma/schema.prisma`. Explicación en [03-ARQUITECTURA.md](03-ARQUITECTURA.md). Aislamiento y búsqueda: migraciones `rls_busqueda` y `busqueda_por_trigger` en `prisma/migrations/`.
 
 ```
 Account ──< Membership >── User (global)

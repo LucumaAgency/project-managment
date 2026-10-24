@@ -6,7 +6,7 @@
 // La primera vez crea los dos roles y la base, igual que se hará en el servidor:
 //   pm_admin → dueño de las tablas, BYPASSRLS. Migraciones, worker, superadmin.
 //   pm_app   → la API. Sin privilegios: Row Level Security aplica a todas sus consultas.
-// En producción los roles se crean a mano con contraseñas reales (docs/DESARROLLO.md).
+// En producción los roles se crean a mano con contraseñas reales (documentacion/08-DESARROLLO.md).
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
