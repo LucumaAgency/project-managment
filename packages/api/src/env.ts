@@ -15,6 +15,22 @@ try {
   estadoEnv = (e as NodeJS.ErrnoException).code === 'ENOENT' ? 'no existe' : `no se pudo leer (${(e as Error).message})`;
 }
 
+/**
+ * Quita comillas que rodean un valor. El lector de .env de Node 21.7 (el del servidor de
+ * Plesk) deja `BASE_DOMAIN=""` como el texto `""` en vez de vacío, y eso rompió la cookie de
+ * sesión (2026-10-24). Se normalizan solo las variables de la app.
+ */
+const VARIABLES = [
+  'NODE_ENV', 'PORT', 'DATABASE_URL', 'DATABASE_ADMIN_URL', 'APP_URL', 'SESSION_SECRET', 'BASE_DOMAIN',
+  'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'MAIL_FROM', 'SOPORTE_BETA',
+];
+for (const nombre of VARIABLES) {
+  const v = process.env[nombre];
+  if (v === undefined) continue;
+  const m = /^\s*(["'])([\s\S]*)\1\s*$/.exec(v);
+  process.env[nombre] = m ? m[2] : v.trim();
+}
+
 const nodeEnv = process.env.NODE_ENV ?? 'development';
 const isProd = nodeEnv === 'production';
 
@@ -32,6 +48,15 @@ function reqEnProduccion(nombre: string, dev: string): string {
   return dev;
 }
 
+/** Un dominio raro rompe la cookie en el primer login: mejor no arrancar y decir por qué. */
+function dominioBase(v: string | undefined): string {
+  const d = (v ?? '').trim().toLowerCase();
+  if (d && !/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(d)) {
+    throw new Error(`BASE_DOMAIN no es un dominio válido: ${JSON.stringify(v)}. Déjalo vacío (BASE_DOMAIN=) o pon algo como app.com.`);
+  }
+  return d;
+}
+
 export const env = {
   nodeEnv,
   isProd,
@@ -41,7 +66,7 @@ export const env = {
   appUrl: reqEnProduccion('APP_URL', 'http://localhost:5174'),
   sessionSecret: reqEnProduccion('SESSION_SECRET', 'dev-no-usar-en-produccion'),
   /** <slug>.baseDomain = una cuenta. Vacío en local: la cuenta se elige con ?cuenta=slug. */
-  baseDomain: process.env.BASE_DOMAIN?.trim().toLowerCase() || '',
+  baseDomain: dominioBase(process.env.BASE_DOMAIN),
   /** Correo saliente (Brevo por SMTP). Sin SMTP_HOST, en desarrollo se imprime en consola. */
   smtp: {
     host: process.env.SMTP_HOST?.trim() || '',
