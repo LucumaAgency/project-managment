@@ -202,3 +202,9 @@ export declare function moverElemento(tx: Tx, actor: Actor, id: string, destino:
         id: string;
     };
 }>;
+/**
+ * De una lista de elementos, cuáles ve HOY un cliente: él y toda su cadena de padres visibles
+ * y activos. Una sola consulta recursiva para todos (feed de actividad, bandeja, búsqueda).
+ * Pasa por RLS como todo lo demás.
+ */
+export declare function visiblesParaCliente(tx: Tx, ids: string[]): Promise<Set<string>>;

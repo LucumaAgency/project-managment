@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { NOMBRE_ROL, esCliente } from '@lucuma-pm/shared';
-import { api, ErrorApi, type InvitacionCreada, type Personas as DatosPersonas, type ProyectoDetalle } from '../api';
+import { api, ErrorApi, type Evento, type InvitacionCreada, type Personas as DatosPersonas, type ProyectoDetalle } from '../api';
+import ListaActividad from '../componentes/Actividad';
+import { olvidarMencionables } from '../componentes/mencionables';
 import EnlaceCompartir, { mensajeInvitacion } from '../componentes/EnlaceCompartir';
 import Icono, { type NombreIcono } from '../componentes/Icono';
 import { iniciales } from '../componentes/Marca';
@@ -12,7 +14,7 @@ const fecha = (iso: string) => new Date(iso).toLocaleDateString('es-PE', { day: 
 
 const SECCIONES: { clave: keyof ProyectoDetalle['secciones']; nombre: string; icono: NombreIcono; vacia: string; uno: string; varios: string; ruta?: string }[] = [
   { clave: 'tareas', nombre: 'Tareas', icono: 'tareas', vacia: 'Las listas de tareas del proyecto aparecerán aquí.', uno: 'lista', varios: 'listas', ruta: 'tareas' },
-  { clave: 'mensajes', nombre: 'Mensajes', icono: 'mensajes', vacia: 'Anuncios y temas para conversar con el equipo y el cliente.', uno: 'mensaje', varios: 'mensajes' },
+  { clave: 'mensajes', nombre: 'Mensajes', icono: 'mensajes', vacia: 'Anuncios y temas para conversar con el equipo y el cliente.', uno: 'mensaje', varios: 'mensajes', ruta: 'mensajes' },
   { clave: 'archivos', nombre: 'Archivos', icono: 'archivo', vacia: 'Entregables, briefs y documentos, con sus versiones.', uno: 'elemento', varios: 'elementos' },
 ];
 
@@ -27,6 +29,7 @@ export default function Proyecto() {
   const [menu, setMenu] = useState(false);
   const [editando, setEditando] = useState(false);
   const [viendoPersonas, setViendoPersonas] = useState(false);
+  const [recientes, setRecientes] = useState<Evento[] | null>(null);
 
   const cargar = useCallback(() => {
     api<ProyectoDetalle>(`/proyectos/${id}`)
@@ -37,6 +40,9 @@ export default function Proyecto() {
       });
   }, [id]);
   useEffect(cargar, [cargar]);
+  useEffect(() => {
+    api<{ eventos: Evento[] }>(`/proyectos/${id}/actividad?limite=8`).then((r) => setRecientes(r.eventos)).catch(() => setRecientes([]));
+  }, [id]);
 
   async function transicion(ruta: 'archivar' | 'reactivar' | 'papelera' | 'restaurar', confirmar?: string) {
     setMenu(false);
@@ -148,7 +154,7 @@ export default function Proyecto() {
                 {s.nombre}
                 {n > 0 && <span className="cuenta">{n} {n === 1 ? s.uno : s.varios}</span>}
               </div>
-              <div className="vacia">{s.ruta ? (n === 0 ? s.vacia : 'Abrir las listas de tareas') : n === 0 ? s.vacia : 'Muy pronto vas a poder abrir esta sección.'}</div>
+              <div className="vacia">{s.ruta ? (n === 0 ? s.vacia : `Abrir ${s.nombre.toLowerCase()}`) : n === 0 ? s.vacia : 'Muy pronto vas a poder abrir esta sección.'}</div>
             </>
           );
           return s.ruta ? (
@@ -158,6 +164,16 @@ export default function Proyecto() {
           );
         })}
       </div>
+
+      {recientes && recientes.length > 0 && (
+        <section className="card" style={{ marginTop: 16 }} aria-label="Actividad reciente">
+          <div className="fila">
+            <h3 className="titulo-panel">Actividad reciente</h3>
+            <Link to={`/proyectos/${p.id}/actividad`} className="meta">Ver toda</Link>
+          </div>
+          <ListaActividad eventos={recientes} projectId={p.id} />
+        </section>
+      )}
 
       {editando && (
         <EditarProyecto
@@ -245,6 +261,7 @@ function PersonasDelProyecto(props: { detalle: ProyectoDetalle; verCorreos: bool
     try {
       setPersonas((await api<{ personas: typeof personas }>(`/proyectos/${proyecto.id}/personas`, { body: { userId: elegido } })).personas);
       setElegido('');
+      olvidarMencionables(proyecto.id);
       props.onCambio();
     } catch (e) {
       setError(e instanceof ErrorApi ? e.message : 'No se pudo conectar.');
@@ -255,6 +272,7 @@ function PersonasDelProyecto(props: { detalle: ProyectoDetalle; verCorreos: bool
     if (!window.confirm(`¿Quitar a ${nombre} del proyecto? Sigue en la cuenta.`)) return;
     try {
       setPersonas((await api<{ personas: typeof personas }>(`/proyectos/${proyecto.id}/personas/${userId}`, { method: 'DELETE' })).personas);
+      olvidarMencionables(proyecto.id);
       props.onCambio();
     } catch (e) {
       setError(e instanceof ErrorApi ? e.message : 'No se pudo conectar.');

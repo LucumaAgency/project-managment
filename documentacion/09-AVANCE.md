@@ -15,8 +15,8 @@ pendientes** del proyecto.
 | 6 | Editor Tiptap | ✅ 2026-10-24 |
 | 7 | Tareas | ✅ 2026-10-24 |
 | 8 | Comentarios, menciones, suscripciones | ✅ 2026-10-24 |
-| 9 | Mensajes y actividad | Siguiente |
-| 10 | Archivos | Pendiente |
+| 9 | Mensajes y actividad | ✅ 2026-10-24 |
+| 10 | Archivos | Siguiente |
 | 11 | Bandeja de notificaciones | Pendiente |
 | 12 | Recordatorios dentro de la app | Pendiente |
 | 13 | Vista del cliente | Pendiente |
@@ -411,6 +411,37 @@ Probado:
   cliente (eligiéndola con @), edita su comentario, deja de seguir y vuelve a seguir; la cliente
   entra, ve el comentario y responde, sin poder editar el ajeno; la fila muestra 2 comentarios.
   Sin errores.
+
+Para desplegar: Git → Desplegar y reiniciar. Sin migraciones.
+
+### 2026-10-24 · Día 9
+
+Hecho:
+
+- `services/mensajes.ts` (listado con extracto, comentarios, última actividad) y
+  `services/actividad.ts` (eventos con frase, enlace y paginación); `routes/mensajes.ts` (D-51).
+- `visiblesParaCliente()`: lo que un cliente ve hoy, para muchos elementos en una consulta.
+- Web: páginas Mensajes (listado y nuevo), Mensaje (detalle, editar, mostrar al cliente o hacer
+  interno, papelera, comentarios) y Actividad (agrupada por día, "Ver más"); la página del
+  proyecto muestra la actividad reciente y la sección Mensajes lleva al listado.
+  `?tarea=<id>` abre una tarea desde un enlace.
+- Lista de @ y responsables: una carga por minuto, filtrada en el navegador y ordenada por
+  parecido; sin la propia persona en mensajes y comentarios.
+
+Probado:
+
+- 166 tests en verde (7 nuevos en `mensajes.test.ts`).
+- En navegador real, escritorio y celular: publicar un mensaje interno y uno visible con
+  @mención a la cliente, comentar, crear y completar una tarea, ver la actividad reciente y la
+  página de actividad, abrir la tarea desde su enlace. La cliente ve solo el mensaje visible, y
+  en la actividad solo ese mensaje y su comentario. Sin errores.
+
+Problemas encontrados y cómo se resolvieron:
+
+| Problema | Causa | Solución |
+|---|---|---|
+| Al marcar "visible" y escribir @ enseguida, el cliente no aparecía | La lista se volvía a pedir al cambiar la visibilidad | Una carga por minuto y filtro en el navegador (`componentes/mencionables.ts`) |
+| "@Luc" elegía a "Equipo Lucuma" antes que a "Lucía" | Se filtraba por "contiene" en orden alfabético | Orden por parecido (empieza con, palabra que empieza con, contiene) |
 
 Para desplegar: Git → Desplegar y reiniciar. Sin migraciones.
 

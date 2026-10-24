@@ -12,6 +12,9 @@ import Personas from './paginas/Personas';
 import Portada from './paginas/Portada';
 import Proyecto from './paginas/Proyecto';
 import Tareas from './paginas/Tareas';
+import Mensajes from './paginas/Mensajes';
+import Mensaje from './paginas/Mensaje';
+import Actividad from './paginas/Actividad';
 import './estilos.css';
 
 // Página de prueba del editor: solo en desarrollo (Vite la quita del build de producción).
@@ -32,6 +35,9 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/" element={<Portada />} />
             <Route path="/proyectos/:id" element={<Proyecto />} />
             <Route path="/proyectos/:id/tareas" element={<Tareas />} />
+            <Route path="/proyectos/:id/mensajes" element={<Mensajes />} />
+            <Route path="/proyectos/:id/mensajes/:mensajeId" element={<Mensaje />} />
+            <Route path="/proyectos/:id/actividad" element={<Actividad />} />
             <Route path="/personas" element={<Personas />} />
             <Route path="/mi-cuenta" element={<MiCuenta />} />
             {PruebaEditor && <Route path="/_editor" element={<Suspense fallback={null}><PruebaEditor /></Suspense>} />}

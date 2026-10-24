@@ -191,3 +191,47 @@ export interface TareaDetalle {
   tarea: Tarea;
   permisos: { editar: boolean; completar: boolean; asignar: boolean; papelera: boolean; cambiarVisibilidad: boolean; mover: boolean };
 }
+
+export interface MensajeResumen {
+  id: string;
+  title: string;
+  extracto: string;
+  visibleToClients: boolean;
+  createdAt: string;
+  creator: { id: string; name: string };
+  comentarios: number;
+  ultimaActividad: string;
+}
+export interface Elemento {
+  id: string;
+  projectId: string;
+  type: string;
+  parentId: string | null;
+  title: string | null;
+  bodyHtml: string | null;
+  body: unknown;
+  visibleToClients: boolean;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  creator: { id: string; name: string };
+}
+export interface ElementoConPermisos {
+  elemento: Elemento;
+  permisos: { editar: boolean; papelera: boolean; cambiarVisibilidad: boolean };
+}
+export interface Evento {
+  id: string;
+  action: string;
+  createdAt: string;
+  actor: { id: string; name: string };
+  elemento: {
+    id: string;
+    type: string;
+    title: string | null;
+    activo: boolean;
+    extracto: string | null;
+    padre: { id: string; type: string; title: string | null } | null;
+  } | null;
+  detalles: { to?: unknown; from?: unknown; name?: unknown; title?: unknown; personas: string[] };
+}

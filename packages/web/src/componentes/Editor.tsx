@@ -56,10 +56,7 @@ const Editor = forwardRef<ControlEditor, PropsEditor>(function Editor(
         renderText: ({ node }) => `@${node.attrs.label ?? ''}`,
         renderHTML: ({ node }) => ['span', { class: 'mencion', 'data-id': node.attrs.id }, `@${node.attrs.label ?? ''}`],
         suggestion: {
-          items: ({ query }) =>
-            personasRef.current
-              .filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
-              .slice(0, 8),
+          items: ({ query }) => ordenarPorParecido(personasRef.current, query).slice(0, 8),
           render: renderSugerencias,
         },
       }),
@@ -152,6 +149,27 @@ function BarraEditor({ editor }: { editor: TiptapEditor }) {
 export function Contenido({ html, className }: { html: string | null | undefined; className?: string }) {
   if (!html) return null;
   return <div className={`prosa ${className ?? ''}`} dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
+/**
+ * Primero quien empieza con lo escrito ("Luc" → Lucía), después quien tiene una palabra que
+ * empieza así, y al final quien solo lo contiene ("Equipo Lucuma"). Sin tildes ni mayúsculas.
+ */
+const normal = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+export function ordenarPorParecido<T extends { name: string }>(personas: T[], query: string): T[] {
+  const q = normal(query.trim());
+  if (!q) return personas;
+  const nivel = (nombre: string) => {
+    const n = normal(nombre);
+    if (n.startsWith(q)) return 0;
+    if (n.split(/\s+/).some((palabra) => palabra.startsWith(q))) return 1;
+    return n.includes(q) ? 2 : -1;
+  };
+  return personas
+    .map((p) => ({ p, n: nivel(p.name) }))
+    .filter((x) => x.n >= 0)
+    .sort((a, b) => a.n - b.n || a.p.name.localeCompare(b.p.name, 'es'))
+    .map((x) => x.p);
 }
 
 // --- Lista de sugerencias del @ -------------------------------------------------------

@@ -360,3 +360,24 @@ export async function moverElemento(tx, actor, id, destino) {
     });
     return movido;
 }
+/**
+ * De una lista de elementos, cuáles ve HOY un cliente: él y toda su cadena de padres visibles
+ * y activos. Una sola consulta recursiva para todos (feed de actividad, bandeja, búsqueda).
+ * Pasa por RLS como todo lo demás.
+ */
+export async function visiblesParaCliente(tx, ids) {
+    const unicos = [...new Set(ids)];
+    if (!unicos.length)
+        return new Set();
+    const filas = await tx.$queryRaw `
+    WITH RECURSIVE c AS (
+      SELECT id AS raiz, id, "parentId", "visibleToClients" AS visible, status::text AS status, 0 AS nivel
+      FROM recordings WHERE id = ANY(${unicos})
+      UNION ALL
+      SELECT c.raiz, r.id, r."parentId", r."visibleToClients", r.status::text, c.nivel + 1
+      FROM recordings r JOIN c ON r.id = c."parentId"
+      WHERE c.nivel < 50
+    )
+    SELECT raiz, bool_and(visible AND status = 'active') AS ok FROM c GROUP BY raiz`;
+    return new Set(filas.filter((f) => f.ok).map((f) => f.raiz));
+}
