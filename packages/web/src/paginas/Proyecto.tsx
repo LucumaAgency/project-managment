@@ -67,7 +67,7 @@ export default function Proyecto() {
   if (!d) return error ? <p className="error">{error}</p> : <p className="cargando">Cargando…</p>;
 
   const { proyecto: p, permisos } = d;
-  const hayAcciones = permisos.editar || permisos.archivar || permisos.papelera;
+  const hayAcciones = permisos.editar || permisos.archivar || permisos.papelera || permisos.verPapelera;
 
   return (
     <>
@@ -112,6 +112,11 @@ export default function Proyecto() {
                   {permisos.archivar && p.status === 'archived' && (
                     <button type="button" role="menuitem" onClick={() => transicion('reactivar')}>
                       <Icono nombre="archivar" tam={16} />Reactivar
+                    </button>
+                  )}
+                  {permisos.verPapelera && p.status !== 'trashed' && (
+                    <button type="button" role="menuitem" onClick={() => navegar(`/proyectos/${p.id}/papelera`)}>
+                      <Icono nombre="papelera" tam={16} />Ver lo borrado
                     </button>
                   )}
                   {permisos.papelera && p.status !== 'trashed' && (

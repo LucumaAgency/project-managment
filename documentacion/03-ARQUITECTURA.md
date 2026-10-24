@@ -351,6 +351,16 @@ app. La tabla `jobs` queda lista para cuando haga falta (correos, exportación).
 |---|---|
 | `GET · POST /api/v1/cron/latido` (encabezado `X-PM-Cron` o `?token=`) | Recordatorios pendientes de todas las cuentas. 503 sin `CRON_TOKEN`, 401 con token incorrecto |
 | `npm run recordatorios:prod` | Lo mismo, a mano |
+| `npm run purgar:prod` | Purga de la papelera a mano (el latido también la corre) |
+
+## Papelera, búsqueda y exportación (día 14)
+
+| Pieza | Dónde | Notas |
+|---|---|---|
+| Purga a los 30 días | `services/purga.ts` | D-56. Filas primero, disco después; latido + al usar la app (cada 6 h por cuenta) |
+| Papelera del proyecto | `GET /proyectos/:id/papelera`, `paginas/Papelera.tsx` | Trae `seBorraEl`; restaurar con `POST /elementos/:id/restaurar` |
+| Búsqueda | `lib/busqueda.ts` (puro), `services/busqueda.ts`, `GET /buscar?q=&proyecto=`, `paginas/Buscar.tsx` | D-57. `pm_sin_tildes()` en la base; marcas como posiciones `[inicio, fin]` |
+| Exportación | `services/exportar.ts`, `GET /cuenta/exportar` | D-58. ZIP con `yazl`, en streaming; solo el dueño |
 
 ## Archivos
 

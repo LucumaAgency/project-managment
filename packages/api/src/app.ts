@@ -11,7 +11,9 @@ import { registrarContexto } from './plugins/contexto.js';
 import rutasArchivos from './routes/archivos.js';
 import rutasAuth from './routes/auth.js';
 import rutasBandeja from './routes/bandeja.js';
+import rutasBusqueda from './routes/busqueda.js';
 import rutasCron from './routes/cron.js';
+import rutasExportar from './routes/exportar.js';
 import rutasComentarios from './routes/comentarios.js';
 import rutasElementos from './routes/elementos.js';
 import rutasInvitaciones from './routes/invitaciones.js';
@@ -98,7 +100,9 @@ export async function buildApp(opciones: OpcionesApp = {}) {
   await app.register(rutasMensajes);
   await app.register(rutasArchivos);
   await app.register(rutasBandeja);
+  await app.register(rutasBusqueda);
   await app.register(rutasCron);
+  await app.register(rutasExportar);
 
   // La web: nginx entrega los estáticos desde el docroot; lo que llega aquí son las rutas del
   // SPA (/proyectos/abc al recargar). Un archivo que falta da 404, no el index.html.

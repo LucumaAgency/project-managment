@@ -18,9 +18,11 @@ const TITULOS: [string, string][] = [
   ['/proyectos/:id/actividad', 'Actividad'],
   ['/proyectos/:id/archivos/:archivoId', 'Archivo'],
   ['/proyectos/:id/archivos', 'Archivos'],
+  ['/proyectos/:id/papelera', 'Papelera'],
   ['/proyectos/:id', 'Proyecto'],
   ['/personas', 'Personas'],
   ['/bandeja', 'Bandeja'],
+  ['/buscar', 'Buscar'],
   ['/mi-cuenta', 'Mi cuenta'],
 ];
 
@@ -62,6 +64,19 @@ export default function Marco() {
     setMenuUsuario(false);
   }, [location.pathname]);
 
+  // "/" abre la búsqueda desde cualquier pantalla (si no se está escribiendo en un campo).
+  useEffect(() => {
+    const alPulsar = (e: KeyboardEvent) => {
+      if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName))) return;
+      e.preventDefault();
+      navegar('/buscar');
+    };
+    window.addEventListener('keydown', alPulsar);
+    return () => window.removeEventListener('keydown', alPulsar);
+  }, [navegar]);
+
   const verCuentas = () => {
     olvidarCuentaLocal();
     irARaiz(config);
@@ -97,6 +112,9 @@ export default function Marco() {
             <div className="nav-seccion">Menú</div>
             <NavLink to="/" className={({ isActive }) => (isActive || location.pathname.startsWith('/proyectos') ? 'activo' : '')} end>
               <Icono nombre="proyectos" />Proyectos
+            </NavLink>
+            <NavLink to="/buscar" className={enlace}>
+              <Icono nombre="buscar" />Buscar
             </NavLink>
             <EnlaceBandeja />
             {!esCliente(yo.rol) && (
@@ -146,6 +164,9 @@ export default function Marco() {
             </button>
             <h1>{titulo}</h1>
             <span className="org">{yo.cuenta.name}</span>
+            <NavLink to="/buscar" className="btn-icono buscar-arriba" aria-label="Buscar" title="Buscar (/)">
+              <Icono nombre="buscar" tam={20} />
+            </NavLink>
           </header>
           {yo.soporte && (
             <div className="franja-soporte" role="status">

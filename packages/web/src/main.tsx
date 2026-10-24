@@ -17,6 +17,8 @@ import Mensaje from './paginas/Mensaje';
 import Actividad from './paginas/Actividad';
 import Archivos from './paginas/Archivos';
 import Archivo from './paginas/Archivo';
+import Buscar from './paginas/Buscar';
+import Papelera from './paginas/Papelera';
 import Bandeja from './paginas/Bandeja';
 import './estilos.css';
 
@@ -43,6 +45,8 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/proyectos/:id/actividad" element={<Actividad />} />
             <Route path="/proyectos/:id/archivos" element={<Archivos />} />
             <Route path="/proyectos/:id/archivos/:archivoId" element={<Archivo />} />
+            <Route path="/proyectos/:id/papelera" element={<Papelera />} />
+            <Route path="/buscar" element={<Buscar />} />
             <Route path="/personas" element={<Personas />} />
             <Route path="/bandeja" element={<Bandeja />} />
             <Route path="/mi-cuenta" element={<MiCuenta />} />

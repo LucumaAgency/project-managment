@@ -4,6 +4,7 @@ import { conCuenta } from '../lib/contexto.js';
 import { HttpError } from '../lib/errores.js';
 import { leer } from '../lib/validar.js';
 import { contarNoLeidos, listarBandeja, marcarLeidos } from '../services/bandeja.js';
+import { dispararPurga } from '../services/purga.js';
 import { dispararRecordatorios } from '../services/recordatorios.js';
 import { exigirCuenta } from '../plugins/contexto.js';
 
@@ -28,6 +29,7 @@ export default async function rutasBandeja(app: FastifyInstance) {
     const actor = exigirCuenta(req);
     // Red de seguridad del latido: alguien está usando la app, se revisan los recordatorios.
     dispararRecordatorios(actor.ctx.accountId, (e) => req.log.error({ err: e }, 'Recordatorios'));
+    dispararPurga(actor.ctx.accountId, (e) => req.log.error({ err: e }, 'Purga de papelera'));
     return { noLeidos: await conCuenta(actor.ctx, (tx) => contarNoLeidos(tx, actor)) };
   });
 

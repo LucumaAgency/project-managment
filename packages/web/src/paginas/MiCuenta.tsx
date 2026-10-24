@@ -1,9 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { MIN_LARGO_PASSWORD } from '@lucuma-pm/shared';
-import { api, ErrorApi, type Sesion } from '../api';
+import { api, ErrorApi, urlExportar, type Sesion } from '../api';
+import Icono from '../componentes/Icono';
+import { useYo } from '../contexto';
 
-/** Datos propios: por ahora, definir o cambiar la contraseña. */
+/** Datos propios: la contraseña y, para el dueño, exportar la cuenta. */
 export default function MiCuenta() {
+  const yo = useYo();
   const [sesion, setSesion] = useState<Sesion | null>(null);
   const [actual, setActual] = useState('');
   const [nueva, setNueva] = useState('');
@@ -34,6 +37,7 @@ export default function MiCuenta() {
   if (!sesion) return <p className="cargando">Cargando…</p>;
   const tiene = sesion.usuario.tienePassword;
   return (
+    <>
     <form className="card card-estrecha" onSubmit={guardar}>
       <h2 className="titulo-panel">Contraseña</h2>
       <p className="meta" style={{ marginTop: 0 }}>{sesion.usuario.name} · {sesion.usuario.email}</p>
@@ -49,5 +53,18 @@ export default function MiCuenta() {
       <button className="btn" style={{ marginTop: 12 }} disabled={guardando}>{guardando ? 'Guardando…' : 'Guardar'}</button>
       {mensaje && <p className={mensaje.tipo} role="status">{mensaje.texto}</p>}
     </form>
+    {yo.rol === 'owner' && !yo.soporte && (
+      <section className="card card-estrecha" style={{ marginTop: 16 }}>
+        <h2 className="titulo-panel">Exportar la cuenta</h2>
+        <p className="meta" style={{ marginTop: 0 }}>
+          Un ZIP con todo lo de «{yo.cuenta.name}»: proyectos, tareas (también en Excel), mensajes, comentarios, archivos con sus
+          versiones y la actividad. Incluye lo archivado y lo que está en la papelera. Puede tardar si hay muchos archivos.
+        </p>
+        <a className="btn btn-sec" href={urlExportar()} download>
+          <Icono nombre="descargar" tam={16} />Descargar ZIP
+        </a>
+      </section>
+    )}
+    </>
   );
 }

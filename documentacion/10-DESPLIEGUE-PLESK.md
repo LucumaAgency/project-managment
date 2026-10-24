@@ -175,6 +175,14 @@ app. Para que lleguen a tiempo aunque nadie entre, un servicio externo llama a l
 Si responde 503 falta `CRON_TOKEN` en el `.env` (o no se reinició); 401, la clave no coincide.
 A mano, desde Run script: `recordatorios:prod`.
 
+## 5d. Papelera, búsqueda y exportación (desde el día 14)
+
+- La purga de la papelera corre con el mismo latido de §5c; no hay nada que configurar. A mano:
+  Run script `purgar:prod`.
+- La exportación de la cuenta sale como descarga larga. Si una cuenta tiene muchos archivos y
+  nginx corta la descarga, subir `proxy_read_timeout` en las directivas de nginx del dominio.
+- El día 14 sumó la dependencia `yazl`: ese despliegue necesita **NPM install**.
+
 ## 6. Lo que todavía no hace falta
 - **Subdominios por cuenta:** con `BASE_DOMAIN` vacío todo vive en un dominio. Para pasar a
   `<cuenta>.dominio` se usa el mismo truco de nginx del CRM (`docs/21-DOS-ORGANIZACIONES-PLESK.md`).

@@ -121,6 +121,13 @@ describe('ninguna ruta del cliente muestra lo interno', () => {
       '/bandeja',
       '/bandeja/contador',
       '/yo',
+      `/buscar?q=${MARCA}`,
+      '/buscar?q=lista',
+      '/buscar?q=tarea',
+      '/buscar?q=mensaje',
+      '/buscar?q=comentario',
+      '/buscar?q=png',
+      '/buscar?q=carpeta',
     ];
     const fugas: string[] = [];
     for (const r of rutas) {

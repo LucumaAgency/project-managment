@@ -559,3 +559,41 @@ label.casilla { display: flex; align-items: center; gap: 8px; font-weight: 500; 
   th.solo-escritorio, td.solo-escritorio { display: table-cell; }
   .solo-movil { display: none; }
 }
+
+/* ── Búsqueda (día 14) ─────────────────────────────────────────────────────── */
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.btn-icono {
+  display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px;
+  border-radius: 8px; color: var(--texto); flex-shrink: 0;
+}
+.btn-icono:hover, .btn-icono.active { background: var(--fondo); }
+.buscar { max-width: 760px; }
+.campo-buscar { position: relative; margin-bottom: 14px; }
+.campo-buscar svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--tenue); pointer-events: none; }
+.campo-buscar input { padding-left: 40px; font-size: 16px; height: 46px; margin: 0; }
+.resultados { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 6px; }
+.resultado {
+  display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 10px;
+  background: var(--blanco); border: 1px solid var(--borde); color: var(--texto); text-decoration: none;
+}
+.resultado:hover { border-color: var(--azul); }
+.resultado > svg { color: var(--tenue); margin-top: 2px; flex-shrink: 0; }
+.resultado .cuerpo { display: grid; gap: 3px; min-width: 0; }
+.resultado .nombre { font-weight: 600; overflow-wrap: anywhere; }
+.resultado .nombre.tachada { color: var(--tenue); text-decoration: line-through; }
+.resultado .fragmento { font-size: 13.5px; color: var(--suave); overflow-wrap: anywhere; }
+.resultado .meta { font-size: 12.5px; }
+mark { background: #fff1b8; color: inherit; border-radius: 3px; padding: 0 1px; }
+
+/* ── Papelera del proyecto (día 14) ───────────────────────────────────────── */
+.papelera-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.papelera-lista li {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 12px 14px;
+  background: var(--blanco); border: 1px solid var(--borde); border-radius: 10px;
+}
+.papelera-lista .cuerpo { flex: 1; min-width: 180px; display: grid; gap: 2px; }
+.papelera-lista .nombre { font-weight: 600; overflow-wrap: anywhere; }
+
+@media (min-width: 960px) {
+  .buscar-arriba { display: none; }
+}

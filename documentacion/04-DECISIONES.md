@@ -366,6 +366,37 @@ le llega de verdad (`visibleParaCliente`, con toda la cadena), el proyecto resum
 cliente en la raíz, y listas y carpetas se pueden mostrar u ocultar después de creadas. El
 espacio usado de la cuenta ya no se le muestra al cliente.
 
+**D-56 · La papelera se vacía sola a los 30 días** (2026-10-24, día 14)
+Lo que lleva más de 30 días en la papelera (elementos sueltos y proyectos enteros) se borra de
+verdad con todo lo que tiene adentro, y los archivos que ya nadie usa se borran del disco
+(`services/purga.ts`). Primero las filas, en una transacción con RLS de la cuenta; después el
+disco: si algo falla a mitad, nunca queda una fila apuntando a un archivo borrado (a lo sumo un
+archivo huérfano en disco, que nadie puede pedir). Un archivo de menos de un día sin versión se
+respeta (puede ser una subida en curso). Corre con el latido externo y "al usar la app" (como
+mucho cada 6 horas por cuenta); también a mano con `purgar:prod`. Cada purga con algo borrado
+queda en `audit_log` (`papelera.purga`). La pantalla de papelera de cada proyecto (dueños y
+administradores) dice cuándo se borra cada cosa y permite restaurarla.
+
+**D-57 · Búsqueda: sin tildes, por prefijo y filtrada en la base** (2026-10-24, día 14)
+`GET /buscar?q=` busca en tareas, listas, mensajes, comentarios, carpetas, archivos y nombres de
+proyecto. Sin la extensión `unaccent` (en Plesk no hay root): una función propia
+`pm_sin_tildes()` que cambia letra por letra (migración `busqueda_sin_tildes`); cada palabra se
+busca como prefijo ("dise" encuentra "Diseño"). Solo proyectos activos o archivados donde la
+persona entra; nada en la papelera ni con un padre en la papelera; para el cliente, la cadena
+entera visible. Todo eso se filtra en la consulta ANTES de cortar a 30 resultados, para que lo
+interno no "tape" lo visible. El resaltado lo calcula el servidor como posiciones y la web lo
+pinta con `<mark>` (nunca HTML armado con el texto). Las rutas de búsqueda están en el test de
+fugas del cliente (D-55). Atajo: la tecla `/` abre la búsqueda.
+
+**D-58 · Exportar la cuenta: un ZIP, solo el dueño** (2026-10-24, día 14)
+Mi cuenta → Exportar la cuenta (solo el dueño; ni administradores ni soporte: son los datos del
+cliente). `cuenta.json` + por proyecto `datos.json` completo, `tareas.csv` (con BOM para Excel
+y celdas que empiezan con = + - @ escapadas), cada mensaje como página HTML con sus
+comentarios, y los archivos en sus carpetas con las versiones viejas como "(vN)". Incluye lo
+archivado y la papelera, marcados. Se arma mientras se descarga (librería `yazl`, sin cargar
+archivos en memoria); si falta un archivo en disco, el ZIP sale igual y lo lista en `LEEME.txt`.
+Cada exportación queda en `audit_log` (`cuenta.exportar`).
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)
