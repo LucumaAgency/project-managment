@@ -7,7 +7,8 @@ actualiza aquí y se anota en la bitácora de [09-AVANCE.md](09-AVANCE.md).
 
 - **Fase:** construcción del MVP. Días 1 a 5 de 15 terminados.
 - **Repo:** https://github.com/LucumaAgency/project-managment (público, rama `main`).
-- **Siguiente paso:** subir la beta a `proyectos.pruebalucuma.site` siguiendo [10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md) y seguir con el día 6 (editor de texto con menciones).
+- **En línea:** https://proyectos.pruebalucuma.site (beta en Plesk, guía en [10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md)).
+- **Siguiente paso:** día 6, editor de texto con menciones.
 - **Esperando tu confirmación:** ver «Para confirmar» en [09-AVANCE.md](09-AVANCE.md).
 
 ## Documentos

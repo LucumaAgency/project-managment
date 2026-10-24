@@ -325,6 +325,15 @@ El usuario configuró Plesk siguiendo la guía: base `carlosm_lucuma_pm` con `ca
 | *Error starting web application*, `ERR_REQUIRE_ESM` | Passenger usa `require()` y Node 21.7.3 no carga módulos ES así | `arranque.cjs` como archivo de inicio (carga la API con `import()`). La suscripción no ofrece Node 22: se queda en 21.7.3 |
 | 500 al entrar: `option domain is invalid: .""` | Node 21.7 lee `BASE_DOMAIN=""` como el texto `""` | `BASE_DOMAIN=` sin comillas; además la app quita comillas de las variables y no arranca con un dominio inválido |
 
+### 2026-10-24 · Beta en línea
+
+`https://proyectos.pruebalucuma.site` funcionando: el usuario entró con la cuenta `lucuma`.
+Servidor: Plesk, Node 21.7.3 (no hay otra), PostgreSQL 12.22, Git en la rama `produccion`,
+archivo de inicio `arranque.cjs`.
+
+Para tener en cuenta en cada despliegue: Git → Desplegar; si cambió `package.json`, NPM
+install; si hay migraciones nuevas, Run script `prisma:deploy`; y reiniciar.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -339,7 +348,9 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 ### MVP (en orden)
 
 - [ ] Días 5 a 15 según [07-PLAN-MVP.md](07-PLAN-MVP.md).
-- [ ] Antes del día 15: contratar el servidor Vultr, crear el bucket R2, cuenta de Sentry, dominio de la app.
+- [ ] Cambiar las contraseñas de `carlosm_pm_admin` y `carlosm_pm_app` (quedaron en el chat) y actualizar el `.env`.
+- [ ] Pedir Node 22 al hosting (la 21 ya no recibe parches de seguridad).
+- [ ] Antes del día 10: bucket R2 para archivos. Antes del día 15: Sentry, respaldo diario de la base.
 
 ### Decisiones abiertas
 
