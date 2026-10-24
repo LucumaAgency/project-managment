@@ -79,6 +79,9 @@ terminar. Para probar contra otro Postgres (por ejemplo la versión del servidor
 vacía: `TEST_PG_URL_APP=… TEST_PG_URL_ADMIN=… npm test`. GitHub Actions (`.github/workflows/ci.yml`) corre
 tipos y tests en cada push a `main` y en cada PR.
 
+El respaldo real (`respaldo.test.ts`) necesita un `pg_dump` 16 o más nuevo: lo busca en el
+sistema o en `TEST_PG_BIN_DIR=/carpeta/con/pg_dump`. Si no hay, ese test se salta con un aviso.
+
 | Archivo | Qué prueba |
 |---|---|
 | `test/aislamiento.test.ts` | Toda tabla con datos de cuenta tiene RLS activado, forzado y con política; sin cuenta no se ve nada; cada cuenta ve exactamente lo suyo; no se puede crear, modificar, mover ni borrar en otra cuenta; la búsqueda respeta la cuenta; la cuenta no se filtra entre conexiones del pool; una persona en dos cuentas; `invitacion_por_token()` solo con el hash exacto; `cuentas_para_soporte()` vacía para quien no es staff |
@@ -98,6 +101,9 @@ tipos y tests en cada push a `main` y en cada PR.
 | `test/purga.test.ts` | Lo de más de 30 días se borra con lo de adentro y lo reciente no; archivos (todas las versiones) fuera del disco y el espacio vuelve a bajar; proyecto entero; solo la cuenta que purga; correrla dos veces; subida en curso se respeta |
 | `test/busqueda.test.ts` | Normalizar/marcar/fragmento; sin tildes y por prefijo; comentario abre lo comentado; papelera (también la del padre) fuera; proyectos por nombre; una letra no busca; el cliente solo lo visible con la cadena; quien no está en el proyecto; otra cuenta; pasar a interno lo saca |
 | `test/exportar.test.ts` | Nombres seguros y sin repetir; ZIP con cuenta, datos, CSV (BOM, fórmulas escapadas), mensajes HTML limpios, archivos con versiones; solo su cuenta; archivo faltante avisado en LEEME; admin, miembro, cliente y soporte 403; registro de seguridad |
+| `test/respaldo.test.ts` | Conexión sin clave ni `?schema`; rotación (deja N y sus listas, no toca la copia previa a restaurar); sin pg_dump, motivo claro; con pg_dump (TEST_PG_BIN_DIR o del sistema): respaldar, restaurar en una base aparte y comparar datos, RLS, funciones y migraciones |
+| `test/sentry.test.ts` | DSN, pila a marcos, sin DSN nada, el mismo error una vez por minuto, Sentry caído no rompe; un 500 llega con ruta/cuenta/persona y sin query ni correos; 404/403 no se reportan; `/config` |
+| `test/carga.test.ts` | Probar no guarda; carga proyecto, personas, listas, tareas (fecha, responsable, notas) y mensajes; la segunda vez salta; rechazos con motivo |
 | `test/planes.test.ts` | `planPermite()`, excepciones por cuenta (ignora valores raros), plan desconocido, `puedeInvitar()` |
 | `test/host.test.ts` | Lectura del host: subdominio, raíz, reservados, dominios ajenos |
 | `test/semilla.ts` | Crea una cuenta con filas en **todas** las tablas con RLS (un test verifica que ninguna quede vacía) |

@@ -58,6 +58,8 @@ export interface Config {
   baseDomain: string;
   /** Hay correo saliente. Sin él (MVP) no se ofrece entrar con enlace al correo. */
   correo: boolean;
+  /** DSN de Sentry para la web (D-59); null = no se reporta. */
+  sentry: string | null;
 }
 export interface CuentaDeUsuario {
   id: string;

@@ -7,6 +7,7 @@ import cookie from '@fastify/cookie';
 import { correoActivo, env } from './env.js';
 import { prisma } from './db.js';
 import { HttpError } from './lib/errores.js';
+import { reportar } from './lib/sentry.js';
 import { registrarContexto } from './plugins/contexto.js';
 import rutasArchivos from './routes/archivos.js';
 import rutasAuth from './routes/auth.js';
@@ -43,10 +44,21 @@ const WEB = path.join(RAIZ, 'public');
  */
 function opcionesLog(opciones: OpcionesApp) {
   if (opciones.logger === false) return false;
-  if (!env.isProd) return { level: 'debug' };
+  // Todo log de nivel error con un `err` (purga, recordatorios, respaldo…) también va a Sentry.
+  // Los 500 de las rutas los manda el manejador de errores, con la ruta: vienen marcados.
+  const hooks = {
+    logMethod(this: unknown, args: unknown[], metodo: (...a: unknown[]) => void, nivel: number) {
+      const [o, msg] = args as [Record<string, unknown> | undefined, unknown];
+      if (nivel >= 50 && o && typeof o === 'object' && o.err && !o.reportado) {
+        void reportar(o.err, { donde: typeof msg === 'string' ? msg : undefined });
+      }
+      return metodo.apply(this, args);
+    },
+  };
+  if (!env.isProd) return { level: 'debug', hooks };
   const dir = path.join(RAIZ, 'logs');
   fs.mkdirSync(dir, { recursive: true });
-  return { level: 'info', file: path.join(dir, 'app.txt') };
+  return { level: 'info', file: path.join(dir, 'app.txt'), hooks };
 }
 
 export async function buildApp(opciones: OpcionesApp = {}) {
@@ -65,7 +77,10 @@ export async function buildApp(opciones: OpcionesApp = {}) {
     if (err.code === 'P2025') return reply.code(404).send({ error: 'No encontrado.' });
     if (err.validation || err.statusCode === 400) return reply.code(400).send({ error: err.message || 'Datos inválidos.' });
     if (err.statusCode && err.statusCode < 500) return reply.code(err.statusCode).send({ error: err.message });
-    req.log.error({ err }, 'Error no controlado');
+    const quien = req as unknown as { cuenta?: { id: string }; usuario?: { id: string } };
+    const ctx = { ruta: req.routeOptions?.url, metodo: req.method, status: 500, cuenta: quien.cuenta?.id, usuario: quien.usuario?.id };
+    void reportar(err, ctx);
+    req.log.error({ err, ...ctx, reportado: true }, 'Error no controlado');
     return reply.code(500).send({ error: 'Error interno.' });
   });
 
@@ -87,7 +102,8 @@ export async function buildApp(opciones: OpcionesApp = {}) {
 
   /** Lo que la web necesita saber del despliegue antes de tener sesión. */
   // `correo`: si hay correo saliente. Sin él (MVP) la web no ofrece el acceso por enlace.
-  app.get('/api/v1/config', async () => ({ baseDomain: app.config.baseDomain, correo: correoActivo() }));
+  // `sentry`: DSN del proyecto web en Sentry (es pública por diseño); null = la web no reporta.
+  app.get('/api/v1/config', async () => ({ baseDomain: app.config.baseDomain, correo: correoActivo(), sentry: env.sentryDsnWeb || null }));
 
   await app.register(rutasAuth);
   await app.register(rutasYo);

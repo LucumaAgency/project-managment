@@ -397,6 +397,34 @@ archivado y la papelera, marcados. Se arma mientras se descarga (librería `yazl
 archivos en memoria); si falta un archivo en disco, el ZIP sale igual y lo lista en `LEEME.txt`.
 Cada exportación queda en `audit_log` (`cuenta.exportar`).
 
+**D-59 · Errores a Sentry sin el SDK** (2026-10-24, día 15)
+El SDK de Node trae ~40 paquetes de OpenTelemetry y pide un cargador al arrancar (`--import`)
+que choca con `arranque.cjs` de Passenger. Lo necesario es poco: `lib/sentry.ts` (API) y
+`componentes/errores.tsx` (web) mandan el error con su pila en el formato "envelope" de Sentry
+por HTTP. Llegan: 500 de las rutas (desde el manejador de errores, con la ruta como patrón, la
+cuenta y la persona como ids), todo `log.error` con `err` (purga, recordatorios, respaldo),
+promesas sin manejar y los errores de la web (más un aviso "Recargar" en vez de pantalla en
+blanco). Nunca cuerpo, query (el latido lleva su token ahí), cookies, correos ni nombres. Frena
+tormentas: el mismo error una vez por minuto, como mucho 30 por minuto. Sin `SENTRY_DSN` no
+manda nada. Si algún día hace falta más (trazas, rendimiento), se pasa al SDK.
+
+**D-60 · Respaldo: pg_dump diario propio + copias de Plesk afuera** (2026-10-24, día 15)
+Sin root no se instala nada: la app usa el `pg_dump` que tenga el servidor (o el de
+`PG_BIN_DIR`) y exige que no sea más viejo que la base. El latido lo corre una vez al día en
+segundo plano; deja `privados/respaldos/base-AAAA-MM-DD.dump` (formato propio, comprimido) y la
+lista de archivos con su huella; guarda 14. La clave va en `PGPASSWORD`, no en la línea de
+comandos (servidor compartido). Restaurar es un comando con `--confirmo` que antes guarda una
+copia de lo actual. Probado de verdad: respaldo → restaurado en otra base → mismos datos, RLS y
+funciones. Como esto vive en el mismo disco, la copia fuera del servidor (base + `privados/`) es
+el gestor de copias de Plesk (10-DESPLIEGUE §5e).
+
+**D-61 · Carga inicial desde JSON con un comando** (2026-10-24, día 15)
+`cargar:prod -- archivo.json [--probar]` crea proyectos, personas del equipo, listas, tareas
+(fecha, responsables, notas) y mensajes con los mismos servicios que la web (eventos y avisos
+incluidos). Valida todo antes de escribir (correos que no son del equipo, clientes, quien no es
+admin); un proyecto por transacción; los que ya existen con ese nombre se saltan. El archivo con
+datos de clientes nunca va al repo.
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

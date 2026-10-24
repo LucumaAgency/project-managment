@@ -183,6 +183,52 @@ A mano, desde Run script: `recordatorios:prod`.
   nginx corta la descarga, subir `proxy_read_timeout` en las directivas de nginx del dominio.
 - El día 14 sumó la dependencia `yazl`: ese despliegue necesita **NPM install**.
 
+## 5e. Respaldo diario (desde el día 15)
+
+Dos capas (D-60):
+
+1. **Respaldo propio de la base**, automático: el latido, una vez al día, corre `pg_dump` y deja
+   `privados/respaldos/base-AAAA-MM-DD.dump` (+ la lista de archivos `archivos-AAAA-MM-DD.tsv`).
+   Guarda los últimos 14. Sirve para deshacer errores (algo borrado, una migración mala).
+   - Comprobar que el servidor tiene `pg_dump`: `base:verificar:prod` (sección "Respaldo").
+     Si dice AVISO, buscar la carpeta de `pg_dump` (p. ej. `/usr/lib/postgresql/12/bin`) y ponerla
+     en `.env` como `PG_BIN_DIR=`.
+   - A mano: Run script `respaldo:prod` (hace el de hoy y lista los que hay).
+   - Restaurar (BORRA la base actual; antes guarda `antes-de-restaurar-….dump`):
+     `respaldo:prod -- restaurar AAAA-MM-DD --confirmo`, luego **Reiniciar**.
+2. **Copia fuera del servidor (Plesk → Copias de seguridad / Backup Manager)**: lo único que
+   protege si se pierde el servidor. Programarla diaria, con **bases de datos y archivos** (así
+   se lleva `privados/archivos` y `privados/respaldos`), a un almacenamiento remoto (Google
+   Drive, FTP o S3, lo que el plan de hosting permita). Guardar al menos 7.
+
+## 5f. Cargar proyectos desde un archivo (desde el día 15)
+
+Para empezar con los proyectos reales sin crearlos uno por uno (D-61):
+
+1. Editar el archivo (borrador en la máquina de desarrollo: `privados/carga-lucuma.json`, fuera
+   del repo porque es público). En `"como"` va el correo del dueño o un administrador.
+2. Subirlo con el Administrador de archivos de Plesk a `privados/` de la app.
+3. Run script `cargar:prod -- privados/carga-lucuma.json --probar` (dice qué haría).
+4. Run script `cargar:prod -- privados/carga-lucuma.json` (carga). Correrlo de nuevo no duplica:
+   un proyecto con el mismo nombre se salta.
+5. Borrar el archivo del servidor.
+
+Formato: `{ "cuenta": "slug", "como": "correo", "proyectos": [ { "nombre", "descripcion"?,
+"personas"?: [correos del equipo], "listas"?: [ { "titulo", "tareas": [ "texto" o { "titulo",
+"vence"?: "AAAA-MM-DD", "responsables"?: [correos], "notas"? } ] } ], "mensajes"?: [ { "titulo",
+"texto" } ] } ] }`. Los clientes no se cargan así: se invitan desde la web.
+
+## 5g. Errores a Sentry (desde el día 15)
+
+1. En sentry.io (plan gratis), crear dos proyectos: **Node.js** (la API) y **Browser
+   JavaScript** (la web). Copiar el DSN de cada uno (Settings → Client Keys).
+2. En `.env`: `SENTRY_DSN=` (el de Node) y `SENTRY_DSN_WEB=` (el de la web). Reiniciar.
+3. Run script `sentry:probar:prod`: manda un error de prueba y dice si llegó.
+
+Llegan los 500 de la API (con la ruta, la cuenta y la persona como ids), los errores de la
+purga, los recordatorios y el respaldo, y los errores de la web. Nunca cuerpos, cookies, query
+ni correos (D-59).
+
 ## 6. Lo que todavía no hace falta
 - **Subdominios por cuenta:** con `BASE_DOMAIN` vacío todo vive en un dominio. Para pasar a
   `<cuenta>.dominio` se usa el mismo truco de nginx del CRM (`docs/21-DOS-ORGANIZACIONES-PLESK.md`).
