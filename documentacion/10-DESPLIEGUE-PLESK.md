@@ -13,7 +13,7 @@ una rama aparte, `produccion`, que arma CI (D-43).
 | PostgreSQL 12 o más | La app usa Row Level Security y búsqueda de Postgres; MariaDB no sirve (D-12) | ✅ El servidor tiene **12.22**; la suite completa pasa en 12.22 (D-45) |
 | Root o superusuario de Postgres | **No hace falta** (D-44): alcanza con dos usuarios comunes creados desde Plesk | Sin root, está bien |
 | Dominio con SSL: `proyectos.pruebalucuma.site` | La cookie de sesión exige HTTPS en producción | ✅ Elegido por el usuario |
-| Node.js 22 o 20 en la suscripción | Igual que el CRM; evitar versiones impares | |
+| Node.js 22 o 20 en la suscripción | Igual que el CRM; evitar versiones impares. Con `arranque.cjs` arranca en cualquiera, incluida la 21 | |
 
 ## 1. Base de datos (Plesk → Bases de datos)
 
@@ -47,11 +47,17 @@ es dueño de nada ni miembro del administrador, así que todo lo que consulta pa
 | Versión de Node | 22 (o 20) |
 | Raíz de la aplicación | la raíz del repo (`/httpdocs` o donde lo deje Git) |
 | **Raíz del documento** | `<raíz>/public` (el SPA compilado; nginx solo publica eso, nunca el código) |
-| **Archivo de arranque** | `packages/api/dist/server.js` |
+| **Archivo de arranque** | **`arranque.cjs`** (no `packages/api/dist/server.js`, ver abajo) |
 | Modo | production |
 
 Passenger deduce la raíz de la aplicación como la carpeta padre del docroot: por eso el docroot
 es `public/` en la raíz del repo (lección del CRM).
+
+**Por qué `arranque.cjs`:** Passenger carga el archivo de inicio con `require()`. La API es un
+módulo ES, y `require()` de un módulo ES solo funciona en Node 20.19+ y 22.12+. Con la 21.7.3
+que traía la suscripción, Plesk mostró *Error starting web application* con `ERR_REQUIRE_ESM`
+(2026-10-24). `arranque.cjs` es un archivo CommonJS de tres líneas que carga la API con
+`import()`, y funciona en cualquier versión.
 
 ### Variables de entorno
 

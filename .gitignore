@@ -7,3 +7,5 @@ dist/
 # Postgres local de desarrollo (scripts/db-local.mjs)
 .pgdata/
 /public/
+# Log de la API en producción (logs/app.txt)
+logs/
