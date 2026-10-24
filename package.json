@@ -2,7 +2,7 @@
   "name": "lucuma-pm",
   "private": true,
   "version": "0.1.0",
-  "description": "Lucuma Proyectos: gestión de proyectos tipo Basecamp para agencias, con portal de clientes",
+  "description": "Lucuma Proyectos: gesti\u00f3n de proyectos tipo Basecamp para agencias, con portal de clientes",
   "workspaces": [
     "packages/shared",
     "packages/api",
@@ -16,11 +16,12 @@
     "dev": "npm run build -w @lucuma-pm/shared && (npm run dev -w @lucuma-pm/api & npm run dev -w @lucuma-pm/web)",
     "build": "npm run build -w @lucuma-pm/shared && npm run build -w @lucuma-pm/api && npm run build -w @lucuma-pm/web",
     "start": "node packages/api/dist/server.js",
-    "typecheck": "tsc -b packages/shared packages/api && tsc -p packages/web --noEmit",
+    "typecheck": "tsc -b packages/shared packages/api && tsc -p packages/api/tsconfig.test.json && tsc -p packages/web --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
-    "prisma:status": "prisma migrate status"
+    "prisma:status": "prisma migrate status",
+    "test": "npm run build -w @lucuma-pm/shared && npm run test -w @lucuma-pm/api"
   },
   "devDependencies": {
     "embedded-postgres": "16.14.0-beta.17",

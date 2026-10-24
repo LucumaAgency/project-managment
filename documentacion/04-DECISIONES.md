@@ -87,6 +87,23 @@ paquete trae los binarios. Mismo Postgres 16 que en producción.
 **D-19 · Hosting en Vultr + CloudPanel, no Plesk** (2026-10-24)
 El CRM sufrió en Plesk porque el cron no funciona. Aquí el cron es necesario desde el día 1.
 
+**D-22 · Tests con su propio Postgres** (2026-10-24, día 2)
+Vitest 3.2. Cada corrida levanta un Postgres 16 temporal (embedded-postgres, puerto libre),
+aplica las migraciones reales y lo borra al terminar. No toca la base de desarrollo y corre
+igual en GitHub Actions. El CRM no tenía tests; aquí el test de aislamiento es obligatorio.
+
+**D-23 · Funciones SECURITY DEFINER para lo previo a la cuenta** (2026-10-24, día 2)
+`cuenta_por_slug` y `cuentas_de_usuario`. Alternativa descartada: usar `prismaAdmin` en el hook
+de cada petición, que pondría un rol sin RLS en el camino de todas las peticiones.
+
+**D-24 · En local la cuenta va por `?cuenta=` o `X-Cuenta`** (2026-10-24, día 2)
+Sin `BASE_DOMAIN` no hay subdominios. Con `BASE_DOMAIN` (producción) esos dos se ignoran, para
+que nadie cambie de cuenta con un parámetro (lo prueba un test).
+
+**D-25 · Soporte (`isStaff`) no entra a cuentas ajenas todavía** (2026-10-24, día 2)
+Sin membresía recibe 403 como cualquiera. El acceso de soporte llega con el superadmin (fase 3)
+y quedará en `AuditLog`.
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

@@ -107,6 +107,28 @@ comparan `accountId` con esa variable. Sin variable no se ve ninguna fila.
 - Sin RLS a propósito: `users`, `login_tokens`, `sessions` (el login ocurre antes de saber la
   cuenta) y `jobs`.
 
+**Antes de saber la cuenta** hay dos consultas que RLS no dejaría hacer, resueltas con
+funciones `SECURITY DEFINER` (migración `resolver_cuenta`) que devuelven columnas mínimas:
+
+- `cuenta_por_slug(slug)`: traduce el subdominio a la cuenta (id, nombre, plan, zona horaria,
+  idioma, si está cerrada).
+- `cuentas_de_usuario()`: las cuentas activas de la persona fijada en `app.user_id`, con su rol
+  (selector de cuenta tras el login).
+
+**Contexto por petición** (`plugins/contexto.ts`): un hook resuelve en cada petición la cuenta
+(subdominio en producción; `?cuenta=` o encabezado `X-Cuenta` solo si no hay `BASE_DOMAIN`),
+el usuario (cookie `pm_sesion`, en la base solo el hash SHA-256) y su membresía. No corta
+nada; cada ruta exige lo suyo:
+
+| Función | Exige | Respuestas |
+|---|---|---|
+| `exigirUsuario(req)` | sesión válida | 401 |
+| `exigirCuenta(req)` | cuenta indicada, existente, abierta, sesión y membresía activa | 400, 404, 410, 401, 403 |
+
+`exigirCuenta` devuelve el `ctx` que se pasa a `conCuenta(ctx, tx => …)` (`lib/contexto.ts`),
+la única forma en que la app toca datos de una cuenta. `conUsuario(userId, …)` fija solo el
+usuario, para el selector de cuentas.
+
 **Dos capas:** RLS cuida la frontera entre cuentas. Dentro de una cuenta, la función
 `puede(ctx, accion, recording)` de `services/permisos.ts` decide por proyecto, rol y
 visibilidad. Las rutas no deciden permisos por su cuenta.

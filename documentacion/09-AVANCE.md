@@ -8,8 +8,8 @@ pendientes** del proyecto.
 | Día | Tema | Estado |
 |---|---|---|
 | 1 | Monorepo, Postgres local, schema, migraciones con RLS, roles | ✅ 2026-10-24 |
-| 2 | Contexto de cuenta por petición, subdominio, test de aislamiento | Siguiente |
-| 3 | Login, sesiones, selector de cuenta | Pendiente |
+| 2 | Contexto de cuenta por petición, subdominio, test de aislamiento | ✅ 2026-10-24 |
+| 3 | Login, sesiones, selector de cuenta | En curso |
 | 4 | Invitaciones, alta de cuenta por script, planes | Pendiente |
 | 5 | Proyectos y servicio genérico de elementos | Pendiente |
 | 6 | Editor Tiptap | Pendiente |
@@ -97,6 +97,43 @@ Notas:
 
 Se creó esta carpeta `documentacion/` con el plan completo y el avance. `docs/PLAN-MVP.md` y
 `docs/DESARROLLO.md` pasaron a ser `07-PLAN-MVP.md` y `08-DESARROLLO.md`.
+
+### 2026-10-24 · Carpeta local renombrada
+
+A pedido del usuario, la carpeta local pasó de `~/lucuma-proyectos` a `~/project-management`
+(mismo nombre que el repo). La documentación vive en `~/project-management/documentacion/`.
+Se renombró en vez de copiar para no tener dos versiones que se desactualicen.
+
+### 2026-10-24 · Día 2
+
+Hecho:
+
+- `lib/contexto.ts`: `conCuenta(ctx, fn)` y `conUsuario(userId, fn)`.
+- `lib/host.ts`: cuenta desde el subdominio (raíz, reservados, ajenos).
+- `lib/sesion.ts`: sesiones con token aleatorio en cookie `pm_sesion` y hash SHA-256 en la base.
+- `lib/cuenta.ts` + migración `resolver_cuenta`: `cuenta_por_slug()` y `cuentas_de_usuario()`.
+- `plugins/contexto.ts`: hook por petición + `exigirUsuario` / `exigirCuenta`.
+- Rutas `GET /api/v1/yo` y `GET /api/v1/mis-cuentas`.
+- `shared/cuentas.ts`: slugs reservados y formato válido.
+- Tests con Vitest y Postgres propio por corrida; CI en GitHub Actions.
+- `scripts/pg-embebido.mjs`: lógica común de Postgres local y de tests.
+
+Probado:
+
+- 43 tests en verde (16 de aislamiento, 15 de HTTP, 12 de host).
+- Sabotaje a propósito: con el RLS de `blobs` apagado, 4 tests fallan. Se quitó.
+- `npm run typecheck` sin errores, incluidos los tests.
+
+## Para confirmar
+
+Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
+si no hay comentario, quedan así.
+
+| # | Tema | Lo que hice | Alternativa |
+|---|---|---|---|
+| C-1 | Carpeta local | Renombré `~/lucuma-proyectos` a `~/project-management` (con la documentación dentro) | Una carpeta aparte solo con copia de los documentos |
+| C-2 | Soporte de Lucuma | Sin membresía no entra a ninguna cuenta (403), hasta el superadmin | Darle acceso de lectura desde ya |
+| C-3 | Duración de la sesión | 30 días | Más corta (7 días) o "recordarme" opcional |
 
 ## Pendientes
 

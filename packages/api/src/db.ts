@@ -10,12 +10,9 @@ import { env } from './env.js';
  *    cuentas (resumen diario, purgas), los scripts de consola y el superadmin. Nunca se
  *    importa desde una ruta de usuario.
  */
-export const prisma = new PrismaClient({
-  datasourceUrl: env.databaseUrl,
-  log: ['warn', 'error'],
-});
+// En tests los rechazos de RLS son esperados: no ensuciar la salida con ellos.
+const log = env.nodeEnv === 'test' ? (['warn'] as const) : (['warn', 'error'] as const);
 
-export const prismaAdmin = new PrismaClient({
-  datasourceUrl: env.databaseAdminUrl,
-  log: ['warn', 'error'],
-});
+export const prisma = new PrismaClient({ datasourceUrl: env.databaseUrl, log: [...log] });
+
+export const prismaAdmin = new PrismaClient({ datasourceUrl: env.databaseAdminUrl, log: [...log] });

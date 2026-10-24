@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tipos-y-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://x@localhost/x
+          DATABASE_ADMIN_URL: postgresql://x@localhost/x
+      - run: npm run build -w @lucuma-pm/shared
+      - run: npm run typecheck
+      # Los tests levantan su propio Postgres 16 (embedded-postgres) y aplican las migraciones.
+      # Incluyen el test de aislamiento entre cuentas: si falla, no se mergea.
+      - run: npm test
