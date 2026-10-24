@@ -312,6 +312,18 @@ El usuario creó en Plesk la base `carlosm_lucuma_pm` con el usuario `carlosm_pm
 - El disco de esta máquina de desarrollo se llenó (99 %) durante la prueba; se borraron solo
   las copias temporales propias. Quedan ~500 MB libres.
 
+### 2026-10-24 · Primer despliegue en Plesk
+
+El usuario configuró Plesk siguiendo la guía: base `carlosm_lucuma_pm` con `carlosm_pm_admin` y
+`carlosm_pm_app`, Git en la rama `produccion`, `.env`, `prisma:deploy`, `base:verificar:prod`
+(Todo en orden) y `cuenta:crear:prod`. Problemas y arreglos:
+
+| Problema | Causa | Solución |
+|---|---|---|
+| Git trajo el código sin `public/` ni `dist/` | Estaba en la rama `main` | Rama `produccion` |
+| `Falta la variable de entorno DATABASE_URL` | Faltaba el `.env` | Creado en la raíz. El error ahora dice dónde buscó el `.env` y si lo encontró |
+| *Error starting web application*, `ERR_REQUIRE_ESM` | Passenger usa `require()` y Node 21.7.3 no carga módulos ES así | `arranque.cjs` como archivo de inicio (carga la API con `import()`); además, pasar a Node 22 |
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
