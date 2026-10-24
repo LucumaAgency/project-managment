@@ -7,8 +7,10 @@
  * No cambia nada: solo lee y dice OK o FALLA por punto. Sale con código 1 si algo falla.
  */
 import { prisma, prismaAdmin } from '../db.js';
+import { buscarHerramienta, listarRespaldos } from '../services/respaldo.js';
 let fallas = 0;
 const ok = (texto) => console.log(`  OK     ${texto}`);
+const aviso = (texto, arreglo) => console.log(`  AVISO  ${texto}\n         → ${arreglo}`);
 const falla = (texto, arreglo) => {
     fallas++;
     console.log(`  FALLA  ${texto}\n         → ${arreglo}`);
@@ -75,6 +77,21 @@ async function main() {
         else
             falla(`${app.usuario} ve ${visibles.n} proyectos sin cuenta fijada`, 'RLS no está aislando. NO usar la app hasta arreglarlo.');
     }
+    // Respaldo diario (D-60): no es una falla de la base, pero sin pg_dump no hay respaldo propio.
+    console.log('\nRespaldo');
+    const pgDump = await buscarHerramienta('pg_dump');
+    const mayor = Math.floor(app.version / 10_000);
+    if (!pgDump)
+        aviso('no se encontró pg_dump', 'Sin él no hay respaldo diario propio. Buscar dónde está (p. ej. /usr/lib/postgresql/12/bin) y ponerlo en PG_BIN_DIR, o usar solo las copias de Plesk.');
+    else if (pgDump.version < mayor)
+        aviso(`pg_dump ${pgDump.version} es más viejo que la base (${mayor})`, 'Poner en PG_BIN_DIR la carpeta de un pg_dump igual o más nuevo.');
+    else
+        ok(`pg_dump ${pgDump.version} (${pgDump.ruta})`);
+    const respaldos = await listarRespaldos();
+    if (respaldos.length)
+        ok(`último respaldo: ${respaldos[0].dia} (${respaldos.length} guardados)`);
+    else
+        aviso('todavía no hay respaldos', 'Se hace solo con el latido (una vez al día) o a mano: respaldo:prod.');
     console.log(fallas ? `\n${fallas} punto(s) con FALLA.` : '\nTodo en orden.');
     process.exitCode = fallas ? 1 : 0;
 }

@@ -5,14 +5,14 @@ import { type Accion, type Actor, type ProyectoCargado } from './permisos.js';
  * permite. Un proyecto que no existe y uno que no puedes ver responden igual (404).
  */
 export declare function proyectoPara(tx: Tx, actor: Actor, projectId: string, accion: Accion, mensaje?: string): Promise<ProyectoCargado & {
+    status: import("@prisma/client").$Enums.ProjectStatus;
     name: string;
     id: string;
     createdAt: Date;
-    status: import("@prisma/client").$Enums.ProjectStatus;
+    trashedAt: Date | null;
     description: string | null;
     createdById: string;
     archivedAt: Date | null;
-    trashedAt: Date | null;
 }>;
 /** Corta con el motivo del plan si sumar un proyecto activo pasa el límite. */
 export declare function exigirCupoProyectos(tx: Tx, accountId: string): Promise<void>;

@@ -23,6 +23,7 @@ try {
 const VARIABLES = [
   'NODE_ENV', 'PORT', 'DATABASE_URL', 'DATABASE_ADMIN_URL', 'APP_URL', 'SESSION_SECRET', 'BASE_DOMAIN',
   'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'MAIL_FROM', 'SOPORTE_BETA', 'ARCHIVOS_DIR', 'ARCHIVOS_MAX_MB', 'CRON_TOKEN',
+  'RESPALDOS_DIR', 'RESPALDOS_MANTENER', 'PG_BIN_DIR', 'SENTRY_DSN', 'SENTRY_DSN_WEB',
 ];
 for (const nombre of VARIABLES) {
   const v = process.env[nombre];
@@ -87,9 +88,19 @@ export const env = {
    */
   archivosDir: process.env.ARCHIVOS_DIR || path.resolve(aqui, '../../../privados/archivos'),
   /** Tamaño máximo de un archivo, en MB. nginx de Plesk tiene su propio tope (client_max_body_size). */
+  archivosMaxBytes: Math.max(1, Number(process.env.ARCHIVOS_MAX_MB ?? 50)) * 1024 * 1024,
   /** Clave del latido externo (/api/v1/cron/latido). Sin ella, el latido responde 503. */
   cronToken: process.env.CRON_TOKEN?.trim() || '',
-  archivosMaxBytes: Math.max(1, Number(process.env.ARCHIVOS_MAX_MB ?? 50)) * 1024 * 1024,
+  /**
+   * Respaldo diario de la base (D-60): pg_dump a <raíz>/privados/respaldos, se guardan los
+   * últimos RESPALDOS_MANTENER (14). PG_BIN_DIR por si pg_dump no está en el PATH.
+   */
+  respaldosDir: process.env.RESPALDOS_DIR || path.resolve(aqui, '../../../privados/respaldos'),
+  respaldosMantener: Math.max(1, Number(process.env.RESPALDOS_MANTENER ?? 14)),
+  pgBinDir: process.env.PG_BIN_DIR?.trim() || '',
+  /** Errores a Sentry (D-59). Vacío = no se manda nada. La web usa su propio proyecto. */
+  sentryDsn: process.env.SENTRY_DSN?.trim() || '',
+  sentryDsnWeb: process.env.SENTRY_DSN_WEB?.trim() || '',
 };
 
 /** Hay correo saliente de verdad. Sin él, la web oculta el acceso por enlace al correo. */

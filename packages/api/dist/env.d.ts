@@ -28,9 +28,19 @@ export declare const env: {
      */
     archivosDir: string;
     /** Tamaño máximo de un archivo, en MB. nginx de Plesk tiene su propio tope (client_max_body_size). */
+    archivosMaxBytes: number;
     /** Clave del latido externo (/api/v1/cron/latido). Sin ella, el latido responde 503. */
     cronToken: string;
-    archivosMaxBytes: number;
+    /**
+     * Respaldo diario de la base (D-60): pg_dump a <raíz>/privados/respaldos, se guardan los
+     * últimos RESPALDOS_MANTENER (14). PG_BIN_DIR por si pg_dump no está en el PATH.
+     */
+    respaldosDir: string;
+    respaldosMantener: number;
+    pgBinDir: string;
+    /** Errores a Sentry (D-59). Vacío = no se manda nada. La web usa su propio proyecto. */
+    sentryDsn: string;
+    sentryDsnWeb: string;
 };
 /** Hay correo saliente de verdad. Sin él, la web oculta el acceso por enlace al correo. */
 export declare const correoActivo: () => boolean;

@@ -30,20 +30,20 @@ export declare function listarComentarios(tx: Tx, actor: Actor, elementoId: stri
 }>;
 export declare function comentar(tx: Tx, actor: Actor, elementoId: string, body: unknown): Promise<{
     mencionados: string[];
+    status: import("@prisma/client").$Enums.RecordingStatus;
+    body: import("@prisma/client/runtime/library").JsonValue;
     id: string;
     createdAt: Date;
-    status: import("@prisma/client").$Enums.RecordingStatus;
     projectId: string;
-    updatedAt: Date;
-    trashedAt: Date | null;
     type: import("@prisma/client").$Enums.RecordingType;
     parentId: string | null;
     title: string | null;
-    body: import("@prisma/client/runtime/library").JsonValue;
     bodyHtml: string | null;
     bodyText: string | null;
     visibleToClients: boolean;
     position: number;
+    trashedAt: Date | null;
+    updatedAt: Date;
     creator: {
         name: string;
         id: string;

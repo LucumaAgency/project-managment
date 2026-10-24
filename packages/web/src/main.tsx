@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Marco from './componentes/Marco';
 import { ProveedorConfig } from './contexto';
+import { AtajoDeErrores } from './componentes/errores';
 import Canjear from './paginas/Canjear';
 import Cuentas from './paginas/Cuentas';
 import Entrar from './paginas/Entrar';
@@ -27,6 +28,7 @@ const PruebaEditor = import.meta.env.DEV ? lazy(() => import('./paginas/PruebaEd
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    <AtajoDeErrores>
     <ProveedorConfig>
       <BrowserRouter>
         <Routes>
@@ -56,5 +58,6 @@ createRoot(document.getElementById('root')!).render(
         </Routes>
       </BrowserRouter>
     </ProveedorConfig>
+    </AtajoDeErrores>
   </StrictMode>
 );

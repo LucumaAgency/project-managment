@@ -10,3 +10,7 @@ process.env.BASE_DOMAIN = '';
 // Archivos subidos en los tests: carpeta temporal propia de la corrida, tope chico (1 MB).
 process.env.ARCHIVOS_DIR = path.join(os.tmpdir(), `pm-test-archivos-${process.pid}`);
 process.env.ARCHIVOS_MAX_MB = '1';
+// Respaldos de los tests: carpeta temporal. pg_dump real solo si se indica (TEST_PG_BIN_DIR) o
+// si el sistema tiene uno igual o más nuevo que el Postgres de los tests.
+process.env.RESPALDOS_DIR = path.join(os.tmpdir(), `pm-test-respaldos-${process.pid}`);
+if (process.env.TEST_PG_BIN_DIR) process.env.PG_BIN_DIR = process.env.TEST_PG_BIN_DIR;

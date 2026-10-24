@@ -581,6 +581,30 @@ Para desplegar (**con migración y con dependencia nueva**): Git → Desplegar �
 `prisma:deploy` → `base:verificar:prod` → Reiniciar. (`prisma:generate` no hace falta esta vez:
 la migración solo cambia funciones de la base, no el schema; correrlo igual no hace daño.)
 
+### 2026-10-24 · Día 15
+
+Hecho:
+
+- **Errores a Sentry** (D-59), sin el SDK: API (500 con ruta, errores de tareas de fondo,
+  promesas sin manejar) y web (errores y una pantalla "Recargar" si una página se rompe). Se
+  activa con `SENTRY_DSN` / `SENTRY_DSN_WEB`; `sentry:probar:prod` lo comprueba.
+- **Respaldo diario** (D-60): `pg_dump` con el latido, 14 días, lista de archivos; `respaldo:prod`
+  para hacerlo, listarlo o restaurarlo; `base:verificar:prod` dice si el servidor tiene `pg_dump`.
+  Copia fuera del servidor: gestor de copias de Plesk (§5e de 10-DESPLIEGUE).
+- **Carga de proyectos** (D-61): `cargar:prod -- archivo.json [--probar]`. Borrador con 10
+  proyectos de Lucuma (30 tareas, con lo pendiente de cada cliente) en `privados/carga-lucuma.json`
+  de la máquina de desarrollo, para revisar antes de subirlo.
+
+Probado:
+
+- 238 tests en verde (respaldo real con pg_dump 16: respaldar, restaurar en otra base y comparar;
+  Sentry contra un servidor falso, sin fugas de query ni correos; carga con validaciones).
+- Recorrido completo en navegador (escritorio y celular) sin errores; la carga en la base local
+  se ve bien en Proyectos y Tareas, y correrla dos veces no duplica.
+
+Para desplegar: Git → Desplegar → Reiniciar (sin migración ni dependencias nuevas). Después,
+los pasos de §5e (respaldo), §5f (carga) y §5g (Sentry) de 10-DESPLIEGUE-PLESK.md.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -594,9 +618,9 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
 ### MVP (en orden)
 
-- [ ] Día 15 según [07-PLAN-MVP.md](07-PLAN-MVP.md): Sentry, respaldo diario (base + `privados/`), cargar los proyectos reales de Lucuma.
+- [ ] Poner en marcha en el servidor (lo hace el usuario en Plesk): latido en cron-job.org (§5c), verificar `pg_dump` y activar las copias de Plesk afuera (§5e), cargar los proyectos (§5f), Sentry (§5g).
+- [ ] Probar una restauración real en el servidor (a una base aparte) antes de necesitarla.
 - [ ] Más adelante: cambiar las contraseñas de la base (quedaron en el chat; el usuario decidió no hacerlo todavía, D-46).
-- [ ] Antes del día 15: Sentry, respaldo diario de la base y de la carpeta de archivos.
 
 ### Decisiones abiertas
 

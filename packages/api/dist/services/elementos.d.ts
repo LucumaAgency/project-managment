@@ -35,14 +35,14 @@ export declare const SELECCION: {
  */
 export declare function elementoPara(tx: Tx, actor: Actor, id: string, accion: Accion, mensaje?: string): Promise<{
     proyecto: ProyectoCargado & {
+        status: import("@prisma/client").$Enums.ProjectStatus;
         name: string;
         id: string;
         createdAt: Date;
-        status: import("@prisma/client").$Enums.ProjectStatus;
+        trashedAt: Date | null;
         description: string | null;
         createdById: string;
         archivedAt: Date | null;
-        trashedAt: Date | null;
     };
     elemento: ElementoCargado;
 }>;
@@ -59,20 +59,20 @@ export interface DatosNuevo {
 }
 export declare function crearElemento(tx: Tx, actor: Actor, projectId: string, datos: DatosNuevo): Promise<{
     mencionados: string[];
+    status: import("@prisma/client").$Enums.RecordingStatus;
+    body: Prisma.JsonValue;
     id: string;
     createdAt: Date;
-    status: import("@prisma/client").$Enums.RecordingStatus;
     projectId: string;
-    updatedAt: Date;
-    trashedAt: Date | null;
     type: import("@prisma/client").$Enums.RecordingType;
     parentId: string | null;
     title: string | null;
-    body: Prisma.JsonValue;
     bodyHtml: string | null;
     bodyText: string | null;
     visibleToClients: boolean;
     position: number;
+    trashedAt: Date | null;
+    updatedAt: Date;
     creator: {
         name: string;
         id: string;
@@ -87,20 +87,20 @@ export interface DatosEdicion {
 }
 export declare function editarElemento(tx: Tx, actor: Actor, id: string, datos: DatosEdicion): Promise<{
     mencionados: string[];
+    status: import("@prisma/client").$Enums.RecordingStatus;
+    body: Prisma.JsonValue;
     id: string;
     createdAt: Date;
-    status: import("@prisma/client").$Enums.RecordingStatus;
     projectId: string;
-    updatedAt: Date;
-    trashedAt: Date | null;
     type: import("@prisma/client").$Enums.RecordingType;
     parentId: string | null;
     title: string | null;
-    body: Prisma.JsonValue;
     bodyHtml: string | null;
     bodyText: string | null;
     visibleToClients: boolean;
     position: number;
+    trashedAt: Date | null;
+    updatedAt: Date;
     creator: {
         name: string;
         id: string;
@@ -108,40 +108,40 @@ export declare function editarElemento(tx: Tx, actor: Actor, id: string, datos: 
 }>;
 /** A la papelera: deja de verse con todo lo que tiene dentro. Se purga a los 30 días (día 14). */
 export declare function papeleraElemento(tx: Tx, actor: Actor, id: string): Promise<{
+    status: import("@prisma/client").$Enums.RecordingStatus;
+    body: Prisma.JsonValue;
     id: string;
     createdAt: Date;
-    status: import("@prisma/client").$Enums.RecordingStatus;
     projectId: string;
-    updatedAt: Date;
-    trashedAt: Date | null;
     type: import("@prisma/client").$Enums.RecordingType;
     parentId: string | null;
     title: string | null;
-    body: Prisma.JsonValue;
     bodyHtml: string | null;
     bodyText: string | null;
     visibleToClients: boolean;
     position: number;
+    trashedAt: Date | null;
+    updatedAt: Date;
     creator: {
         name: string;
         id: string;
     };
 }>;
 export declare function restaurarElemento(tx: Tx, actor: Actor, id: string): Promise<{
+    status: import("@prisma/client").$Enums.RecordingStatus;
+    body: Prisma.JsonValue;
     id: string;
     createdAt: Date;
-    status: import("@prisma/client").$Enums.RecordingStatus;
     projectId: string;
-    updatedAt: Date;
-    trashedAt: Date | null;
     type: import("@prisma/client").$Enums.RecordingType;
     parentId: string | null;
     title: string | null;
-    body: Prisma.JsonValue;
     bodyHtml: string | null;
     bodyText: string | null;
     visibleToClients: boolean;
     position: number;
+    trashedAt: Date | null;
+    updatedAt: Date;
     creator: {
         name: string;
         id: string;
@@ -155,20 +155,20 @@ export declare function listarElementos(tx: Tx, actor: Actor, proyecto: Proyecto
     parentId: string | null;
     type?: RecordingType;
 }): Promise<{
+    status: import("@prisma/client").$Enums.RecordingStatus;
+    body: Prisma.JsonValue;
     id: string;
     createdAt: Date;
-    status: import("@prisma/client").$Enums.RecordingStatus;
     projectId: string;
-    updatedAt: Date;
-    trashedAt: Date | null;
     type: import("@prisma/client").$Enums.RecordingType;
     parentId: string | null;
     title: string | null;
-    body: Prisma.JsonValue;
     bodyHtml: string | null;
     bodyText: string | null;
     visibleToClients: boolean;
     position: number;
+    trashedAt: Date | null;
+    updatedAt: Date;
     creator: {
         name: string;
         id: string;
@@ -184,20 +184,20 @@ export declare function moverElemento(tx: Tx, actor: Actor, id: string, destino:
     parentId?: string | null;
     despuesDe: string | null;
 }): Promise<{
+    status: import("@prisma/client").$Enums.RecordingStatus;
+    body: Prisma.JsonValue;
     id: string;
     createdAt: Date;
-    status: import("@prisma/client").$Enums.RecordingStatus;
     projectId: string;
-    updatedAt: Date;
-    trashedAt: Date | null;
     type: import("@prisma/client").$Enums.RecordingType;
     parentId: string | null;
     title: string | null;
-    body: Prisma.JsonValue;
     bodyHtml: string | null;
     bodyText: string | null;
     visibleToClients: boolean;
     position: number;
+    trashedAt: Date | null;
+    updatedAt: Date;
     creator: {
         name: string;
         id: string;

@@ -344,7 +344,7 @@ describe('soporte de Lucuma (beta)', () => {
 
 describe('config', () => {
   it('avisa que no hay correo saliente (la web oculta el acceso por enlace)', async () => {
-    expect((await pedir('GET', '/api/v1/config')).json()).toEqual({ baseDomain: '', correo: false });
+    expect((await pedir('GET', '/api/v1/config')).json()).toEqual({ baseDomain: '', correo: false, sentry: null });
   });
 });
 

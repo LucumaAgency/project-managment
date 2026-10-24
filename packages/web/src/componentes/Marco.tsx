@@ -8,6 +8,7 @@ import { ProveedorAvisos, useAvisos } from './avisos';
 import Icono from './Icono';
 import Marca, { iniciales } from './Marca';
 import PaginaAcceso from './PaginaAcceso';
+import { AtajoDeErrores } from './errores';
 
 /** Título de la barra superior según la ruta. */
 const TITULOS: [string, string][] = [
@@ -175,7 +176,10 @@ export default function Marco() {
             </div>
           )}
           <main className="contenido">
-            <Outlet />
+            {/* Por página (y se reinicia al navegar): si una pantalla se rompe, el menú sigue. */}
+            <AtajoDeErrores key={location.pathname}>
+              <Outlet />
+            </AtajoDeErrores>
           </main>
         </div>
       </div>

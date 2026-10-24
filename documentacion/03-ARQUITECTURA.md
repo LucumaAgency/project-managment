@@ -12,7 +12,7 @@
 | Archivos | Cloudflare R2, URL firmada, subida con Uppy | Día 10 |
 | Miniaturas | sharp (imágenes) + pdftoppm (PDF), en job | Día 10 |
 | Correo | Brevo | Día 12 |
-| Errores | Sentry | Día 15 |
+| Errores | Sentry, sin SDK (`lib/sentry.ts`, `componentes/errores.tsx`) | D-59 |
 | Hosting | Plesk en la beta (D-43, guía en 10-DESPLIEGUE-PLESK.md); Vultr + CloudPanel con cron real después | Desde ya |
 | Postgres local | `embedded-postgres` (solo desarrollo) | Instalado (día 1) |
 
@@ -361,6 +361,14 @@ app. La tabla `jobs` queda lista para cuando haga falta (correos, exportación).
 | Papelera del proyecto | `GET /proyectos/:id/papelera`, `paginas/Papelera.tsx` | Trae `seBorraEl`; restaurar con `POST /elementos/:id/restaurar` |
 | Búsqueda | `lib/busqueda.ts` (puro), `services/busqueda.ts`, `GET /buscar?q=&proyecto=`, `paginas/Buscar.tsx` | D-57. `pm_sin_tildes()` en la base; marcas como posiciones `[inicio, fin]` |
 | Exportación | `services/exportar.ts`, `GET /cuenta/exportar` | D-58. ZIP con `yazl`, en streaming; solo el dueño |
+
+## Operación (día 15)
+
+| Pieza | Dónde | Notas |
+|---|---|---|
+| Errores | `lib/sentry.ts`, hook de pino en `app.ts`, `componentes/errores.tsx`; `sentry:probar:prod` | D-59 |
+| Respaldo | `services/respaldo.ts`; latido (1 vez al día); `respaldo:prod [lista \| restaurar AAAA-MM-DD --confirmo]` | D-60 |
+| Carga inicial | `services/carga.ts`; `cargar:prod -- archivo.json [--probar]` | D-61 |
 
 ## Archivos
 

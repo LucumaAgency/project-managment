@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { api, type Config, type Sesion, type Yo } from './api';
 import { cuentaActual, irACuenta } from './cuenta';
+import { activarSentry } from './componentes/errores';
 
 const ConfigCtx = createContext<Config | null>(null);
 
@@ -9,7 +10,12 @@ export function ProveedorConfig({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<Config | null>(null);
   const [error, setError] = useState(false);
   useEffect(() => {
-    api<Config>('/config').then(setConfig).catch(() => setError(true));
+    api<Config>('/config')
+      .then((c) => {
+        activarSentry(c.sentry);
+        setConfig(c);
+      })
+      .catch(() => setError(true));
   }, []);
   if (error) return <div className="vacio">No se pudo conectar con el servidor. Recarga la página.</div>;
   if (!config) return null;
