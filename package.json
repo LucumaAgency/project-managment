@@ -21,7 +21,9 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:status": "prisma migrate status",
-    "test": "npm run build -w @lucuma-pm/shared && npm run test -w @lucuma-pm/api"
+    "test": "npm run build -w @lucuma-pm/shared && npm run test -w @lucuma-pm/api",
+    "cuenta:crear": "npm run cuenta:crear -w @lucuma-pm/api --",
+    "cuenta:crear:prod": "npm run cuenta:crear:prod -w @lucuma-pm/api --"
   },
   "devDependencies": {
     "embedded-postgres": "16.14.0-beta.17",

@@ -104,6 +104,27 @@ que nadie cambie de cuenta con un parámetro (lo prueba un test).
 Sin membresía recibe 403 como cualquiera. El acceso de soporte llega con el superadmin (fase 3)
 y quedará en `AuditLog`.
 
+**D-26 · Login único para todas las cuentas** (2026-10-24, día 3)
+Como la persona es global (D-08), entra una vez y la cookie vale para todos los subdominios.
+Si tiene una sola cuenta va directo; si tiene varias, elige. Descartado: login por cuenta como
+en el CRM.
+
+**D-27 · Enlace mágico como forma principal de entrar** (2026-10-24, día 3)
+La pantalla ofrece primero el enlace al correo y la contraseña como alternativa. Los clientes
+de las agencias entran pocas veces y no recuerdan contraseñas. Ver C-5.
+
+**D-28 · Los correos de acceso salen en la misma petición** (2026-10-24, día 3)
+El enlace mágico tiene que llegar en segundos; no espera a la cola, que además se construye en
+la semana 3. Los avisos y resúmenes sí irán por la cola.
+
+**D-29 · Alta de cuentas por consola, adelantada al día 3** (2026-10-24, día 3)
+`npm run cuenta:crear -- <slug> "<Nombre>" <correo> ["Nombre"] [--clave]`. Sin él no se podía
+probar el login en local. Si la persona ya existe, se suma como dueña.
+
+**D-30 · Estilos propios provisionales, sin shadcn/ui por ahora** (2026-10-24, día 3)
+CSS con variables de color y modo oscuro. shadcn/ui (o la librería que se elija) entra cuando
+esté definida la identidad del producto. Ver C-4.
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

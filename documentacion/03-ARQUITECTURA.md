@@ -133,6 +133,46 @@ usuario, para el selector de cuentas.
 `puede(ctx, accion, recording)` de `services/permisos.ts` decide por proyecto, rol y
 visibilidad. Las rutas no deciden permisos por su cuenta.
 
+## Acceso (login)
+
+La persona es global: entra una sola vez y elige cuenta. Rutas en `routes/auth.ts`:
+
+| Ruta | Qué hace |
+|---|---|
+| `POST /api/v1/auth/enlace` | Envía un enlace mágico (20 min, un uso). Misma respuesta exista o no el correo |
+| `POST /api/v1/auth/canjear` | Canjea el token por una sesión. Se marca usado en el mismo paso que se valida |
+| `POST /api/v1/auth/entrar` | Correo y contraseña (scrypt). Mismo error y mismo tiempo para todo fallo |
+| `GET /api/v1/auth/sesion` | Quién soy y mis cuentas (selector) |
+| `POST /api/v1/auth/salir` | Borra la fila de la sesión y la cookie |
+| `POST /api/v1/auth/password` | Define o cambia la contraseña; cierra las otras sesiones |
+| `GET /api/v1/config` | Dominio base, para que la web arme los enlaces entre cuentas |
+
+- **Cookie** `pm_sesion`: HttpOnly, SameSite=Lax, Secure en producción, 30 días. Con dominio
+  base va a `.dominio`, así una sesión sirve para todas las cuentas de la persona.
+- **Enlace del correo:** se arma solo con el dominio configurado (o `APP_URL`), nunca con el
+  Host de la petición. Si no, alguien podría pedir el enlace de otra persona con un Host falso
+  y recibir su token en su propio sitio (lo prueba un test).
+- **Frenos:** 5 contraseñas fallidas por IP y correo cada 15 min (429); 3 enlaces por correo
+  y 20 por IP cada 15 min (se responde igual, sin enviar).
+- **Solo JSON:** la API no acepta `text/plain`, para que un formulario de otro sitio no pueda
+  mandar un POST sin preflight.
+- **Auditoría:** `user.login` (con método), `user.login_fallido`, `user.password` en `audit_log`
+  sin cuenta.
+- **Correo:** `lib/correo.ts`. En tests va a un buzón en memoria; sin `SMTP_HOST` en desarrollo
+  se imprime en consola con sus enlaces; en producción sale por SMTP (Brevo) y sin SMTP no
+  arranca el envío. Los correos de acceso salen en la misma petición; los demás irán por la cola.
+
+## Web
+
+SPA React con React Router (`packages/web`). Pantallas al día 3: Entrar (enlace o contraseña),
+Canjear enlace, Selector de cuentas, Portada de la cuenta, Mi cuenta (contraseña). Estilos
+provisionales en `estilos.css` con tokens de color y modo oscuro (marca pendiente, C-4).
+
+- En producción la cuenta sale del subdominio; en local, de `?cuenta=` y se guarda en
+  `sessionStorage` para mandarla en `X-Cuenta`.
+- En local también se pueden usar subdominios reales con `BASE_DOMAIN=lvh.me`
+  (`lucuma.lvh.me:5174`; `lvh.me` apunta a 127.0.0.1).
+
 ## Visibilidad para clientes
 
 Lógica en `services/visibilidad.ts`:

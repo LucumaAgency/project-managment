@@ -1,25 +1,27 @@
-import { StrictMode, useEffect, useState } from 'react';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-
-// Día 1: solo confirma que la web llega a la API y la API a la base. Las pantallas empiezan el día 3.
-function App() {
-  const [estado, setEstado] = useState('consultando…');
-  useEffect(() => {
-    fetch('/api/v1/salud')
-      .then((r) => r.json())
-      .then((d) => setEstado(d.ok ? `API y base OK (Postgres ${d.postgres})` : 'La API responde, la base no'))
-      .catch(() => setEstado('La API no responde'));
-  }, []);
-  return (
-    <main style={{ fontFamily: 'Montserrat, system-ui, sans-serif', padding: 24 }}>
-      <h1>Lucuma Proyectos</h1>
-      <p>{estado}</p>
-    </main>
-  );
-}
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { ProveedorConfig } from './contexto';
+import Canjear from './paginas/Canjear';
+import Cuentas from './paginas/Cuentas';
+import Entrar from './paginas/Entrar';
+import MiCuenta from './paginas/MiCuenta';
+import Portada from './paginas/Portada';
+import './estilos.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ProveedorConfig>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Portada />} />
+          <Route path="/entrar" element={<Entrar />} />
+          <Route path="/entrar/enlace" element={<Canjear />} />
+          <Route path="/cuentas" element={<Cuentas />} />
+          <Route path="/mi-cuenta" element={<MiCuenta />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </ProveedorConfig>
   </StrictMode>
 );

@@ -9,8 +9,8 @@ pendientes** del proyecto.
 |---|---|---|
 | 1 | Monorepo, Postgres local, schema, migraciones con RLS, roles | ✅ 2026-10-24 |
 | 2 | Contexto de cuenta por petición, subdominio, test de aislamiento | ✅ 2026-10-24 |
-| 3 | Login, sesiones, selector de cuenta | En curso |
-| 4 | Invitaciones, alta de cuenta por script, planes | Pendiente |
+| 3 | Login, sesiones, selector de cuenta | ✅ 2026-10-24 |
+| 4 | Invitaciones, planes (alta de cuenta por script ya hecha) | Siguiente |
 | 5 | Proyectos y servicio genérico de elementos | Pendiente |
 | 6 | Editor Tiptap | Pendiente |
 | 7 | Tareas | Pendiente |
@@ -124,6 +124,37 @@ Probado:
 - Sabotaje a propósito: con el RLS de `blobs` apagado, 4 tests fallan. Se quitó.
 - `npm run typecheck` sin errores, incluidos los tests.
 
+### 2026-10-24 · Día 3
+
+Hecho:
+
+- API de acceso (`routes/auth.ts`): enlace mágico, canje, contraseña, sesión, salir y cambio
+  de contraseña. Detalle en [03-ARQUITECTURA.md](03-ARQUITECTURA.md#acceso-login).
+- `lib/correo.ts` (nodemailer 7; buzón en tests, consola en desarrollo, SMTP en producción),
+  `lib/password.ts` (copiado del CRM), `lib/freno.ts`, `lib/auditoria.ts`, cookie en `lib/sesion.ts`.
+- La API solo acepta JSON.
+- Script `cuenta:crear` (adelantado del día 4).
+- Web: React Router y cinco pantallas (Entrar, Canjear, Cuentas, Portada, Mi cuenta), estilos
+  provisionales con modo oscuro, subdominios locales con `lvh.me`.
+
+Probado:
+
+- 57 tests en verde (14 nuevos de acceso). CI del día 2 en verde en GitHub (38 s).
+- Flujo completo contra la base de desarrollo por el proxy de la web: crear cuenta → pedir
+  enlace → canjear → `/yo` como dueño → el mismo enlace no sirve dos veces → salir invalida la sesión.
+- Recorrido en navegador real (Chromium sin ventana) en escritorio (1280 px) y celular (390 px):
+  entrar con contraseña errada y correcta, portada, Mi cuenta, cuenta inexistente y salir. Sin
+  errores de JavaScript. Capturas en [capturas/](capturas/).
+- Corregido tras mirar las capturas: el enlace "Mi cuenta" salía subrayado y los demás no.
+
+Notas:
+
+- La cuenta local de desarrollo es `lucuma` con `dev@lucumaagency.com` (solo existe en la base
+  de esta máquina). Si se pierde la contraseña: `npm run cuenta:crear` no sirve (la cuenta ya
+  existe); entrar por enlace (sale en la consola de la API) y definirla en Mi cuenta.
+- El Chrome del sistema no funciona con Playwright 1.48 (ya no acepta `--headless=old`); se usa
+  el Chromium que Playwright tiene descargado en `~/.cache/ms-playwright`.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -134,6 +165,10 @@ si no hay comentario, quedan así.
 | C-1 | Carpeta local | Renombré `~/lucuma-proyectos` a `~/project-management` (con la documentación dentro) | Una carpeta aparte solo con copia de los documentos |
 | C-2 | Soporte de Lucuma | Sin membresía no entra a ninguna cuenta (403), hasta el superadmin | Darle acceso de lectura desde ya |
 | C-3 | Duración de la sesión | 30 días | Más corta (7 días) o "recordarme" opcional |
+| C-4 | Diseño visual | Estilos provisionales neutros con el azul de Lucuma, sin librería de componentes | Definir marca del producto y adoptar shadcn/ui (u otra) antes de las pantallas de tareas (día 7) |
+| C-5 | Forma principal de entrar | Enlace al correo primero, contraseña como alternativa | Contraseña primero |
+| C-6 | Persona sin cuentas | Puede entrar y ve "todavía no tienes acceso a ninguna cuenta" | Rechazar el login |
+| C-7 | Remitente de los correos | `MAIL_FROM` sin definir (en local no sale nada) | Necesito la dirección y el dominio para Brevo (p. ej. `no-reply@<dominio de la app>`) |
 
 ## Pendientes
 

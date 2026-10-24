@@ -3,6 +3,7 @@ import cookie from '@fastify/cookie';
 import { env } from './env.js';
 import { prisma } from './db.js';
 import { registrarContexto } from './plugins/contexto.js';
+import rutasAuth from './routes/auth.js';
 import rutasYo from './routes/yo.js';
 
 export interface OpcionesApp {
@@ -29,6 +30,9 @@ export async function buildApp(opciones: OpcionesApp = {}) {
     return reply.code(500).send({ error: 'Error interno.' });
   });
 
+  // Solo JSON: sin el parser de texto plano, un formulario de otro sitio no puede mandar un
+  // POST "simple" (sin preflight) a la API.
+  app.removeContentTypeParser('text/plain');
   await app.register(cookie);
   registrarContexto(app, opciones.baseDomain ?? env.baseDomain);
 
@@ -39,6 +43,10 @@ export async function buildApp(opciones: OpcionesApp = {}) {
     return { ok: true, postgres: fila.version, rol: fila.usuario };
   });
 
+  /** Lo que la web necesita saber del despliegue antes de tener sesión. */
+  app.get('/api/v1/config', async () => ({ baseDomain: app.config.baseDomain }));
+
+  await app.register(rutasAuth);
   await app.register(rutasYo);
 
   return app;

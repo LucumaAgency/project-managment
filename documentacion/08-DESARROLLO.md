@@ -21,6 +21,20 @@ Comprobación directa: `curl localhost:3100/api/v1/salud` → `"rol":"pm_app"`.
 node_modules) y guarda los datos en `.pgdata/` (fuera de git). La primera vez crea los
 roles y la base. Para empezar de cero: apagarlo y borrar `.pgdata/`.
 
+## Primera cuenta en local
+
+```bash
+npm run cuenta:crear -- lucuma "Lucuma Agency" tu@correo.com "Tu Nombre" --clave
+```
+
+Imprime una contraseña una sola vez. Sin `--clave` se entra con enlace: sin `SMTP_HOST`, el
+correo no sale y la API imprime el enlace en su consola (`[correo:dev] enlace: …`).
+
+Luego abrir http://localhost:5174 → Entrar. Con una sola cuenta entra directo a ella.
+
+Subdominios como en producción (opcional): `BASE_DOMAIN=lvh.me` en `.env`, reiniciar la API y
+abrir http://lucuma.lvh.me:5174 (la raíz es http://lvh.me:5174).
+
 ## Tests
 
 ```bash
@@ -36,6 +50,7 @@ tipos y tests en cada push a `main` y en cada PR.
 |---|---|
 | `test/aislamiento.test.ts` | Toda tabla con datos de cuenta tiene RLS activado, forzado y con política; sin cuenta no se ve nada; cada cuenta ve exactamente lo suyo; no se puede crear, modificar, mover ni borrar en otra cuenta; la búsqueda respeta la cuenta; la cuenta no se filtra entre conexiones del pool; una persona en dos cuentas |
 | `test/http-contexto.test.ts` | `/yo` y `/mis-cuentas` por HTTP: 200, 400, 401, 403, 404, 410; sesión vencida o inventada; membresía desactivada; cuenta cerrada; subdominio y que con subdominio no se pueda cambiar de cuenta por parámetro |
+| `test/auth.test.ts` | Enlace mágico (un uso, vencido, correo inexistente sin aviso, freno de pedidos, enlace armado con el dominio configurado y no con el Host), contraseña (correcta, mismo 401 para todo fallo, bloqueo tras 5 fallos), sesión, salir invalida la cookie, cookie para todos los subdominios, cambio de contraseña cierra las otras sesiones, rechazo de `text/plain` |
 | `test/host.test.ts` | Lectura del host: subdominio, raíz, reservados, dominios ajenos |
 | `test/semilla.ts` | Crea una cuenta con filas en **todas** las tablas con RLS (un test verifica que ninguna quede vacía) |
 

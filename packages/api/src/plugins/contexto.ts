@@ -13,6 +13,9 @@ export interface MiembroResuelto {
 }
 
 declare module 'fastify' {
+  interface FastifyInstance {
+    config: { baseDomain: string };
+  }
   interface FastifyRequest {
     /** Slug pedido (subdominio, o `?cuenta=` / `X-Cuenta` en local). Null = sin cuenta. */
     slugPedido: string | null;
@@ -34,6 +37,7 @@ declare module 'fastify' {
  *  - Sin `baseDomain` (local y tests): de `?cuenta=slug` o del encabezado `X-Cuenta`.
  */
 export function registrarContexto(app: FastifyInstance, baseDomain: string) {
+  app.decorate('config', { baseDomain });
   app.decorateRequest('slugPedido', null);
   app.decorateRequest('cuenta', null);
   app.decorateRequest('usuario', null);

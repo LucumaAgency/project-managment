@@ -38,4 +38,12 @@ export const env = {
   sessionSecret: reqEnProduccion('SESSION_SECRET', 'dev-no-usar-en-produccion'),
   /** <slug>.baseDomain = una cuenta. Vacío en local: la cuenta se elige con ?cuenta=slug. */
   baseDomain: process.env.BASE_DOMAIN?.trim().toLowerCase() || '',
+  /** Correo saliente (Brevo por SMTP). Sin SMTP_HOST, en desarrollo se imprime en consola. */
+  smtp: {
+    host: process.env.SMTP_HOST?.trim() || '',
+    port: Number(process.env.SMTP_PORT ?? 587),
+    user: process.env.SMTP_USER?.trim() || '',
+    pass: process.env.SMTP_PASS ?? '',
+  },
+  mailFrom: process.env.MAIL_FROM?.trim() || 'Lucuma Proyectos <no-reply@localhost>',
 };
