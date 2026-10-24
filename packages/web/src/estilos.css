@@ -435,6 +435,25 @@ label.casilla { display: flex; align-items: center; gap: 8px; font-weight: 500; 
 @media (min-width: 620px) { .rejilla-archivos { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-width: 960px) { .rejilla-archivos { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 
+/* --- Bandeja ---------------------------------------------------------------- */
+.lateral-nav .globo {
+  margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px;
+  background: var(--azul); color: #fff; font-size: 11.5px; font-weight: 700; line-height: 20px; text-align: center;
+}
+.lista-avisos { list-style: none; padding: 0; margin: 0; background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio); overflow: hidden; }
+.lista-avisos li + li { border-top: 1px solid var(--borde-suave); }
+.aviso-fila { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; background: none; border: 0; padding: 12px 14px; color: var(--texto); }
+.aviso-fila:hover { background: var(--fondo); }
+.aviso-fila .punto { width: 8px; height: 8px; border-radius: 50%; margin-top: 10px; flex: none; }
+.aviso-fila.no-leido { background: #FBFCFF; }
+.aviso-fila.no-leido .punto { background: var(--azul); }
+.aviso-fila .avatar { width: 28px; height: 28px; font-size: 11px; }
+.aviso-fila .datos { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.aviso-cab { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.aviso-texto { font-size: 13.5px; overflow-wrap: anywhere; }
+.aviso-fila:not(.no-leido) .aviso-texto { color: var(--suave); }
+.aviso-fila:not(.no-leido) .aviso-texto b { font-weight: 600; }
+
 /* --- Texto con formato (editor y contenido guardado) ------------------- */
 .prosa { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
 .prosa > :first-child { margin-top: 0; }

@@ -19,6 +19,7 @@ import { planDeCuenta } from '../lib/plan.js';
 import { nombreLimpio, seMuestraEnLinea, tipoReal } from '../lib/tipos-archivo.js';
 import { env } from '../env.js';
 import { crearElemento, elementoPara } from './elementos.js';
+import { avisar, seguidoresComo } from './avisos.js';
 import { registrarEvento } from './eventos.js';
 import { exigir, puede, type Actor } from './permisos.js';
 import { proyectoPara } from './proyectos.js';
@@ -114,7 +115,7 @@ export async function nuevaVersion(actor: Actor, id: string, datos: { nombre: st
       await tx.uploadVersion.create({ data: { recordingId: id, blobId: blob.id, version, uploadedById: actor.ctx.userId, note: datos.nota?.slice(0, 500) || null } });
       // El título sigue al último nombre subido, salvo que lo hayan renombrado a mano antes.
       await tx.recording.update({ where: { id }, data: { title: g.nombre } });
-      await registrarEvento(tx, {
+      const eventId = await registrarEvento(tx, {
         accountId: actor.ctx.accountId,
         projectId: proyecto.id,
         recordingId: id,
@@ -122,6 +123,14 @@ export async function nuevaVersion(actor: Actor, id: string, datos: { nombre: st
         action: 'version_uploaded',
         details: { version },
         visibleToClients: elemento.visibleEnCadena,
+      });
+      await avisar(tx, {
+        accountId: actor.ctx.accountId,
+        eventId,
+        recordingId: id,
+        actorId: actor.ctx.userId,
+        visibleToClients: elemento.visibleEnCadena,
+        destinatarios: await seguidoresComo(tx, id),
       });
     })
   );

@@ -4,6 +4,7 @@ import { NOMBRE_ROL, esCliente } from '@lucuma-pm/shared';
 import { api, ErrorApi, olvidarCuentaLocal, type Sesion, type Yo } from '../api';
 import { useConfig, YoCtx } from '../contexto';
 import { cuentaActual, irACuenta, irARaiz } from '../cuenta';
+import { ProveedorAvisos, useAvisos } from './avisos';
 import Icono from './Icono';
 import Marca, { iniciales } from './Marca';
 import PaginaAcceso from './PaginaAcceso';
@@ -19,6 +20,7 @@ const TITULOS: [string, string][] = [
   ['/proyectos/:id/archivos', 'Archivos'],
   ['/proyectos/:id', 'Proyecto'],
   ['/personas', 'Personas'],
+  ['/bandeja', 'Bandeja'],
   ['/mi-cuenta', 'Mi cuenta'],
 ];
 
@@ -86,6 +88,7 @@ export default function Marco() {
 
   return (
     <YoCtx.Provider value={yo}>
+      <ProveedorAvisos>
       <div className="app">
         <aside className={`lateral${menuAbierto ? ' abierto' : ''}`}>
           <Marca />
@@ -95,6 +98,7 @@ export default function Marco() {
             <NavLink to="/" className={({ isActive }) => (isActive || location.pathname.startsWith('/proyectos') ? 'activo' : '')} end>
               <Icono nombre="proyectos" />Proyectos
             </NavLink>
+            <EnlaceBandeja />
             {!esCliente(yo.rol) && (
               <NavLink to="/personas" className={enlace}>
                 <Icono nombre="personas" />Personas
@@ -154,6 +158,17 @@ export default function Marco() {
           </main>
         </div>
       </div>
+      </ProveedorAvisos>
     </YoCtx.Provider>
+  );
+}
+
+function EnlaceBandeja() {
+  const { noLeidos } = useAvisos();
+  return (
+    <NavLink to="/bandeja" className={({ isActive }) => (isActive ? 'activo' : '')}>
+      <Icono nombre="bandeja" />Bandeja
+      {noLeidos > 0 && <span className="globo" aria-label={`${noLeidos} sin leer`}>{noLeidos > 99 ? '99+' : noLeidos}</span>}
+    </NavLink>
   );
 }

@@ -1,5 +1,5 @@
 export async function registrarEvento(tx, datos) {
-    await tx.event.create({
+    const e = await tx.event.create({
         data: {
             accountId: datos.accountId,
             projectId: datos.projectId,
@@ -11,4 +11,5 @@ export async function registrarEvento(tx, datos) {
         },
         select: { id: true },
     });
+    return e.id;
 }

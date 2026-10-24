@@ -17,8 +17,8 @@ pendientes** del proyecto.
 | 8 | Comentarios, menciones, suscripciones | ✅ 2026-10-24 |
 | 9 | Mensajes y actividad | ✅ 2026-10-24 |
 | 10 | Archivos | ✅ 2026-10-24 |
-| 11 | Bandeja de notificaciones | Siguiente |
-| 12 | Recordatorios dentro de la app | Pendiente |
+| 11 | Bandeja de notificaciones | ✅ 2026-10-24 |
+| 12 | Recordatorios dentro de la app | Siguiente |
 | 13 | Vista del cliente | Pendiente |
 | 14 | Papelera, búsqueda, celular, exportación | Pendiente |
 | 15 | Servidor y salida a producción | Pendiente |
@@ -476,6 +476,31 @@ Problemas encontrados y cómo se resolvieron:
 Para desplegar: Git → Desplegar y reiniciar. **Sin migraciones** (las tablas de archivos
 existían desde el día 1) y sin dependencias nuevas de la API. Ver la sección de archivos en
 [10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md).
+
+### 2026-10-24 · Día 11
+
+Hecho:
+
+- `services/avisos.ts`: avisos en la misma transacción que el cambio (D-53), enganchados en
+  crear y editar elementos (menciones, comentarios, mensajes nuevos), asignar, completar y
+  subir versiones. `registrarEvento` ahora devuelve el id del evento.
+- `services/bandeja.ts` + `routes/bandeja.ts`: listar, contador, marcar uno, todo o al abrir.
+- La presentación de eventos (frase, enlace) se comparte entre actividad y bandeja.
+- Web: "Bandeja" en el menú con el número de no leídos y en el título de la pestaña, página
+  Bandeja (todos / no leídos, marcar todo, "Ver más"), y al abrir una tarea, un mensaje o un
+  archivo sus avisos quedan leídos.
+
+Probado:
+
+- 189 tests en verde (11 nuevos en `bandeja.test.ts`).
+- En navegador real, escritorio y celular: el equipo asigna una tarea a la cliente y la
+  menciona en un mensaje; la cliente ve "2" en el menú y "(2)" en la pestaña, su bandeja dice
+  "Te mencionaron" y "Te asignaron"; al abrir la mención baja a 1; comenta la tarea y al equipo
+  le llega "Comentario nuevo". Sin errores.
+- En el script de prueba (no en la app) hubo que cerrar las ventanas entre pasadas: el modo
+  desarrollo carga cientos de archivos y el navegador se quedaba sin recursos.
+
+Para desplegar: Git → Desplegar y reiniciar. **Sin migraciones** (la tabla de avisos existía).
 
 ## Para confirmar
 

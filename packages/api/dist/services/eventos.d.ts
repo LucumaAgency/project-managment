@@ -15,4 +15,4 @@ export declare function registrarEvento(tx: Tx, datos: {
     details?: Prisma.InputJsonValue;
     /** Copia de la visibilidad efectiva al momento: el feed del cliente filtra por aquí. */
     visibleToClients?: boolean;
-}): Promise<void>;
+}): Promise<string>;

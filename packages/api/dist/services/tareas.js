@@ -9,6 +9,7 @@ import { crearElemento, editarElemento, elementoPara } from './elementos.js';
 import { registrarEvento } from './eventos.js';
 import { mencionables } from './menciones.js';
 import { suscribir } from './suscripciones.js';
+import { avisar, seguidoresComo } from './avisos.js';
 import { exigir, puede } from './permisos.js';
 const SELECCION_TAREA = {
     id: true,
@@ -152,8 +153,17 @@ async function fijarResponsables(tx, actor, datos) {
         await suscribir(tx, { accountId: actor.ctx.accountId, recordingId: datos.tareaId, userIds: entran });
     }
     const base = { accountId: actor.ctx.accountId, projectId: datos.projectId, recordingId: datos.tareaId, actorId: actor.ctx.userId, visibleToClients: datos.visibleParaClientes };
-    if (entran.length)
-        await registrarEvento(tx, { ...base, action: 'assigned', details: { userIds: entran } });
+    if (entran.length) {
+        const eventId = await registrarEvento(tx, { ...base, action: 'assigned', details: { userIds: entran } });
+        await avisar(tx, {
+            accountId: actor.ctx.accountId,
+            eventId,
+            recordingId: datos.tareaId,
+            actorId: actor.ctx.userId,
+            visibleToClients: datos.visibleParaClientes,
+            destinatarios: entran.map((userId) => ({ userId, reason: 'assigned' })),
+        });
+    }
     if (salen.length)
         await registrarEvento(tx, { ...base, action: 'unassigned', details: { userIds: salen } });
 }
@@ -237,7 +247,7 @@ export async function completarTarea(tx, actor, id, completar) {
         where: { recordingId: id },
         data: completar ? { completedAt: new Date(), completedById: actor.ctx.userId } : { completedAt: null, completedById: null },
     });
-    await registrarEvento(tx, {
+    const eventId = await registrarEvento(tx, {
         accountId: actor.ctx.accountId,
         projectId: proyecto.id,
         recordingId: id,
@@ -245,5 +255,16 @@ export async function completarTarea(tx, actor, id, completar) {
         action: completar ? 'completed' : 'reopened',
         visibleToClients: elemento.visibleEnCadena,
     });
+    // Completar avisa a quienes siguen la tarea (reabrir no: suele ser una corrección).
+    if (completar) {
+        await avisar(tx, {
+            accountId: actor.ctx.accountId,
+            eventId,
+            recordingId: id,
+            actorId: actor.ctx.userId,
+            visibleToClients: elemento.visibleEnCadena,
+            destinatarios: await seguidoresComo(tx, id),
+        });
+    }
     return (await tareaDetalle(tx, actor, id)).tarea;
 }

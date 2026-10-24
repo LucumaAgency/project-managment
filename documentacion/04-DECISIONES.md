@@ -328,6 +328,20 @@ Los avisos a los mencionados llegan con la bandeja (día 11).
   página de los PDF) queda para cuando haga falta; necesita herramientas del sistema.
 - Archivos en la papelera: se ocultan; borrarlos del disco llega con la purga (día 14).
 
+**D-53 · Avisos: en la misma transacción, sin cola** (2026-10-24, día 11)
+Los avisos de la bandeja se crean en la misma transacción que el cambio, no en un job. En Plesk
+el cron corre enjaulado y no es confiable (lección del CRM); son pocas filas por cambio y así no
+se pierde ninguno ni llega tarde. La tabla `jobs` queda para lo que sí necesita horario
+(recordatorios del día 12, correos cuando haya). Qué avisa:
+- Te mencionan (en un comentario, tarea, mensaje o archivo; al editar, solo los nuevos).
+- Te asignan una tarea.
+- Lo que sigues: comentario nuevo, tarea completada, versión nueva de un archivo.
+- Mensaje nuevo: a la gente del proyecto que puede verlo (es un anuncio).
+Nunca a quien hizo el cambio; uno por persona y evento (mención > asignación > lo que sigues);
+solo a personas activas; a un cliente solo si es visible, y la bandeja vuelve a revisar la
+visibilidad de hoy al mostrarla. El aviso abre lo comentado (no el comentario). La bandeja es
+por cuenta; RLS separa cuentas, no personas, así que toda consulta filtra por la persona (test).
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

@@ -321,26 +321,21 @@ Lógica en `services/elementos.ts` (cadena de padres) y `services/permisos.ts` (
 - Correos, bandeja y búsqueda pasan por el mismo filtro.
 - Lo comprueban los tests de `proyectos.test.ts`; con el filtro quitado a propósito fallan 3.
 
-## Actividad y notificaciones
+## Actividad y avisos
 
-```
-cambio del usuario ──(misma transacción)──> Event
-                                              │
-                                   job notify.fanout
-                                              │
-              ┌───────────────────────────────┼─────────────────────┐
-         mencionados                     asignados           suscriptores
-              └──────────────> Notification (una por persona) <─────┘
-                                              │
-                   inmediato (mención/asignación) → job email.send
-                   resto → job digest.daily (por zona horaria)
-```
+Cada cambio escribe un `Event` (actividad, D-51) y, en la misma transacción, los `Notification`
+de quienes deben enterarse (`services/avisos.ts`, D-53). La bandeja: `services/bandeja.ts`,
+`routes/bandeja.ts`.
 
-- El evento se escribe en la misma transacción que el cambio: si el cambio se guarda, su
-  evento también.
-- Las notificaciones se generan fuera de la petición (job), para no hacer lenta la respuesta.
-- Nadie recibe aviso de su propia acción.
-- `Notification.emailedAt` evita mandar dos veces lo mismo.
+| Ruta | Qué hace |
+|---|---|
+| `GET /api/v1/bandeja?no-leidos=1&antes=` | Mis avisos en esta cuenta, con la frase, el proyecto y qué abren |
+| `GET /api/v1/bandeja/contador` | Cuántos sin leer (la web lo pide cada 30 s) |
+| `POST /api/v1/bandeja/:id/leido · leer-todo` | Marcar |
+| `POST /api/v1/bandeja/leer` `{ recordingId }` | Al abrir una tarea, mensaje o archivo |
+
+Web: "Bandeja" en el menú con el número de no leídos (también en el título de la pestaña),
+`paginas/Bandeja.tsx`, `componentes/avisos.tsx` (contador y `useLeerAvisosDe`).
 
 ## Cola de trabajos
 

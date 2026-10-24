@@ -4,6 +4,7 @@ import { esCliente } from '@lucuma-pm/shared';
 import { api, ErrorApi, subirBinario, tamano, urlArchivo, type DetalleArchivo } from '../api';
 import Comentarios from '../componentes/Comentarios';
 import Icono from '../componentes/Icono';
+import { useLeerAvisosDe } from '../componentes/avisos';
 import { useYo } from '../contexto';
 
 const mensajeDe = (e: unknown) => (e instanceof ErrorApi ? e.message : 'No se pudo conectar.');
@@ -20,6 +21,7 @@ export default function Archivo() {
   const [error, setError] = useState<string | null>(null);
   const selector = useRef<HTMLInputElement>(null);
 
+  useLeerAvisosDe(archivoId);
   const cargar = useCallback(() => {
     api<DetalleArchivo>(`/archivos/${archivoId}`)
       .then(setD)

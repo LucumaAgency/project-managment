@@ -6,6 +6,7 @@ import { api, ErrorApi, type ListaTareas, type Tarea, type TareaDetalle, type Ta
 import Comentarios from '../componentes/Comentarios';
 import Editor, { Contenido } from '../componentes/Editor';
 import { useMencionables } from '../componentes/mencionables';
+import { useLeerAvisosDe } from '../componentes/avisos';
 import Icono from '../componentes/Icono';
 import Modal from '../componentes/Modal';
 import { useYo } from '../contexto';
@@ -353,6 +354,7 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
   const [visible, setVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  useLeerAvisosDe(id);
 
   useEffect(() => {
     api<TareaDetalle>(`/tareas/${id}`)

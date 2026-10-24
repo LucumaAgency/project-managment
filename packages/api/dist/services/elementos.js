@@ -13,7 +13,8 @@ import { esCliente } from '@lucuma-pm/shared';
 import { Prisma } from '@prisma/client';
 import { documentoDesdeTexto, documentoVacio, procesarDocumento } from '../lib/documento.js';
 import { HttpError } from '../lib/errores.js';
-import { guardarMenciones } from './menciones.js';
+import { avisar, seguidoresComo } from './avisos.js';
+import { guardarMenciones, mencionables } from './menciones.js';
 import { suscribir } from './suscripciones.js';
 import { registrarEvento } from './eventos.js';
 import { exigir } from './permisos.js';
@@ -167,7 +168,7 @@ export async function crearElemento(tx, actor, projectId, datos) {
         recordingId: datos.type === 'comment' ? parentId : creado.id,
         userIds: [actor.ctx.userId, ...mencionados],
     });
-    await registrarEvento(tx, {
+    const eventId = await registrarEvento(tx, {
         accountId: actor.ctx.accountId,
         projectId,
         recordingId: creado.id,
@@ -175,6 +176,23 @@ export async function crearElemento(tx, actor, projectId, datos) {
         action: 'created',
         details: { type: creado.type, ...(mencionados.length ? { mencionados } : {}) },
         visibleToClients: visibleEnCadena,
+    });
+    // Avisos: a los mencionados; en un comentario, a quienes siguen lo comentado; en un mensaje
+    // nuevo, a la gente del proyecto que puede verlo (es un anuncio).
+    const destinatarios = mencionados.map((userId) => ({ userId, reason: 'mentioned' }));
+    if (datos.type === 'comment')
+        destinatarios.push(...(await seguidoresComo(tx, parentId)));
+    if (datos.type === 'message') {
+        const gente = await mencionables(tx, actor.ctx.accountId, projectId, { incluirClientes: visibleEnCadena });
+        destinatarios.push(...gente.map((p) => ({ userId: p.userId, reason: 'subscribed' })));
+    }
+    await avisar(tx, {
+        accountId: actor.ctx.accountId,
+        eventId,
+        recordingId: datos.type === 'comment' ? parentId : creado.id,
+        actorId: actor.ctx.userId,
+        visibleToClients: visibleEnCadena,
+        destinatarios,
     });
     return { ...creado, mencionados };
 }
@@ -208,10 +226,12 @@ export async function editarElemento(tx, actor, id, datos) {
     const editado = await tx.recording.update({ where: { id }, data: cambios, select: SELECCION });
     const visible = await visibleEfectivo(tx, id);
     let mencionados = [];
+    let antes = [];
     if (doc !== undefined || cambios.visibleToClients !== undefined) {
         // Si cambió el texto o la visibilidad, las menciones se recalculan (un cliente deja de
         // contar como mencionado si el elemento pasa a interno).
         const actualDoc = doc !== undefined ? doc : editado.body ? procesarDocumento(editado.body) : null;
+        antes = (await tx.mention.findMany({ where: { recordingId: id }, select: { userId: true } })).map((m) => m.userId);
         mencionados = await guardarMenciones(tx, {
             accountId: actor.ctx.accountId,
             projectId: proyecto.id,
@@ -231,7 +251,7 @@ export async function editarElemento(tx, actor, id, datos) {
         await registrarEvento(tx, { ...base, action: 'visibility_changed', details: { to: cambios.visibleToClients }, visibleToClients: visible });
     }
     if (cambios.title !== undefined || doc !== undefined) {
-        await registrarEvento(tx, {
+        const eventId = await registrarEvento(tx, {
             ...base,
             action: 'updated',
             details: {
@@ -240,6 +260,19 @@ export async function editarElemento(tx, actor, id, datos) {
             },
             visibleToClients: visible,
         });
+        // Solo los mencionados por primera vez en esta edición: no volver a avisar a los de antes.
+        const nuevos = mencionados.filter((m) => !antes.includes(m));
+        if (nuevos.length) {
+            const fila = await tx.recording.findUniqueOrThrow({ where: { id }, select: { type: true, parentId: true } });
+            await avisar(tx, {
+                accountId: actor.ctx.accountId,
+                eventId,
+                recordingId: fila.type === 'comment' && fila.parentId ? fila.parentId : id,
+                actorId: actor.ctx.userId,
+                visibleToClients: visible,
+                destinatarios: nuevos.map((userId) => ({ userId, reason: 'mentioned' })),
+            });
+        }
     }
     return { ...editado, mencionados };
 }

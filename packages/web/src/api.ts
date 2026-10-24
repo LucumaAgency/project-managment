@@ -304,3 +304,13 @@ export function tamano(bytes: number) {
   if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1).replace('.0', '')} MB`;
   return `${(bytes / 1024 ** 3).toFixed(1).replace('.0', '')} GB`;
 }
+
+export interface Aviso {
+  id: string;
+  reason: 'mentioned' | 'assigned' | 'subscribed' | 'due_soon';
+  leido: boolean;
+  createdAt: string;
+  abre: string | null;
+  proyecto: { id: string; name: string };
+  evento: Evento;
+}
