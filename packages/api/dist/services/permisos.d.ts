@@ -33,7 +33,7 @@ export interface ElementoCargado {
     /** Algún padre está en la papelera (o archivado): el elemento no se ve ni se toca. */
     padreInactivo: boolean;
 }
-export type Accion = 'proyecto.ver' | 'proyecto.crear' | 'proyecto.editar' | 'proyecto.archivar' | 'proyecto.papelera' | 'proyecto.personas' | 'proyecto.verPapelera' | 'elemento.ver' | 'elemento.crear' | 'elemento.editar' | 'elemento.papelera' | 'elemento.cambiarVisibilidad';
+export type Accion = 'proyecto.ver' | 'proyecto.crear' | 'proyecto.editar' | 'proyecto.archivar' | 'proyecto.papelera' | 'proyecto.personas' | 'proyecto.verPapelera' | 'elemento.ver' | 'elemento.crear' | 'elemento.editar' | 'elemento.papelera' | 'elemento.cambiarVisibilidad' | 'elemento.mover' | 'tarea.completar' | 'tarea.asignar';
 /** Tipos que edita cualquiera del equipo del proyecto, no solo quien los creó. */
 export declare const DEL_EQUIPO: RecordingType[];
 /** Qué tipos puede crear un cliente. Lo que crea nace visible para clientes. */
@@ -42,6 +42,8 @@ export declare function puede(actor: Actor, accion: Accion, sobre?: {
     proyecto?: ProyectoCargado;
     elemento?: ElementoCargado;
     tipo?: RecordingType;
+    /** La persona que actúa es responsable de la tarea. */
+    esAsignado?: boolean;
 }): boolean;
 /**
  * Corta si no puede. Cuando ni siquiera puede VER, responde 404 y no 403: así no revela que

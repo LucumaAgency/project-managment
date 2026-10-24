@@ -203,6 +203,10 @@ input, select, textarea {
   width: 100%; padding: 10px 12px; border: 1px solid var(--borde);
   border-radius: 8px; font: inherit; font-size: 14px; background: var(--blanco); color: var(--texto);
 }
+input[type='checkbox'], input[type='radio'] {
+  width: 16px; height: 16px; padding: 0; accent-color: var(--azul); vertical-align: middle; flex: none;
+}
+input[type='checkbox']:focus, input[type='radio']:focus { box-shadow: none; }
 input[readonly] { background: var(--fondo); color: var(--suave); }
 input:focus, select:focus, textarea:focus {
   outline: none; border-color: var(--azul); box-shadow: 0 0 0 3px var(--azul-tinte);
@@ -311,6 +315,8 @@ textarea { resize: vertical; line-height: 1.45; }
 .seccion-cab { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14.5px; }
 .seccion-cab svg { color: var(--azul); }
 .seccion-cab .cuenta { margin-left: auto; color: var(--tenue); font-weight: 500; font-size: 12.5px; }
+.seccion-enlace { color: var(--texto); }
+.seccion-enlace:hover { border-color: var(--azul-suave); box-shadow: var(--sombra); text-decoration: none; }
 .seccion .vacia { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--tenue); font-size: 12.5px; padding: 12px 0 0; }
 
 .menu-acciones { position: relative; }
@@ -323,6 +329,41 @@ textarea { resize: vertical; line-height: 1.45; }
 .lista-personas .nombre, .lista-personas .meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sumar { display: flex; gap: 8px; margin-top: 8px; }
 .sumar select { flex: 1; min-width: 0; }
+
+/* --- Tareas -------------------------------------------------------------- */
+.lista-tareas { padding: 16px 16px 10px; }
+.lista-tareas.soltar-aqui { border-color: var(--azul-suave); }
+.titulo-lista { font-size: 16px; margin: 0 0 2px; overflow-wrap: anywhere; }
+.descripcion-lista { margin-top: 6px; }
+.progreso { height: 4px; background: var(--borde-suave); border-radius: 2px; margin: 10px 0 6px; overflow: hidden; }
+.progreso i { display: block; height: 100%; background: var(--verde); border-radius: 2px; transition: width .2s; }
+.tareas { list-style: none; padding: 0; margin: 4px 0 0; }
+.tarea {
+  display: flex; align-items: flex-start; gap: 8px; padding: 7px 6px; border-radius: 8px;
+  border-top: 2px solid transparent;
+}
+.tarea:hover { background: var(--fondo); }
+.tarea.soltar-aqui { border-top-color: var(--azul); }
+.tarea input[type='checkbox'] { margin-top: 2px; flex: none; width: 18px; height: 18px; }
+.tarea .asa { color: var(--tenue); cursor: grab; margin-top: 2px; opacity: 0; flex: none; }
+.tarea:hover .asa { opacity: 1; }
+.tarea-cuerpo { flex: 1; min-width: 0; background: none; border: 0; padding: 0; text-align: left; }
+.tarea-titulo { display: block; font-size: 14px; overflow-wrap: anywhere; }
+.tarea.hecha .tarea-titulo { color: var(--tenue); text-decoration: line-through; }
+.tarea-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 12px; color: var(--suave); margin-top: 2px; }
+.tarea-meta:empty { display: none; }
+.tarea-meta svg { color: var(--tenue); }
+.agregar-tarea { display: flex; align-items: center; gap: 8px; padding: 4px 6px; color: var(--tenue); }
+.agregar-tarea input { border: 0; padding: 8px 4px; background: transparent; }
+.agregar-tarea input:focus { box-shadow: none; border-bottom: 1px solid var(--azul); border-radius: 0; }
+.ver-hechas { margin: 6px 6px 4px; font-size: 12.5px; }
+.tareas.hechas { margin-top: 2px; }
+/* En listas que se pueden ordenar, las completadas no tienen asa: se corren para alinear. */
+.tareas.hechas.con-asa .tarea { padding-left: 28px; }
+label.casilla { display: flex; align-items: center; gap: 8px; font-weight: 500; font-size: 13px; margin: 6px 0; cursor: pointer; }
+.opciones-personas { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0 12px; }
+.modal:has(.detalle-tarea) { max-width: 640px; }
+@media (hover: none) { .tarea .asa { display: none; } }
 
 /* --- Texto con formato (editor y contenido guardado) ------------------- */
 .prosa { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }

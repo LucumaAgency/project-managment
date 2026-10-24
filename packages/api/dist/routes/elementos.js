@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { conCuenta } from '../lib/contexto.js';
 import { leer } from '../lib/validar.js';
-import { crearElemento, editarElemento, elementoPara, listarElementos, papeleraElemento, restaurarElemento, SELECCION, TIPOS_CREABLES, } from '../services/elementos.js';
+import { crearElemento, editarElemento, elementoPara, listarElementos, moverElemento, papeleraElemento, restaurarElemento, SELECCION, TIPOS_CREABLES, } from '../services/elementos.js';
 import { mencionables } from '../services/menciones.js';
 import { puede } from '../services/permisos.js';
 import { proyectoPara } from '../services/proyectos.js';
@@ -32,6 +32,7 @@ const edicion = z.object({
     visibleToClients: z.boolean().optional(),
     position: z.number().finite().optional(),
 });
+const mover = z.object({ parentId: id.nullable().optional(), despuesDe: id.nullable() });
 const filtro = z.object({
     padre: id.optional(),
     tipo: z.enum(['todolist', 'todo', 'message', 'folder', 'upload', 'comment']).optional(),
@@ -82,6 +83,12 @@ export default async function rutasElementos(app) {
         const actor = exigirCuenta(req);
         const datos = leer(edicion, req.body);
         return conCuenta(actor.ctx, async (tx) => ({ elemento: await editarElemento(tx, actor, req.params.id, datos) }));
+    });
+    /** Reordenar o pasar a otro padre: queda justo después de `despuesDe` (null = primero). */
+    app.post('/api/v1/elementos/:id/mover', async (req) => {
+        const actor = exigirCuenta(req);
+        const datos = leer(mover, req.body);
+        return conCuenta(actor.ctx, async (tx) => ({ elemento: await moverElemento(tx, actor, req.params.id, datos) }));
     });
     app.post('/api/v1/elementos/:id/papelera', async (req) => {
         const actor = exigirCuenta(req);

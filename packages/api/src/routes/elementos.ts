@@ -7,6 +7,7 @@ import {
   editarElemento,
   elementoPara,
   listarElementos,
+  moverElemento,
   papeleraElemento,
   restaurarElemento,
   SELECCION,
@@ -43,6 +44,7 @@ const edicion = z.object({
   visibleToClients: z.boolean().optional(),
   position: z.number().finite().optional(),
 });
+const mover = z.object({ parentId: id.nullable().optional(), despuesDe: id.nullable() });
 const filtro = z.object({
   padre: id.optional(),
   tipo: z.enum(['todolist', 'todo', 'message', 'folder', 'upload', 'comment']).optional(),
@@ -98,6 +100,13 @@ export default async function rutasElementos(app: FastifyInstance) {
     const actor = exigirCuenta(req);
     const datos = leer(edicion, req.body);
     return conCuenta(actor.ctx, async (tx) => ({ elemento: await editarElemento(tx, actor, req.params.id, datos) }));
+  });
+
+  /** Reordenar o pasar a otro padre: queda justo después de `despuesDe` (null = primero). */
+  app.post<{ Params: { id: string } }>('/api/v1/elementos/:id/mover', async (req) => {
+    const actor = exigirCuenta(req);
+    const datos = leer(mover, req.body);
+    return conCuenta(actor.ctx, async (tx) => ({ elemento: await moverElemento(tx, actor, req.params.id, datos) }));
   });
 
   app.post<{ Params: { id: string } }>('/api/v1/elementos/:id/papelera', async (req) => {

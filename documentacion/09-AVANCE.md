@@ -13,8 +13,8 @@ pendientes** del proyecto.
 | 4 | Invitaciones, personas, planes, soporte en beta, sistema visual del CRM | ✅ 2026-10-24 |
 | 5 | Proyectos y servicio genérico de elementos | ✅ 2026-10-24 |
 | 6 | Editor Tiptap | ✅ 2026-10-24 |
-| 7 | Tareas | Siguiente |
-| 8 | Comentarios, menciones, suscripciones | Pendiente |
+| 7 | Tareas | ✅ 2026-10-24 |
+| 8 | Comentarios, menciones, suscripciones | Siguiente |
 | 9 | Mensajes y actividad | Pendiente |
 | 10 | Archivos | Pendiente |
 | 11 | Bandeja de notificaciones | Pendiente |
@@ -358,6 +358,38 @@ Probado:
 - El build de producción no incluye la página de prueba (Tiptap entra con las tareas, día 7).
 
 Para desplegar: Git → Desplegar y reiniciar. Sin migraciones ni dependencias nuevas de la API.
+
+### 2026-10-24 · Día 7
+
+Hecho:
+
+- `services/tareas.ts` y `routes/tareas.ts`: listas con tareas, crear, detalle, editar (título,
+  notas con el editor, fecha, responsables, visibilidad), completar y reabrir (D-49).
+- Movimiento genérico de elementos (`/elementos/:id/mover`), con renumeración cuando el hueco
+  entre dos posiciones se agota.
+- Permisos nuevos en `puede()`: `elemento.mover`, `tarea.completar`, `tarea.asignar`.
+- Web: página **Tareas** del proyecto (listas con progreso, agregar con Enter, casilla para
+  completar, completadas plegadas, arrastrar para ordenar o pasar de lista) y panel de detalle
+  (título, notas con el editor y @menciones, fecha, responsables, visible para el cliente,
+  lista, subir/bajar, completar, papelera). La sección Tareas del proyecto lleva ahí.
+
+Probado:
+
+- 150 tests en verde (14 nuevos en `tareas.test.ts`).
+- En navegador real, escritorio y celular: crear dos listas (una visible, una interna),
+  agregar tareas con Enter, ponerle a una fecha, responsable, notas con negrita y "visible para
+  el cliente", completar otra, reordenar (arrastrando en escritorio, con las flechas en
+  celular). Luego un cliente invitado al proyecto ve **solo** la lista visible y **solo** la
+  tarea visible, sin poder completarla (no es suya). Sin errores ni scroll horizontal.
+
+Problemas encontrados y cómo se resolvieron:
+
+| Problema | Causa | Solución |
+|---|---|---|
+| Las casillas salían estiradas a todo el ancho | Faltaba la regla del CRM que da tamaño fijo a casillas y radios | Agregada en `estilos.css` |
+| Las tareas completadas no quedaban alineadas | No llevan el asa de arrastre | Sangría igual al asa |
+
+Para desplegar: Git → Desplegar y reiniciar. Sin migraciones (las tablas de tareas existían).
 
 ## Para confirmar
 

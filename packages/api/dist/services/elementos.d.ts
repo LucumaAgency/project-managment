@@ -173,3 +173,32 @@ export declare function listarElementos(tx: Tx, actor: Actor, proyecto: Proyecto
         id: string;
     };
 }[]>;
+/**
+ * Mueve un elemento: lo pone justo después de `despuesDe` (null = primero) dentro de
+ * `parentId` (el actual si no se indica). Sirve para ordenar tareas y listas y para pasar una
+ * tarea a otra lista. La posición nueva es el promedio entre sus vecinos (sin renumerar); si
+ * la diferencia se vuelve demasiado chica, se renumera ese grupo.
+ */
+export declare function moverElemento(tx: Tx, actor: Actor, id: string, destino: {
+    parentId?: string | null;
+    despuesDe: string | null;
+}): Promise<{
+    id: string;
+    createdAt: Date;
+    status: import("@prisma/client").$Enums.RecordingStatus;
+    projectId: string;
+    updatedAt: Date;
+    trashedAt: Date | null;
+    type: import("@prisma/client").$Enums.RecordingType;
+    parentId: string | null;
+    title: string | null;
+    body: Prisma.JsonValue;
+    bodyHtml: string | null;
+    bodyText: string | null;
+    visibleToClients: boolean;
+    position: number;
+    creator: {
+        name: string;
+        id: string;
+    };
+}>;

@@ -337,3 +337,63 @@ export async function listarElementos(
     orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
   });
 }
+
+/**
+ * Mueve un elemento: lo pone justo después de `despuesDe` (null = primero) dentro de
+ * `parentId` (el actual si no se indica). Sirve para ordenar tareas y listas y para pasar una
+ * tarea a otra lista. La posición nueva es el promedio entre sus vecinos (sin renumerar); si
+ * la diferencia se vuelve demasiado chica, se renumera ese grupo.
+ */
+export async function moverElemento(
+  tx: Tx,
+  actor: Actor,
+  id: string,
+  destino: { parentId?: string | null; despuesDe: string | null }
+) {
+  const { proyecto, elemento } = await elementoPara(tx, actor, id, 'elemento.mover', 'No puedes mover esto.');
+  const actual = await tx.recording.findUniqueOrThrow({ where: { id }, select: { parentId: true, type: true } });
+  const parentId = destino.parentId === undefined ? actual.parentId : destino.parentId;
+
+  if (parentId !== actual.parentId) {
+    if (!parentId) throw new HttpError(400, 'Eso no puede quedar en la raíz.');
+    const { elemento: padre } = await elementoPara(tx, actor, parentId, 'elemento.ver');
+    const filaPadre = await tx.recording.findUniqueOrThrow({ where: { id: parentId }, select: { projectId: true } });
+    if (filaPadre.projectId !== proyecto.id) throw new HttpError(404, 'No encontrado.');
+    if (padre.status !== 'active') throw new HttpError(409, 'Eso está en la papelera.');
+    if (!PADRES[elemento.type].includes(padre.type)) throw new HttpError(400, 'No puede ir ahí.');
+  }
+
+  const hermanos = await tx.recording.findMany({
+    where: { projectId: proyecto.id, parentId, type: actual.type, status: 'active', id: { not: id } },
+    select: { id: true, position: true },
+    orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
+  });
+  let i = 0;
+  if (destino.despuesDe) {
+    const k = hermanos.findIndex((h) => h.id === destino.despuesDe);
+    if (k === -1) throw new HttpError(400, 'El elemento de referencia no está en ese lugar.');
+    i = k + 1;
+  }
+  const antes = hermanos[i - 1]?.position;
+  const despues = hermanos[i]?.position;
+  let posicion = antes === undefined ? (despues === undefined ? 1 : despues - 1) : despues === undefined ? antes + 1 : (antes + despues) / 2;
+
+  if (antes !== undefined && despues !== undefined && despues - antes < 1e-6) {
+    // Demasiadas inserciones en el mismo hueco: renumerar el grupo 1..n y ubicar de nuevo.
+    const orden = [...hermanos.slice(0, i).map((h) => h.id), id, ...hermanos.slice(i).map((h) => h.id)];
+    for (const [n, hid] of orden.entries()) await tx.recording.update({ where: { id: hid }, data: { position: n + 1 } });
+    posicion = i + 1;
+  }
+
+  const movido = await tx.recording.update({ where: { id }, data: { parentId, position: posicion }, select: SELECCION });
+  await registrarEvento(tx, {
+    accountId: actor.ctx.accountId,
+    projectId: proyecto.id,
+    recordingId: id,
+    actorId: actor.ctx.userId,
+    action: 'moved',
+    details: parentId !== actual.parentId ? { from: actual.parentId, to: parentId } : {},
+    visibleToClients: await visibleEfectivo(tx, id),
+  });
+  return movido;
+}

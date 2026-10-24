@@ -11,6 +11,7 @@ import PaginaAcceso from './PaginaAcceso';
 /** Título de la barra superior según la ruta. */
 const TITULOS: [string, string][] = [
   ['/', 'Proyectos'],
+  ['/proyectos/:id/tareas', 'Tareas'],
   ['/proyectos/:id', 'Proyecto'],
   ['/personas', 'Personas'],
   ['/mi-cuenta', 'Mi cuenta'],

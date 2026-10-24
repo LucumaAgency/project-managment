@@ -67,6 +67,14 @@ export function puede(actor, accion, sobre = {}) {
             return gestiona(rol) || esCreador;
         case 'elemento.cambiarVisibilidad':
             return e.status === 'active' && !cliente && e.type !== 'comment';
+        case 'elemento.mover':
+            // Ordenar es trabajo del equipo; el cliente no reordena.
+            return e.status === 'active' && !cliente && (gestiona(rol) || p.esMiembro);
+        case 'tarea.completar':
+            // El equipo completa cualquier tarea; el cliente, las suyas o las que le asignaron.
+            return e.type === 'todo' && e.status === 'active' && (gestiona(rol) || (!cliente && p.esMiembro) || esCreador || !!sobre.esAsignado);
+        case 'tarea.asignar':
+            return e.type === 'todo' && e.status === 'active' && !cliente && (gestiona(rol) || p.esMiembro);
     }
     return false;
 }

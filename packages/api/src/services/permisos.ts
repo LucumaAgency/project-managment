@@ -50,7 +50,10 @@ export type Accion =
   | 'elemento.crear'
   | 'elemento.editar'
   | 'elemento.papelera'
-  | 'elemento.cambiarVisibilidad';
+  | 'elemento.cambiarVisibilidad'
+  | 'elemento.mover' // reordenar o pasar a otro padre (otra lista, otra carpeta)
+  | 'tarea.completar' // completar y reabrir
+  | 'tarea.asignar'; // responsables y fecha
 
 const gestiona = (rol: Rol) => veTodosLosProyectos(rol); // owner y admin
 
@@ -63,7 +66,13 @@ export const TIPOS_DE_CLIENTE: RecordingType[] = ['todo', 'message', 'comment'];
 export function puede(
   actor: Actor,
   accion: Accion,
-  sobre: { proyecto?: ProyectoCargado; elemento?: ElementoCargado; tipo?: RecordingType } = {}
+  sobre: {
+    proyecto?: ProyectoCargado;
+    elemento?: ElementoCargado;
+    tipo?: RecordingType;
+    /** La persona que actúa es responsable de la tarea. */
+    esAsignado?: boolean;
+  } = {}
 ): boolean {
   const { rol } = actor;
   const cliente = esCliente(rol);
@@ -114,6 +123,14 @@ export function puede(
       return gestiona(rol) || esCreador;
     case 'elemento.cambiarVisibilidad':
       return e.status === 'active' && !cliente && e.type !== 'comment';
+    case 'elemento.mover':
+      // Ordenar es trabajo del equipo; el cliente no reordena.
+      return e.status === 'active' && !cliente && (gestiona(rol) || p.esMiembro);
+    case 'tarea.completar':
+      // El equipo completa cualquier tarea; el cliente, las suyas o las que le asignaron.
+      return e.type === 'todo' && e.status === 'active' && (gestiona(rol) || (!cliente && p.esMiembro) || esCreador || !!sobre.esAsignado);
+    case 'tarea.asignar':
+      return e.type === 'todo' && e.status === 'active' && !cliente && (gestiona(rol) || p.esMiembro);
   }
   return false;
 }
