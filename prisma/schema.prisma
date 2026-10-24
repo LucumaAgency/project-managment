@@ -2,7 +2,7 @@
 //
 // Motor: PostgreSQL 16. Se eligió sobre MariaDB (la del CRM) por dos cosas que MariaDB no tiene:
 //   1. Row Level Security: la BASE bloquea que una cuenta lea filas de otra, aunque el código
-//      olvide un filtro. Políticas en prisma/rls.sql.
+//      olvide un filtro. Políticas en la migración `rls_busqueda`.
 //   2. Búsqueda full-text con índice GIN, sin servicio aparte.
 //
 // Tres ideas que sostienen todo el modelo:
@@ -18,8 +18,11 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  /// La API: rol pm_app, sujeto a RLS.
+  url       = env("DATABASE_URL")
+  /// Migraciones (prisma migrate): rol pm_admin, dueño de las tablas.
+  directUrl = env("DATABASE_ADMIN_URL")
 }
 
 // ------------------------------------------------------------------ cuentas y personas
@@ -265,7 +268,8 @@ model Recording {
   trashedBy        User?           @relation("RecordingTrasher", fields: [trashedById], references: [id])
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
-  /// Columna generada (tsvector) creada en la migración SQL; ver rls.sql.
+  /// tsvector de title + bodyText, lo llena un trigger (migración `busqueda_por_trigger`).
+  /// No escribirlo desde el código.
   search           Unsupported("tsvector")?
 
   todo          TodoDetail?
@@ -280,6 +284,7 @@ model Recording {
   @@index([projectId, type, status])
   @@index([parentId, position])
   @@index([accountId, status, trashedAt])
+  @@index([search], type: Gin)
   @@map("recordings")
 }
 

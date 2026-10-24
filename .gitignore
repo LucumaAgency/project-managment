@@ -1,4 +1,9 @@
 node_modules/
+dist/
+*.tsbuildinfo
 .env
 .env.*
-dist/
+!.env.example
+# Postgres local de desarrollo (scripts/db-local.mjs)
+.pgdata/
+public/

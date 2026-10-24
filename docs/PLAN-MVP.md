@@ -42,7 +42,7 @@ Brevo, estructura de monorepo `packages/shared|api|web`, multi-cuenta por subdom
 
 ## 3. Modelo de datos (resumen)
 
-Archivo completo: `prisma/schema.prisma`. Aislamiento: `prisma/rls.sql`.
+Archivo completo: `prisma/schema.prisma`. Aislamiento y búsqueda: migraciones `rls_busqueda` y `busqueda_por_trigger` en `prisma/migrations/`.
 
 ```
 Account ──< Membership >── User (global)
@@ -106,7 +106,7 @@ que no ve nada de B. Corre en CI siempre.
 
 | Día | Qué | Termina con |
 |---|---|---|
-| 1 | Monorepo (copiar estructura del CRM), Postgres local, schema, migración inicial + `rls.sql`, roles `app`/`app_admin` | `prisma migrate dev` corre limpio |
+| 1 ✅ | Monorepo (copiar estructura del CRM), Postgres local, schema, migración inicial + RLS, roles `pm_app`/`pm_admin` | `prisma migrate dev` corre limpio |
 | 2 | `conCuenta()`, hook de contexto, resolución por subdominio, **test de aislamiento** entre cuentas | Test A/B en verde |
 | 3 | Login: enlace mágico + contraseña + sesiones (copiar del CRM), selector de cuenta si tiene varias | Entrar y salir |
 | 4 | Invitaciones (equipo y cliente-a-proyecto), alta de cuenta por script (`org:create`), `planes.ts` con `can()` y límites | Invitar a alguien y que entre |
