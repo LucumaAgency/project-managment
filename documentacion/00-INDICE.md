@@ -24,6 +24,7 @@ actualiza aquí y se anota en la bitácora de [09-AVANCE.md](09-AVANCE.md).
 | 07 | [Plan del MVP](07-PLAN-MVP.md) | Alcance, stack, permisos y cronograma día por día con estado |
 | 08 | [Desarrollo](08-DESARROLLO.md) | Cómo correrlo en local, roles de la base, migraciones, servidor |
 | 10 | [Despliegue en Plesk](10-DESPLIEGUE-PLESK.md) | Requisitos, base, Git de Plesk, variables, primer arranque, verificación |
+| 11 | [API para bots](11-API-BOT.md) | Bot de Telegram: claves, rutas y ejemplos |
 | 09 | [Avance](09-AVANCE.md) | Bitácora con fechas, qué se probó, problemas encontrados, **pendientes** |
 
 ## Cómo leerla

@@ -28,31 +28,32 @@ datasource db {
 // ------------------------------------------------------------------ cuentas y personas
 
 model Account {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
   /// Subdominio: <slug>.app.com (mismo esquema que el CRM, CRM_BASE_DOMAIN).
-  slug      String   @unique
+  slug      String    @unique
   /// Plan comercial. En el MVP todas son `interno`; los límites salen de shared/planes.ts.
-  plan      String   @default("interno")
+  plan      String    @default("interno")
   /// Excepciones al plan para esta cuenta: { maxUsuarios?, maxProyectos?, maxAlmacenamientoBytes? } (shared/planes.ts).
   limits    Json?
   /// Zona horaria por defecto para resúmenes y recordatorios si el usuario no definió la suya.
-  timeZone  String   @default("America/Lima")
-  locale    String   @default("es")
+  timeZone  String    @default("America/Lima")
+  locale    String    @default("es")
   settings  Json?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   /// Cierre de cuenta: se marca y un job borra todo a los 30 días (exportación disponible antes).
   closedAt  DateTime?
 
-  memberships Membership[]
-  invitations Invitation[]
-  projects    Project[]
-  members     ProjectMember[]
-  recordings  Recording[]
-  blobs       Blob[]
-  events      Event[]
+  memberships   Membership[]
+  invitations   Invitation[]
+  apiKeys       ApiKey[]
+  projects      Project[]
+  members       ProjectMember[]
+  recordings    Recording[]
+  blobs         Blob[]
+  events        Event[]
   notifications Notification[]
-  auditLog    AuditLog[]
+  auditLog      AuditLog[]
 
   @@map("accounts")
 }
@@ -71,10 +72,14 @@ model User {
   avatarBlobKey     String?
   /// Soporte de Lucuma: puede entrar a cualquier cuenta (siempre queda en AuditLog).
   isStaff           Boolean   @default(false)
+  /// Usuario de integración (p. ej. el bot de Telegram): no entra con contraseña, usa una
+  /// clave de API (ApiKey) y figura con su nombre en la actividad. D-63.
+  isBot             Boolean   @default(false)
   lastLoginAt       DateTime?
   createdAt         DateTime  @default(now())
 
   memberships   Membership[]
+  apiKeys       ApiKey[]
   loginTokens   LoginToken[]
   sessions      Session[]
   projectRoles  ProjectMember[]
@@ -92,8 +97,8 @@ model User {
 }
 
 enum AccountRole {
-  owner  // dueño: facturación, cerrar cuenta, todo lo de admin
-  admin  // gestiona personas y todos los proyectos
+  owner // dueño: facturación, cerrar cuenta, todo lo de admin
+  admin // gestiona personas y todos los proyectos
   member // equipo: ve y trabaja en los proyectos donde está
   client // invitado externo: solo ve lo marcado como visible para clientes
 }
@@ -138,6 +143,26 @@ model Invitation {
 
   @@index([accountId, email])
   @@map("invitations")
+}
+
+/// Clave de API de un usuario bot en una cuenta (D-63). Se guarda solo la huella (sha256);
+/// la clave se muestra una vez al crearla. Solo sirve para las rutas /api/v1/bot/*.
+model ApiKey {
+  id         String    @id @default(cuid())
+  accountId  String
+  account    Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  /// Primeros caracteres de la clave, para reconocerla en listas ("lpm_ab12…").
+  prefix     String
+  keyHash    String    @unique
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([accountId])
+  @@map("api_keys")
 }
 
 /// Enlace mágico de acceso (mismo flujo que el CRM).
@@ -219,11 +244,11 @@ model ProjectMember {
 
 enum RecordingType {
   todolist // lista de tareas
-  todo     // tarea (parent = todolist)
-  message  // anuncio / tema del proyecto
-  folder   // carpeta de archivos (parent = otra carpeta o null = raíz)
-  upload   // archivo con versiones (parent = folder o null)
-  comment  // comentario (parent = cualquier otro recording)
+  todo // tarea (parent = todolist)
+  message // anuncio / tema del proyecto
+  folder // carpeta de archivos (parent = otra carpeta o null = raíz)
+  upload // archivo con versiones (parent = folder o null)
+  comment // comentario (parent = cualquier otro recording)
 }
 
 enum RecordingStatus {
@@ -240,17 +265,17 @@ enum RecordingStatus {
 ///   - Lo que crea un cliente nace visible para clientes.
 ///   - Un comentario hereda la visibilidad de lo que comenta.
 model Recording {
-  id               String          @id @default(cuid())
+  id               String                   @id @default(cuid())
   accountId        String
-  account          Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  account          Account                  @relation(fields: [accountId], references: [id], onDelete: Cascade)
   projectId        String
-  project          Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project          Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   type             RecordingType
   parentId         String?
-  parent           Recording?      @relation("RecordingTree", fields: [parentId], references: [id], onDelete: Cascade)
-  children         Recording[]     @relation("RecordingTree")
+  parent           Recording?               @relation("RecordingTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children         Recording[]              @relation("RecordingTree")
   creatorId        String
-  creator          User            @relation("RecordingCreator", fields: [creatorId], references: [id])
+  creator          User                     @relation("RecordingCreator", fields: [creatorId], references: [id])
   title            String?
   /// Documento de Tiptap (JSON). Es la fuente; lo demás se deriva al guardar.
   body             Json?
@@ -258,16 +283,16 @@ model Recording {
   bodyHtml         String?
   /// Texto plano para búsqueda, previews de notificación y resumen diario.
   bodyText         String?
-  visibleToClients Boolean         @default(false)
-  status           RecordingStatus @default(active)
+  visibleToClients Boolean                  @default(false)
+  status           RecordingStatus          @default(active)
   /// Orden dentro del padre (listas, tareas, carpetas). Float para insertar entre dos sin
   /// renumerar: (a + b) / 2.
-  position         Float           @default(0)
+  position         Float                    @default(0)
   trashedAt        DateTime?
   trashedById      String?
-  trashedBy        User?           @relation("RecordingTrasher", fields: [trashedById], references: [id])
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  trashedBy        User?                    @relation("RecordingTrasher", fields: [trashedById], references: [id])
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
   /// tsvector de title + bodyText, lo llena un trigger (migración `busqueda_por_trigger`).
   /// No escribirlo desde el código.
   search           Unsupported("tsvector")?
@@ -382,12 +407,12 @@ model RecordingAttachment {
 
 /// @menciones extraídas del body al guardar (no se confía en lo que manda el navegador).
 model Mention {
-  recordingId     String
-  recording       Recording @relation(fields: [recordingId], references: [id], onDelete: Cascade)
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accountId       String
-  createdAt       DateTime  @default(now())
+  recordingId String
+  recording   Recording @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId   String
+  createdAt   DateTime  @default(now())
 
   @@id([recordingId, userId])
   @@map("mentions")
@@ -440,7 +465,7 @@ enum NotificationReason {
   mentioned
   assigned
   subscribed // comentario o cambio en algo que sigues
-  due_soon   // tarea tuya que vence mañana (job diario)
+  due_soon // tarea tuya que vence mañana (job diario)
 }
 
 /// La bandeja ("Hey!"). Una fila por persona y evento.

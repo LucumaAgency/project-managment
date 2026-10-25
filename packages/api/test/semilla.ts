@@ -97,6 +97,7 @@ export async function sembrarCuenta(nombre: string): Promise<Semilla> {
   await db.notification.create({
     data: { accountId, userId: member.id, eventId: event.id, recordingId: comment.id, reason: 'mentioned' },
   });
+  await db.apiKey.create({ data: { accountId, userId: owner.id, name: 'semilla', prefix: 'lpm_semill', keyHash: `semilla-${accountId}` } });
   await db.auditLog.create({ data: { accountId, userId: owner.id, action: 'user.login' } });
 
   return {

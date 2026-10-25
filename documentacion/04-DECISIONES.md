@@ -433,6 +433,17 @@ incluidos). Valida todo antes de escribir (correos que no son del equipo, client
 admin); un proyecto por transacción; los que ya existen con ese nombre se saltan. El archivo con
 datos de clientes nunca va al repo.
 
+**D-63 · API para bots con un usuario bot y claves** (2026-10-24, pedido por el usuario)
+Para el bot de Telegram: consultar, crear y completar tareas. El bot es un usuario aparte
+(`users.isBot`, decidido por el usuario) con rol de administrador para ver todos los proyectos;
+figura con su nombre en la actividad y no cuenta para el plan. Entra con una clave `lpm_…`
+(se guarda solo su huella; tabla `api_keys` con RLS; `api_key_por_hash()` como hueco controlado,
+migración `claves_api`). La clave solo vale en `/api/v1/bot/*` (rutas propias con un contrato
+pensado para chat: nombres de proyecto y persona sin tildes ni exactitud, 409 con opciones si
+hay varias coincidencias); el resto de la API exige sesión, así que lo delicado queda fuera de
+su alcance. Claves y bot se crean por consola (`bot:prod`); pantalla en la web, más adelante.
+Documentación: 11-API-BOT.md.
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)
