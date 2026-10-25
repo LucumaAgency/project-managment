@@ -713,3 +713,47 @@ mark { background: #fff1b8; color: inherit; border-radius: 3px; padding: 0 1px; 
 .lista-pasos li { display: flex; align-items: center; gap: 8px; }
 .lista-pasos li .casilla { margin: 0; flex: 1; }
 .lista-pasos li.hecho .casilla span { color: var(--suave); text-decoration: line-through; }
+
+/* ------------------------------------------------------------------- timeline */
+.timeline-herramientas { flex-wrap: wrap; gap: 8px; }
+@media (max-width: 759px) { .timeline-herramientas .empuja { flex-basis: 100%; } .timeline-herramientas select { flex: 1; } }
+.timeline-herramientas select { width: auto; margin: 0; }
+.segmentos { display: inline-flex; gap: 4px; }
+.timeline { display: grid; background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio); overflow-x: auto; font-size: 12.5px; }
+.tl-esquina, .tl-dia { position: sticky; top: 0; background: var(--blanco); border-bottom: 1px solid var(--borde); z-index: 1; }
+.tl-dia { display: grid; justify-items: center; padding: 6px 0; color: var(--suave); font-size: 11px; border-left: 1px solid var(--borde-suave); }
+.tl-dia b { color: var(--texto); font-size: 12.5px; }
+.tl-dia.finde { background: var(--fondo); }
+.tl-dia.hoy { background: var(--azul-tinte); }
+.tl-dia.hoy b { color: var(--azul); }
+.tl-proyecto { padding: 8px 10px 4px; font-weight: 700; font-size: 13px; border-top: 1px solid var(--borde); background: var(--fondo); }
+.tl-nombre { display: grid; text-align: left; gap: 1px; padding: 6px 10px; background: none; border: 0; border-top: 1px solid var(--borde-suave); cursor: pointer; font: inherit; color: var(--texto); min-width: 0; }
+.tl-nombre span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.tl-nombre .meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.tl-carril { position: relative; border-top: 1px solid var(--borde-suave); min-height: 38px; background-image: linear-gradient(to right, var(--borde-suave) 1px, transparent 1px); }
+.tl-barra { position: absolute; top: 9px; height: 20px; border-radius: 10px; border: 0; padding: 0 8px; color: #fff; font: inherit; font-size: 11.5px; font-weight: 600; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: pointer; background: var(--azul); }
+.tl-barra.punto { background: transparent; padding: 0; }
+.tl-barra.punto::after { content: ''; position: absolute; left: 50%; top: 2px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--azul); box-shadow: 0 0 0 2px var(--blanco); }
+.tl-barra.punto.revision::after { background: var(--ambar); }
+.tl-barra.punto.vencida::after { background: var(--rojo); }
+.tl-barra.punto.hecha { opacity: 1; }
+.tl-barra.punto.hecha::after { background: var(--verde); opacity: .6; }
+.tl-barra.revision { background: var(--ambar); }
+.tl-barra.vencida { background: var(--rojo); }
+.tl-barra.hecha { background: var(--verde); opacity: .55; }
+.tl-barra.punto.revision, .tl-barra.punto.vencida, .tl-barra.punto.hecha { background: transparent; }
+.tl-barra.corta-ini { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.tl-barra.corta-fin { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.punto-estado { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--azul); vertical-align: middle; flex: none; }
+.punto-estado.revision { background: var(--ambar); }
+.punto-estado.vencida { background: var(--rojo); }
+.punto-estado.hecha { background: var(--verde); }
+.agenda { display: grid; gap: 10px; }
+.agenda-dia { background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio); padding: 10px 12px; }
+.agenda-dia.hoy { border-color: var(--azul-suave); }
+.agenda-dia h3 { margin: 0 0 6px; font-size: 13.5px; }
+.agenda-dia h3::first-letter { text-transform: uppercase; }
+.agenda-dia ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.agenda-dia li button { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; align-items: center; width: 100%; text-align: left; background: none; border: 0; padding: 6px 0; cursor: pointer; font: inherit; color: var(--texto); }
+.agenda-titulo { font-weight: 600; overflow-wrap: anywhere; }
+.agenda-dia li .meta { grid-column: 2; font-size: 12px; }

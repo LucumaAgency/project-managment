@@ -5,6 +5,7 @@ import { crearElemento } from '../services/elementos.js';
 import { proyectoPara } from '../services/proyectos.js';
 import { activarAhora, completarPorRespuestas, completarTarea, crearTarea, editarTarea, listarTareas, tareaDetalle } from '../services/tareas.js';
 import { MAX_CAMPOS, fichaProyecto, responder, verAcceso } from '../services/campos.js';
+import { timeline } from '../services/timeline.js';
 import { aprobar, fijarColumnas, fijarPasos, moverAColumna, pedirCambios, verComoTablero } from '../services/tablero.js';
 import { exigirCuenta } from '../plugins/contexto.js';
 const titulo = z.string().max(300, 'Máximo 300 caracteres.');
@@ -17,6 +18,7 @@ const nuevaTarea = z.object({
     body: documento.optional(),
     visibleToClients: z.boolean().optional(),
     dueOn: dia.optional(),
+    startsOn: dia.optional(),
     assigneeIds: ids.optional(),
     campos: z.array(z.record(z.unknown())).max(MAX_CAMPOS).nullable().optional(),
     esperaA: z.string().min(1).max(40).nullable().optional(),
@@ -65,6 +67,12 @@ export default async function rutasTareas(app) {
             const r = await responder(tx, actor, req.params.id, datos.respuestas, completarPorRespuestas);
             return { ...r, ...(await tareaDetalle(tx, actor, req.params.id)) };
         });
+    });
+    /** Timeline: tareas con fecha entre desde y hasta, de un proyecto o de todos los que veo. */
+    app.get('/api/v1/timeline', async (req) => {
+        const actor = exigirCuenta(req);
+        const q = leer(z.object({ desde: z.string().max(10), hasta: z.string().max(10), proyecto: z.string().max(40).optional() }), req.query);
+        return conCuenta(actor.ctx, (tx) => timeline(tx, actor, q));
     });
     // ------------------------------------------------------------ tablero y pasos (D-68)
     /** Ver la lista como tablero (enabled: true) o como lista (false). */

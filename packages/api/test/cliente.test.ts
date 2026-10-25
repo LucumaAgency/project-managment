@@ -140,6 +140,8 @@ describe('ninguna ruta del cliente muestra lo interno', () => {
       `/proyectos/${p}/archivos?carpeta=${ids.carpetaVisible}`,
       `/proyectos/${p}/mencionables`,
       `/proyectos/${p}/ficha`,
+      '/timeline?desde=2029-11-01&hasta=2030-02-01',
+      `/timeline?desde=2029-11-01&hasta=2030-02-01&proyecto=${p}`,
       `/tareas/${ids.pideVisible}`,
       `/elementos/${ids.listaVisible}`,
       `/elementos/${ids.tareaVisible}`,

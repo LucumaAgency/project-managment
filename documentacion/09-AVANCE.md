@@ -806,6 +806,18 @@ celular; la actividad lo cuenta.
 Para desplegar (**con migración**): Git → Desplegar → `prisma:generate` → `prisma:deploy` →
 `base:verificar:prod` → Reiniciar.
 
+### 2026-10-25 · Timeline
+
+Hecho (detalle en [13-TABLERO-Y-TIMELINE.md](13-TABLERO-Y-TIMELINE.md)): menú **Timeline**, de
+toda la agencia o de un proyecto, en **línea** (barras desde–hasta y puntos de un día, con
+colores por estado) o **agenda** (día por día, por defecto en el celular). Fecha de inicio nueva
+en las tareas. Cada quien ve lo que ve en Tareas.
+
+Probado: 317 tests en verde (5 nuevos; la auditoría de fugas suma el timeline del cliente).
+Recorrido en navegador sin errores, escritorio y celular.
+
+Para desplegar: va junto con el tablero (la migración `tablero` es la única).
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -838,7 +850,7 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
 ### Antes de la fase 2
 
-- [ ] Timeline (vista por fechas para shoots y entregas): [13-TABLERO-Y-TIMELINE.md](13-TABLERO-Y-TIMELINE.md).
+- [ ] Desplegar tablero y timeline (migración `tablero`).
 - [ ] Probar las plantillas Onboarding de cliente y Desarrollo web con un cliente real y ajustar lo que haga falta (ver [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md)).
 
 - [ ] Iniciar el trámite con Meta para WhatsApp (número, verificación, plantillas) mientras se usa el MVP.

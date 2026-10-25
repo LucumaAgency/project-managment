@@ -1,5 +1,7 @@
 # 13 · Tablero (tipo Trello) y timeline
 
+Estado: tablero y timeline construidos el 2026-10-25.
+
 Pedido por el usuario el 2026-10-25: un card table como el de Basecamp, para coordinar el
 contenido y los shoots de los clientes (días de grabación), y de la mano una vista de timeline.
 
@@ -46,7 +48,25 @@ y `steps` (migración `20261026180000_tablero`); `services/tablero.ts`; rutas
 **Todavía no**: columnas en las plantillas (que una plantilla traiga su tablero), pasos en las
 plantillas, reordenar dentro de una columna arrastrando (la tarjeta movida va al final).
 
-## Timeline (siguiente)
+## Timeline (construido el 2026-10-25)
 
-Para los shoots y las fechas de entrega: ver las tareas del proyecto (o de todos los proyectos)
-en una línea de tiempo por días o semanas. Se diseña y construye a continuación.
+Para coordinar shoots y entregas. Menú **Timeline** (todos, también el cliente) y botón
+**Timeline** en las Tareas de un proyecto.
+
+- **De toda la agencia o de un proyecto** (selector arriba). Cada quien ve lo mismo que en
+  Tareas: dueño y admin, todos los proyectos activos; el equipo, los suyos; el cliente, los suyos
+  y solo lo visible.
+- **Línea**: una fila por tarea, agrupadas por proyecto, con los días arriba (hoy marcado, fines
+  de semana sombreados). Con fecha de inicio y de entrega es una **barra**; con una sola fecha,
+  un **punto**. Colores: pendiente (azul), en revisión del tablero (ámbar), vencida (rojo),
+  hecha (verde). Tocar abre la tarea.
+- **Agenda** (por defecto en el celular): día por día, con proyecto, columna y responsables.
+- Navegar por semanas (← Hoy →) y ver 1, 2, 4 u 8 semanas.
+- **Fecha de inicio** nueva en las tareas («+ fecha de inicio», solo el equipo; va antes que la
+  entrega). Usa `TodoDetail.startsOn`, que ya existía en la base.
+
+**Técnico**: `services/timeline.ts`, `GET /timeline?desde=&hasta=&proyecto=` (hasta 120 días y
+600 tareas); `paginas/Timeline.tsx`. Sin migración.
+
+**Todavía no**: hora y lugar del shoot (hoy van en las notas; la app no guarda horas),
+arrastrar barras para cambiar fechas, filtrar por persona.

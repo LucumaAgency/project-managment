@@ -402,6 +402,11 @@ por el lector binario), `GET /proyectos/:id/ficha`. Web: `componentes/Campos.tsx
 `services/tablero.ts`. `cambiarCompletada()` en `services/tareas.ts` completa sin revisar
 permisos (lo usan completar y aprobar) y deja la tarjeta en su columna. Ver 13-TABLERO-Y-TIMELINE.md.
 
+## Timeline
+
+`services/timeline.ts` + `GET /timeline`: tareas con `startsOn`/`dueOn` en el rango, de los
+proyectos que el actor ve (mismo filtro de visibilidad que Tareas). Web `paginas/Timeline.tsx`.
+
 ## Página del proyecto: vista previa
 
 `services/vista-previa.ts` arma `vistaPrevia` en `GET /proyectos/:id`: primeras listas con sus

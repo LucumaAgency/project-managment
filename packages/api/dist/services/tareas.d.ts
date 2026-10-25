@@ -15,6 +15,7 @@ type FilaTarea = {
     };
     todo: {
         dueOn: Date | null;
+        startsOn: Date | null;
         completedAt: Date | null;
         completedBy: {
             id: string;
@@ -45,6 +46,8 @@ declare function aTarea(f: FilaTarea, conCuerpo?: boolean): {
         name: string;
     };
     dueOn: string | null;
+    /** Desde cuándo (para el timeline: con desde y vence es una barra). */
+    startsOn: string | null;
     completedAt: Date | null;
     completedBy: {
         id: string;
@@ -102,6 +105,8 @@ export declare function listarTareas(tx: Tx, actor: Actor, proyecto: ProyectoCar
                 name: string;
             };
             dueOn: string | null;
+            /** Desde cuándo (para el timeline: con desde y vence es una barra). */
+            startsOn: string | null;
             completedAt: Date | null;
             completedBy: {
                 id: string;
@@ -170,6 +175,8 @@ export declare function tareaDetalle(tx: Tx, actor: Actor, id: string): Promise<
             name: string;
         };
         dueOn: string | null;
+        /** Desde cuándo (para el timeline: con desde y vence es una barra). */
+        startsOn: string | null;
         completedAt: Date | null;
         completedBy: {
             id: string;
@@ -206,6 +213,8 @@ export interface DatosTarea {
     body?: unknown;
     visibleToClients?: boolean;
     dueOn?: string | null;
+    /** Desde cuándo (timeline). Tiene que ser antes o igual que la entrega. */
+    startsOn?: string | null;
     assigneeIds?: string[];
     /** Lo que pide la tarea (D-65); null o [] = nada. Solo el equipo. */
     campos?: unknown;
@@ -250,6 +259,8 @@ export declare function crearTarea(tx: Tx, actor: Actor, listaId: string, datos:
         name: string;
     };
     dueOn: string | null;
+    /** Desde cuándo (para el timeline: con desde y vence es una barra). */
+    startsOn: string | null;
     completedAt: Date | null;
     completedBy: {
         id: string;
@@ -304,6 +315,8 @@ export declare function editarTarea(tx: Tx, actor: Actor, id: string, datos: Dat
         name: string;
     };
     dueOn: string | null;
+    /** Desde cuándo (para el timeline: con desde y vence es una barra). */
+    startsOn: string | null;
     completedAt: Date | null;
     completedBy: {
         id: string;
@@ -358,6 +371,8 @@ export declare function completarTarea(tx: Tx, actor: Actor, id: string, complet
         name: string;
     };
     dueOn: string | null;
+    /** Desde cuándo (para el timeline: con desde y vence es una barra). */
+    startsOn: string | null;
     completedAt: Date | null;
     completedBy: {
         id: string;
@@ -422,6 +437,8 @@ export declare const completarPorRespuestas: (tx: Tx, actor: Actor, id: string) 
         name: string;
     };
     dueOn: string | null;
+    /** Desde cuándo (para el timeline: con desde y vence es una barra). */
+    startsOn: string | null;
     completedAt: Date | null;
     completedBy: {
         id: string;
@@ -477,6 +494,8 @@ export declare function activarAhora(tx: Tx, actor: Actor, id: string): Promise<
         name: string;
     };
     dueOn: string | null;
+    /** Desde cuándo (para el timeline: con desde y vence es una barra). */
+    startsOn: string | null;
     completedAt: Date | null;
     completedBy: {
         id: string;

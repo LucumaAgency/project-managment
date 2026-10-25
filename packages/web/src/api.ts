@@ -175,6 +175,7 @@ export interface Tarea {
   createdAt: string;
   creator: { id: string; name: string };
   dueOn: string | null;
+  startsOn: string | null;
   completedAt: string | null;
   completedBy: { id: string; name: string } | null;
   assignees: { userId: string; name: string }[];
@@ -477,4 +478,25 @@ export interface VistaPrevia {
   mensajes: { id: string; title: string; autor: string; createdAt: string; extracto: string }[];
   archivos: { id: string; title: string; blobId: string | null; tipo: string | null }[];
   ficha: { respondidos: number; total: number };
+}
+
+/** Timeline (13-TABLERO-Y-TIMELINE.md). */
+export interface TareaTimeline {
+  id: string;
+  title: string;
+  projectId: string;
+  lista: string | null;
+  desde: string;
+  hasta: string;
+  completada: boolean;
+  columna: { nombre: string; tipo: 'revision' | 'hecho' | null } | null;
+  visibleToClients: boolean;
+  responsables: { userId: string; name: string }[];
+}
+export interface DatosTimeline {
+  desde: string;
+  hasta: string;
+  proyectos: { id: string; name: string }[];
+  tareas: TareaTimeline[];
+  recortado: boolean;
 }
