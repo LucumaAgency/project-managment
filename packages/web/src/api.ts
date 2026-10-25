@@ -189,6 +189,26 @@ export interface Tarea {
   vistasAccesos?: VistaAcceso[];
   /** "Se activa cuando" (D-67): null = activa. */
   espera?: InfoEspera | null;
+  /** Tablero (D-68): columna en que está (en el listado) y pasos. */
+  columna?: string | null;
+  pasos: { total: number; hechos: number } | PasoVista[];
+  tablero?: { enabled: boolean; columnas: (Columna & { id: string })[]; columna: string } | null;
+}
+export interface Columna {
+  id?: string;
+  nombre: string;
+  tipo?: 'revision' | 'hecho';
+}
+export interface PasoVista {
+  id: string;
+  texto: string;
+  hecho: boolean;
+  por: string | null;
+  el: string | null;
+}
+export interface Tablero {
+  enabled: boolean;
+  columnas: (Columna & { id: string })[];
 }
 export interface InfoEspera {
   espera: { id: string | null; title: string; borrada: boolean };
@@ -203,6 +223,7 @@ export interface ListaTareas {
   visibleToClients: boolean;
   position: number;
   permisos: { editar: boolean; papelera: boolean; agregar: boolean; mover: boolean; visibilidad: boolean };
+  tablero: Tablero | null;
   tareas: Tarea[];
 }
 export interface TareasProyecto {
@@ -211,7 +232,7 @@ export interface TareasProyecto {
 }
 export interface TareaDetalle {
   tarea: Tarea;
-  permisos: { editar: boolean; completar: boolean; asignar: boolean; papelera: boolean; cambiarVisibilidad: boolean; mover: boolean; responder: boolean; pedir: boolean };
+  permisos: { editar: boolean; completar: boolean; asignar: boolean; papelera: boolean; cambiarVisibilidad: boolean; mover: boolean; responder: boolean; pedir: boolean; pasos: boolean; marcarPasos: boolean };
 }
 
 export interface MensajeResumen {

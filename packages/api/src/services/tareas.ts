@@ -11,6 +11,7 @@ import { registrarEvento } from './eventos.js';
 import { mencionables } from './menciones.js';
 import { suscribir } from './suscripciones.js';
 import { avisar, seguidoresComo } from './avisos.js';
+import { columnaDe, columnaSegunEstado, leerPasos, tablerosDe } from './tablero.js';
 import { activarLasQueEsperan, esperasDe, fijarEspera, fijarPrevistos, olvidarEspera } from './espera.js';
 import { camposConRespuestas, columnaCampos, fijarCampos, leerCampos, normalizarCampos, puedeResponder, respuestasDe, vistasDeAccesos } from './campos.js';
 import { exigir, puede, type Actor, type ElementoCargado, type ProyectoCargado } from './permisos.js';
@@ -25,7 +26,7 @@ const SELECCION_TAREA = {
   position: true,
   createdAt: true,
   creator: { select: { id: true, name: true } },
-  todo: { select: { dueOn: true, completedAt: true, completedBy: { select: { id: true, name: true } }, fields: true, waitsForId: true, pendingAssigneeIds: true, dueAfterDays: true } },
+  todo: { select: { dueOn: true, completedAt: true, completedBy: { select: { id: true, name: true } }, fields: true, waitsForId: true, pendingAssigneeIds: true, dueAfterDays: true, columnId: true, steps: true } },
   assignees: { select: { user: { select: { id: true, name: true } } }, orderBy: { createdAt: 'asc' as const } },
 } as const;
 
@@ -39,7 +40,7 @@ type FilaTarea = {
   position: number;
   createdAt: Date;
   creator: { id: string; name: string };
-  todo: { dueOn: Date | null; completedAt: Date | null; completedBy: { id: string; name: string } | null; fields: unknown; waitsForId: string | null; pendingAssigneeIds: unknown; dueAfterDays: number | null } | null;
+  todo: { dueOn: Date | null; completedAt: Date | null; completedBy: { id: string; name: string } | null; fields: unknown; waitsForId: string | null; pendingAssigneeIds: unknown; dueAfterDays: number | null; columnId: string | null; steps: unknown } | null;
   assignees: { user: { id: string; name: string } }[];
 };
 
@@ -71,6 +72,11 @@ function aTarea(f: FilaTarea, conCuerpo = false) {
     assignees: f.assignees.map((a) => ({ userId: a.user.id, name: a.user.name })),
     /** Cuántas cosas pide (D-65); 0 = tarea normal. */
     pide: leerCampos(f.todo?.fields).length,
+    /** Pasos dentro de la tarea (D-68): cuántos y cuántos hechos. */
+    pasos: (() => {
+      const p = leerPasos(f.todo?.steps);
+      return { total: p.length, hechos: p.filter((x) => x.hecho).length };
+    })(),
   };
 }
 export type Tarea = ReturnType<typeof aTarea>;
@@ -98,6 +104,7 @@ export async function listarTareas(tx: Tx, actor: Actor, proyecto: ProyectoCarga
   });
   const comentariosDe = new Map(conteos.map((c) => [c.parentId, c._count._all]));
   const esperas = await esperasDe(tx, actor, tareas);
+  const tableros = await tablerosDe(tx, listas.map((l) => l.id));
   const conCampos = tareas.filter((t) => leerCampos(t.todo?.fields).length).map((t) => t.id);
   const respondidos = conCampos.length
     ? new Map(
@@ -132,7 +139,17 @@ export async function listarTareas(tx: Tx, actor: Actor, proyecto: ProyectoCarga
       visibleToClients: l.visibleToClients,
       position: l.position,
       permisos: permisoLista(l),
-      tareas: tareas.filter((t) => t.parentId === l.id).map((t) => ({ ...aTarea(t), comentarios: comentariosDe.get(t.id) ?? 0, respondidos: respondidos.get(t.id) ?? 0, espera: esperas.get(t.id) ?? null })),
+      // Tablero (D-68): si la lista se ve por columnas, y en cuál está cada tarjeta.
+      tablero: tableros.get(l.id) ?? null,
+      tareas: tareas
+        .filter((t) => t.parentId === l.id)
+        .map((t) => ({
+          ...aTarea(t),
+          comentarios: comentariosDe.get(t.id) ?? 0,
+          respondidos: respondidos.get(t.id) ?? 0,
+          espera: esperas.get(t.id) ?? null,
+          columna: tableros.has(l.id) ? columnaDe(tableros.get(l.id)!.columnas, t.todo?.columnId, !!t.todo?.completedAt).id : null,
+        })),
     })),
     permisos: {
       crearLista: puede(actor, 'elemento.crear', { proyecto, tipo: 'todolist' }),
@@ -161,6 +178,8 @@ export async function tareaDetalle(tx: Tx, actor: Actor, id: string) {
       visibleParaCliente: elemento.visibleEnCadena,
       campos: camposConRespuestas(campos, respuestas),
       espera: (await esperasDe(tx, actor, [fila])).get(id) ?? null,
+      pasos: await pasosConNombres(tx, fila.todo?.steps),
+      tablero: await tableroDeTarea(tx, fila),
       // Quién vio los accesos protegidos (D-66): solo para el equipo.
       ...(campos.some((c) => c.tipo === 'acceso') && !esCliente(actor.rol) ? { vistasAccesos: await vistasDeAccesos(tx, id) } : {}),
     },
@@ -172,6 +191,9 @@ export async function tareaDetalle(tx: Tx, actor: Actor, id: string) {
       cambiarVisibilidad: puede(actor, 'elemento.cambiarVisibilidad', { proyecto, elemento }),
       mover: puede(actor, 'elemento.mover', { proyecto, elemento }),
       responder: campos.length > 0 && (await puedeResponder(tx, actor, proyecto, elemento)),
+      // Pasos: cambiarlos es del equipo; marcarlos, de quien puede completar.
+      pasos: !esCliente(actor.rol) && puede(actor, 'elemento.editar', { proyecto, elemento }),
+      marcarPasos: puede(actor, 'tarea.completar', { proyecto, elemento, esAsignado: asignado }),
       // Qué pide la tarea lo define el equipo.
       pedir: !esCliente(actor.rol) && puede(actor, 'elemento.editar', { proyecto, elemento }),
     },
@@ -329,8 +351,20 @@ export async function completarTarea(tx: Tx, actor: Actor, id: string, completar
     { proyecto, elemento, esAsignado: await esAsignado(tx, id, actor.ctx.userId) },
     'Solo el equipo, o quien la tiene asignada, puede completarla.'
   );
+  await cambiarCompletada(tx, actor, { projectId: proyecto.id, visible: elemento.visibleEnCadena }, id, completar);
+  return (await tareaDetalle(tx, actor, id)).tarea;
+}
+
+/**
+ * Completar o reabrir SIN revisar permisos (lo revisa quien llama: completarTarea, o aprobar
+ * en el tablero). Registra el evento, avisa, activa las que esperaban y pone la tarjeta en la
+ * columna que corresponde.
+ */
+export async function cambiarCompletada(tx: Tx, actor: Actor, donde: { projectId: string; visible: boolean }, id: string, completar: boolean, accion?: 'approved') {
+  const proyecto = { id: donde.projectId };
+  const elemento = { visibleEnCadena: donde.visible };
   const detalle = await tx.todoDetail.upsert({ where: { recordingId: id }, create: { recordingId: id }, update: {}, select: { completedAt: true } });
-  if (!!detalle.completedAt === completar) return (await tareaDetalle(tx, actor, id)).tarea; // ya estaba así
+  if (!!detalle.completedAt === completar) return; // ya estaba así
   await tx.todoDetail.update({
     where: { recordingId: id },
     data: completar ? { completedAt: new Date(), completedById: actor.ctx.userId } : { completedAt: null, completedById: null },
@@ -340,11 +374,12 @@ export async function completarTarea(tx: Tx, actor: Actor, id: string, completar
     projectId: proyecto.id,
     recordingId: id,
     actorId: actor.ctx.userId,
-    action: completar ? 'completed' : 'reopened',
+    action: accion ?? (completar ? 'completed' : 'reopened'),
     visibleToClients: elemento.visibleEnCadena,
   });
   // Completar avisa a quienes siguen la tarea (reabrir no: suele ser una corrección), y activa
   // las tareas que la esperaban (D-67).
+  await columnaSegunEstado(tx, id, completar);
   if (completar) {
     await olvidarEspera(tx, id);
     await activarLasQueEsperan(tx, actor, id);
@@ -357,7 +392,6 @@ export async function completarTarea(tx: Tx, actor: Actor, id: string, completar
       destinatarios: await seguidoresComo(tx, id),
     });
   }
-  return (await tareaDetalle(tx, actor, id)).tarea;
 }
 
 /** Para campos.ts: completar cuando ya está todo lo que pide. */
@@ -367,4 +401,20 @@ export const completarPorRespuestas = (tx: Tx, actor: Actor, id: string) => comp
 export async function activarAhora(tx: Tx, actor: Actor, id: string) {
   await fijarEspera(tx, actor, id, null);
   return (await tareaDetalle(tx, actor, id)).tarea;
+}
+
+/** Pasos con el nombre de quien marcó cada uno. */
+async function pasosConNombres(tx: Tx, json: unknown) {
+  const pasos = leerPasos(json);
+  const ids = [...new Set(pasos.flatMap((p) => (p.porId ? [p.porId] : [])))];
+  const nombres = new Map((ids.length ? await tx.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } }) : []).map((u) => [u.id, u.name]));
+  return pasos.map((p) => ({ id: p.id, texto: p.texto, hecho: p.hecho, por: p.porId ? (nombres.get(p.porId) ?? null) : null, el: p.el ?? null }));
+}
+
+/** Columnas del tablero de la lista de una tarea y en cuál está (null si su lista no es tablero). */
+async function tableroDeTarea(tx: Tx, fila: FilaTarea) {
+  if (!fila.parentId) return null;
+  const b = (await tablerosDe(tx, [fila.parentId])).get(fila.parentId);
+  if (!b) return null;
+  return { enabled: b.enabled, columnas: b.columnas, columna: columnaDe(b.columnas, fila.todo?.columnId, !!fila.todo?.completedAt).id };
 }

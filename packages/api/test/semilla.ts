@@ -61,6 +61,7 @@ export async function sembrarCuenta(nombre: string): Promise<Semilla> {
 
   const base = { accountId, projectId, creatorId: owner.id };
   const lista = await db.recording.create({ data: { ...base, type: 'todolist', title: 'Diseño' } });
+  await db.listBoard.create({ data: { recordingId: lista.id, accountId, enabled: false, columns: [{ id: 'k1', nombre: 'Sin empezar' }, { id: 'k2', nombre: 'Hecho', tipo: 'hecho' }] } });
   const todo = await db.recording.create({
     data: { ...base, type: 'todo', parentId: lista.id, title: `Home ${palabraUnica}`, bodyText: 'logo grande' },
   });

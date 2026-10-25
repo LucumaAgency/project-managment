@@ -5,6 +5,7 @@ import type { JSONContent } from '@tiptap/react';
 import { api, ErrorApi, NOMBRE_AUDIENCIA, type Campo, type ListaTareas, type PlantillaAplicada, type PlantillaDetalle, type Plantillas, type Tarea, type TareaDetalle, type TareasProyecto } from '../api';
 import { EditorCampos, Formulario } from '../componentes/Campos';
 import Comentarios from '../componentes/Comentarios';
+import { ColumnaDeTarea, EditorColumnas, Pasos, Tablero } from '../componentes/Tablero';
 import Editor, { Contenido } from '../componentes/Editor';
 import { useMencionables } from '../componentes/mencionables';
 import { useLeerAvisosDe } from '../componentes/avisos';
@@ -138,6 +139,9 @@ export default function Tareas() {
           onRenombrar={(title) => accion(() => api(`/elementos/${l.id}`, { method: 'PATCH', body: { title } }))}
           onPapelera={() => accion(() => api(`/elementos/${l.id}/papelera`, { body: {} }))}
           onVisibilidad={() => accion(() => api(`/elementos/${l.id}`, { method: 'PATCH', body: { visibleToClients: !l.visibleToClients } }))}
+          onTablero={(enabled) => accion(() => api(`/listas/${l.id}/tablero`, { body: { enabled } }))}
+          onCambio={cargar}
+          onError={setError}
           onGuardarPlantilla={
             veTodosLosProyectos(yo.rol)
               ? (name) =>
@@ -203,6 +207,9 @@ interface PropsLista {
   onVisibilidad: () => void;
   /** Solo dueño y admin. */
   onGuardarPlantilla?: (nombre: string) => void;
+  onTablero: (enabled: boolean) => void;
+  onCambio: () => void;
+  onError: (m: string | null) => void;
   onArrastrar: (t: Tarea) => void;
   onSobre: (id: string | null) => void;
   onSoltar: (antesDe: string | null) => void;
@@ -213,6 +220,8 @@ function Lista(p: PropsLista) {
   const [nueva, setNueva] = useState('');
   const [verHechas, setVerHechas] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [columnas, setColumnas] = useState(false);
+  const comoTablero = !!lista.tablero?.enabled;
   const abiertas = lista.tareas.filter((t) => !t.completedAt);
   const hechas = lista.tareas.filter((t) => t.completedAt).sort((a, b) => (b.completedAt! > a.completedAt! ? 1 : -1));
   const total = lista.tareas.length;
@@ -264,6 +273,16 @@ function Lista(p: PropsLista) {
                     <Icono nombre="ojo" tam={16} />{lista.visibleToClients ? 'Hacer interna (el cliente deja de verla)' : 'Mostrar al cliente'}
                   </button>
                 )}
+                {lista.permisos.editar && !p.esCliente && (
+                  <button type="button" role="menuitem" onClick={() => { setMenu(false); p.onTablero(!comoTablero); }}>
+                    <Icono nombre={comoTablero ? 'lista' : 'tablero'} tam={16} />{comoTablero ? 'Ver como lista' : 'Ver como tablero'}
+                  </button>
+                )}
+                {comoTablero && lista.permisos.editar && !p.esCliente && (
+                  <button type="button" role="menuitem" onClick={() => { setMenu(false); setColumnas(true); }}>
+                    <Icono nombre="editar" tam={16} />Editar columnas
+                  </button>
+                )}
                 {p.onGuardarPlantilla && (
                   <button type="button" role="menuitem" onClick={() => { setMenu(false); const t = window.prompt('Nombre de la plantilla (las fechas pasan a «día N» y las personas no se guardan)', lista.title); if (t?.trim()) p.onGuardarPlantilla!(t.trim()); }}>
                     <Icono nombre="plantilla" tam={16} />Guardar como plantilla
@@ -282,6 +301,10 @@ function Lista(p: PropsLista) {
       {lista.bodyHtml && <Contenido html={lista.bodyHtml} className="meta descripcion-lista" />}
       {total > 0 && <div className="progreso" aria-hidden="true"><i style={{ width: `${(hechas.length / total) * 100}%` }} /></div>}
 
+      {comoTablero ? (
+        <Tablero lista={lista} esCliente={p.esCliente} onAbrir={p.onAbrir} onCambio={p.onCambio} onError={p.onError} />
+      ) : (
+      <>
       <ul className="tareas">
         {abiertas.map((t) => (
           <FilaTarea key={t.id} t={t} {...p} />
@@ -309,6 +332,9 @@ function Lista(p: PropsLista) {
           )}
         </>
       )}
+      </>
+      )}
+      {columnas && <EditorColumnas lista={lista} onCerrar={() => setColumnas(false)} onGuardado={() => { setColumnas(false); p.onCambio(); }} />}
     </section>
   );
 }
@@ -351,6 +377,11 @@ function FilaTarea({ t, lista, esCliente: cliente, puedeCompletar, sobre, onAbri
         <span className="tarea-meta">
           {t.assignees.length > 0 && <span>{t.assignees.map((a) => a.name.split(' ')[0]).join(', ')}</span>}
           {t.dueOn && <span className={`chip ${claseFecha(t)}`}>{fechaCorta(t.dueOn)}</span>}
+          {!Array.isArray(t.pasos) && t.pasos.total > 0 && (
+            <span className={`chip ${t.pasos.hechos === t.pasos.total ? 'chip-verde' : 'chip-gris'}`} title="Pasos">
+              {t.pasos.hechos}/{t.pasos.total} pasos
+            </span>
+          )}
           {t.espera && (
             <span className="chip chip-gris" title="Se activa cuando se complete la otra tarea">
               Espera: {t.espera.espera.title}
@@ -551,6 +582,7 @@ function AgregarPlantilla({ projectId, onCerrar, onAgregada }: { projectId: stri
 
 /** Panel de una tarea: título, notas, responsables, fecha, visibilidad, mover, completar, papelera. */
 function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: string; projectId: string; listas: ListaTareas[]; onCerrar: () => void; onCambio: () => void }) {
+  const yo = useYo();
   const [d, setD] = useState<TareaDetalle | null>(null);
   const [titulo, setTitulo] = useState('');
   const [notas, setNotas] = useState<JSONContent | null>(null);
@@ -823,6 +855,23 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
           )}
         </div>
       </form>
+      {t.tablero?.enabled && (
+        <ColumnaDeTarea
+          d={d}
+          esCliente={esCliente(yo.rol)}
+          onCambio={(r) => {
+            setD(r);
+            onCambio();
+          }}
+        />
+      )}
+      <Pasos
+        d={d}
+        onCambio={(r) => {
+          setD(r);
+          onCambio();
+        }}
+      />
       <Comentarios elementoId={t.id} projectId={projectId} interno={!(t.visibleToClients && lista?.visibleToClients)} onCambio={onCambio} />
     </Modal>
   );

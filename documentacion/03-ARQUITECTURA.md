@@ -396,6 +396,12 @@ por el lector binario), `GET /proyectos/:id/ficha`. Web: `componentes/Campos.tsx
 `ListTemplateItem.waitsFor`; `services/espera.ts` (activar, esperas, vueltas);
 `completarTarea` activa las que esperan; `POST /tareas/:id/activar`. Evento `activated`.
 
+## Tablero y pasos (D-68)
+
+`list_boards` (columnas JSON por lista, RLS), `TodoDetail.columnId` y `steps`;
+`services/tablero.ts`. `cambiarCompletada()` en `services/tareas.ts` completa sin revisar
+permisos (lo usan completar y aprobar) y deja la tarjeta en su columna. Ver 13-TABLERO-Y-TIMELINE.md.
+
 ## Página del proyecto: vista previa
 
 `services/vista-previa.ts` arma `vistaPrevia` en `GET /proyectos/:id`: primeras listas con sus
