@@ -26,6 +26,8 @@ actualiza aquí y se anota en la bitácora de [09-AVANCE.md](09-AVANCE.md).
 | 10 | [Despliegue en Plesk](10-DESPLIEGUE-PLESK.md) | Requisitos, base, Git de Plesk, variables, primer arranque, verificación |
 | 11 | [API para bots](11-API-BOT.md) | Bot de Telegram: claves, rutas y ejemplos |
 | 14 | [Fase 3: vender](14-FASE-3-VENDER.md) | Paso a paso para venderlo a otras agencias |
+| 15 | [Servidor en Vultr](15-SERVIDOR-VULTR.md) | Servidor propio: qué contratar, instalación con script, despliegue, mudanza desde Plesk |
+| 16 | [Espacio para archivos](16-ESPACIO-DE-ARCHIVOS.md) | Cómo limitan Basecamp, Slack y otros; topes por plan; cuándo pasar a R2 |
 | 13 | [Tablero y timeline](13-TABLERO-Y-TIMELINE.md) | Listas vistas como tablero tipo Trello, revisión del cliente, pasos; timeline |
 | 12 | [Plantillas y flujos](12-PLANTILLAS-Y-FLUJOS.md) | Plantillas de lista (onboarding, servicios): diseño, plan por etapas y cómo funciona |
 | 09 | [Avance](09-AVANCE.md) | Bitácora con fechas, qué se probó, problemas encontrados, **pendientes** |

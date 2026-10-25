@@ -499,6 +499,14 @@ no se revocan todavía; el correo no se hace todavía; las plantillas reales ya 
 se hará el trámite con Meta (WhatsApp queda fuera hasta nuevo aviso). Fase 3 planificada en
 14-FASE-3-VENDER.md, sin empezar.
 
+**D-71 · Servidor propio en Vultr y archivos a R2 cuando haga falta** (2026-10-25, propuesta, sin ejecutar)
+Para vender: Vultr São Paulo de $10 (1 vCPU, 2 GB) con copias automáticas, sin panel, Cloudflare
+delante con certificado de origen comodín; instalación y despliegue con `deploy/vultr/`. Mismo
+criterio que el CRM inmobiliario. Los archivos siguen en disco hasta que pase del 60 % o haya
+planes de 100 GB o más; entonces van a Cloudflare R2 (sin costo de descarga) detrás de
+`lib/almacen.ts`. Descartado: CloudPanel (no aporta nada para una sola app Node), Vultr Object
+Storage ($18 fijos) y S3 (cobra las descargas). Detalle en 15 y 16.
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)
