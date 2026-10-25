@@ -114,7 +114,7 @@ export default function Personas() {
                           {p.esYo && <span className="meta"> (tú)</span>}
                           {p.company && <span className="meta"> · {p.company}</span>}
                         </div>
-                        <div className="meta">{p.email}</div>
+                        <div className="meta">{p.esBot ? 'Bot (integración por API)' : p.email}</div>
                       </span>
                     </div>
                   </td>

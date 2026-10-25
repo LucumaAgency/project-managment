@@ -12,6 +12,7 @@ import { registrarContexto } from './plugins/contexto.js';
 import rutasArchivos from './routes/archivos.js';
 import rutasAuth from './routes/auth.js';
 import rutasBandeja from './routes/bandeja.js';
+import rutasBot from './routes/bot.js';
 import rutasBusqueda from './routes/busqueda.js';
 import rutasCron from './routes/cron.js';
 import rutasExportar from './routes/exportar.js';
@@ -116,6 +117,7 @@ export async function buildApp(opciones: OpcionesApp = {}) {
   await app.register(rutasMensajes);
   await app.register(rutasArchivos);
   await app.register(rutasBandeja);
+  await app.register(rutasBot);
   await app.register(rutasBusqueda);
   await app.register(rutasCron);
   await app.register(rutasExportar);

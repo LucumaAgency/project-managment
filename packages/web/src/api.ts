@@ -89,6 +89,8 @@ export interface Persona {
   company: string | null;
   lastLoginAt: string | null;
   esYo: boolean;
+  /** Usuario de integración (bot de Telegram): entra con clave de API, no con contraseña. */
+  esBot?: boolean;
 }
 export interface InvitacionPendiente {
   id: string;

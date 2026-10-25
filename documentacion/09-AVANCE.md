@@ -612,6 +612,29 @@ Encontrado y arreglado en el camino:
 Para desplegar: Git → Desplegar → Reiniciar (sin migración ni dependencias nuevas). Después,
 los pasos de §5e (respaldo), §5f (carga) y §5g (Sentry) de 10-DESPLIEGUE-PLESK.md.
 
+### 2026-10-24 · API para el bot de Telegram
+
+Pedido por el usuario: que el bot de Lucuma consulte, cree y complete tareas, como usuario aparte.
+
+Hecho (D-63):
+
+- Usuario bot + claves de API (`bot:prod -- crear|clave|lista|revocar`). La clave solo sirve en
+  `/api/v1/bot/*`.
+- Rutas: `yo`, `proyectos`, `personas`, `tareas` (hoy / mañana / semana / vencidas, por proyecto
+  y por responsable), crear tarea (lista por nombre o la primera; se crea si no existe),
+  completar y reabrir. Nombres "de chat": "fenix google", "carlos".
+- En Personas, el bot se ve como "Bot (integración por API)"; no cuenta para el plan.
+- Documentación con ejemplos: [11-API-BOT.md](11-API-BOT.md).
+
+Probado: 252 tests en verde (14 nuevos: clave inválida, revocada, de alguien que no es bot, que
+no sirve fuera de /bot, sin la clave guardada; filtros; ambigüedad 409; crear con aviso al
+responsable; completar/reabrir como el bot; otra cuenta no ve ni toca nada).
+
+Para desplegar (**con migración**): Git → Desplegar → `prisma:generate` → `prisma:deploy` →
+`base:verificar:prod` → Reiniciar. Después §5h de 10-DESPLIEGUE (crear el bot y su clave).
+
+Falta decidir: cómo convive con `tareas.md` del asistente de Telegram (hoy es su lista de tareas).
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;

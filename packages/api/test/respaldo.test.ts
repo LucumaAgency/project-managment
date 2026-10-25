@@ -77,7 +77,10 @@ describe('piezas', () => {
 describe('respaldo y restauración de verdad', () => {
   it('respalda, y restaurado en otra base trae los mismos datos', async (ctx) => {
     if (!hayPgDump) return ctx.skip();
+    // Otros tests crean cuentas en paralelo: se cuenta antes y después del respaldo.
+    const antes = await prismaAdmin.account.count();
     const r = await hacerRespaldo({ dia: '2026-10-24' });
+    const despues = await prismaAdmin.account.count();
     expect(fs.statSync(r.archivo).size).toBeGreaterThan(1000);
     expect((fs.statSync(r.archivo).mode & 0o777) !== 0o666).toBe(true);
     const lista = fs.readFileSync(path.join(env.respaldosDir, 'archivos-2026-10-24.tsv'), 'utf8');
@@ -91,8 +94,9 @@ describe('respaldo y restauración de verdad', () => {
 
     const copia = new PrismaClient({ datasourceUrl: url.toString() });
     try {
-      const [cuentas, original] = await Promise.all([copia.account.count(), prismaAdmin.account.count()]);
-      expect(cuentas).toBe(original);
+      const cuentas = await copia.account.count();
+      expect(cuentas).toBeGreaterThanOrEqual(antes);
+      expect(cuentas).toBeLessThanOrEqual(despues);
       expect(await copia.account.findUnique({ where: { id: A.accountId }, select: { slug: true } })).toEqual({ slug: A.slug });
       // Con RLS, funciones de búsqueda y migraciones incluidas.
       const [{ rls }] = await copia.$queryRaw<{ rls: boolean }[]>`SELECT relrowsecurity AS rls FROM pg_class WHERE relname = 'recordings'`;

@@ -229,6 +229,15 @@ Llegan los 500 de la API (con la ruta, la cuenta y la persona como ids), los err
 purga, los recordatorios y el respaldo, y los errores de la web. Nunca cuerpos, cookies, query
 ni correos (D-59).
 
+## 5h. Bot y API (desde el 2026-10-24)
+
+1. Run script `bot:prod -- crear lucuma "Bot Lucuma"`: imprime la clave **una sola vez**. Copiarla
+   y guardarla donde la vaya a usar el bot (nunca en el repo ni en un chat compartido).
+2. Probar: `curl -H "Authorization: Bearer <clave>" https://proyectos.pruebalucuma.site/api/v1/bot/yo`.
+3. Si se filtra: `bot:prod -- lista lucuma` y `bot:prod -- revocar <inicio>`; después `bot:prod -- clave lucuma`.
+
+Rutas y ejemplos: [11-API-BOT.md](11-API-BOT.md).
+
 ## 6. Lo que todavía no hace falta
 - **Subdominios por cuenta:** con `BASE_DOMAIN` vacío todo vive en un dominio. Para pasar a
   `<cuenta>.dominio` se usa el mismo truco de nginx del CRM (`docs/21-DOS-ORGANIZACIONES-PLESK.md`).

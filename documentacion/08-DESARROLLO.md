@@ -104,6 +104,7 @@ sistema o en `TEST_PG_BIN_DIR=/carpeta/con/pg_dump`. Si no hay, ese test se salt
 | `test/respaldo.test.ts` | Conexión sin clave ni `?schema`; rotación (deja N y sus listas, no toca la copia previa a restaurar); sin pg_dump, motivo claro; con pg_dump (TEST_PG_BIN_DIR o del sistema): respaldar, restaurar en una base aparte y comparar datos, RLS, funciones y migraciones |
 | `test/sentry.test.ts` | DSN, pila a marcos, sin DSN nada, el mismo error una vez por minuto, Sentry caído no rompe; un 500 llega con ruta/cuenta/persona y sin query ni correos; 404/403 no se reportan; `/config` |
 | `test/carga.test.ts` | Probar no guarda; carga proyecto, personas, listas, tareas (fecha, responsable, notas) y mensajes; la segunda vez salta; rechazos con motivo |
+| `test/bot.test.ts` | Clave (sin, mal formada, inventada, de alguien que no es bot, revocada, no guardada, no sirve fuera de /bot); no cuenta para el plan; proyectos y equipo sin clientes ni bots; filtros por fecha, proyecto sin tildes y responsable por nombre; ambigüedad 409; crear (lista por defecto o nueva, aviso al responsable, figura el bot); completar y reabrir; otra cuenta no ve ni toca nada |
 | `test/planes.test.ts` | `planPermite()`, excepciones por cuenta (ignora valores raros), plan desconocido, `puedeInvitar()` |
 | `test/host.test.ts` | Lectura del host: subdominio, raíz, reservados, dominios ajenos |
 | `test/semilla.ts` | Crea una cuenta con filas en **todas** las tablas con RLS (un test verifica que ninguna quede vacía) |

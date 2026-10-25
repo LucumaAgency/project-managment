@@ -13,7 +13,7 @@ export async function planDeCuenta(tx, accountId) {
  */
 export async function usuariosEnUso(tx, accountId, opciones = {}) {
     const activos = await tx.membership.count({
-        where: { accountId, status: 'active', role: { not: 'client' } },
+        where: { accountId, status: 'active', role: { not: 'client' }, user: { isBot: false } },
     });
     if (!opciones.conPendientes)
         return activos;

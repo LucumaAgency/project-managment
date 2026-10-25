@@ -16,7 +16,7 @@ export async function planDeCuenta(tx: Tx, accountId: string): Promise<Plan> {
  */
 export async function usuariosEnUso(tx: Tx, accountId: string, opciones: { conPendientes?: boolean; salvoEmail?: string } = {}) {
   const activos = await tx.membership.count({
-    where: { accountId, status: 'active', role: { not: 'client' } },
+    where: { accountId, status: 'active', role: { not: 'client' }, user: { isBot: false } },
   });
   if (!opciones.conPendientes) return activos;
   const pendientes = await tx.invitation.count({

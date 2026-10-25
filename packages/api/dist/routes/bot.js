@@ -1,0 +1,72 @@
+import { z } from 'zod';
+import { conCuenta } from '../lib/contexto.js';
+import { leer } from '../lib/validar.js';
+import { completarTareaBot, crearTareaBot, exigirBot, tareasBot } from '../services/bot.js';
+/**
+ * API para bots (D-63, services/bot.ts). Autenticación: `Authorization: Bearer lpm_…`.
+ * Documentación con ejemplos: documentacion/11-API-BOT.md.
+ */
+const filtroTareas = z.object({
+    responsable: z.string().max(200).optional(),
+    proyecto: z.string().max(200).optional(),
+    cuando: z.enum(['hoy', 'manana', 'semana', 'vencidas', 'todas']).default('todas'),
+    completadas: z.enum(['0', '1']).default('0'),
+    limite: z.coerce.number().int().min(1).max(200).default(50),
+});
+const nuevaTarea = z.object({
+    proyecto: z.string().trim().min(1, 'Falta el proyecto.').max(200),
+    lista: z.string().trim().max(300).optional(),
+    titulo: z.string().trim().min(1, 'Falta el título.').max(300),
+    vence: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha va como AAAA-MM-DD.').nullable().optional(),
+    responsables: z.array(z.string().max(200)).max(20).default([]),
+    notas: z.string().max(10_000).optional(),
+});
+export default async function rutasBot(app) {
+    /** Quién soy: para probar la clave. */
+    app.get('/api/v1/bot/yo', async (req) => {
+        const a = await exigirBot(req);
+        return conCuenta(a.actor.ctx, async (tx) => {
+            const u = await tx.user.findUniqueOrThrow({ where: { id: a.actor.ctx.userId }, select: { name: true } });
+            return { bot: u.name, cuenta: a.slug, zonaHoraria: a.timeZone };
+        });
+    });
+    app.get('/api/v1/bot/proyectos', async (req) => {
+        const a = await exigirBot(req);
+        return conCuenta(a.actor.ctx, async (tx) => ({
+            proyectos: (await tx.project.findMany({
+                where: { accountId: a.actor.ctx.accountId, status: 'active' },
+                select: { id: true, name: true, _count: { select: { recordings: { where: { type: 'todo', status: 'active', todo: { completedAt: null } } } } } },
+                orderBy: { name: 'asc' },
+            })).map((p) => ({ id: p.id, nombre: p.name, tareasPendientes: p._count.recordings })),
+        }));
+    });
+    /** El equipo (para asignar): nombre y correo. */
+    app.get('/api/v1/bot/personas', async (req) => {
+        const a = await exigirBot(req);
+        return conCuenta(a.actor.ctx, async (tx) => ({
+            personas: (await tx.membership.findMany({
+                where: { accountId: a.actor.ctx.accountId, status: 'active', role: { not: 'client' }, user: { isBot: false } },
+                select: { role: true, user: { select: { name: true, email: true } } },
+                orderBy: { user: { name: 'asc' } },
+            })).map((m) => ({ nombre: m.user.name, correo: m.user.email, rol: m.role })),
+        }));
+    });
+    app.get('/api/v1/bot/tareas', async (req) => {
+        const a = await exigirBot(req);
+        const f = leer(filtroTareas, req.query);
+        return tareasBot(a, { ...f, cuando: f.cuando ?? 'todas', completadas: f.completadas === '1', limite: f.limite ?? 50 });
+    });
+    app.post('/api/v1/bot/tareas', async (req) => {
+        const a = await exigirBot(req);
+        const d = leer(nuevaTarea, req.body);
+        return { tarea: await crearTareaBot(a, { ...d, responsables: d.responsables ?? [] }) };
+    });
+    app.post('/api/v1/bot/tareas/:id/completar', async (req) => {
+        const a = await exigirBot(req);
+        return { tarea: await completarTareaBot(a, req.params.id, true) };
+    });
+    app.post('/api/v1/bot/tareas/:id/reabrir', async (req) => {
+        const a = await exigirBot(req);
+        return { tarea: await completarTareaBot(a, req.params.id, false) };
+    });
+}

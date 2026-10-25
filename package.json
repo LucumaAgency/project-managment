@@ -32,7 +32,8 @@
     "purgar:prod": "node packages/api/dist/scripts/purgar.js",
     "respaldo:prod": "node packages/api/dist/scripts/respaldo.js",
     "sentry:probar:prod": "node packages/api/dist/scripts/sentry.js",
-    "cargar:prod": "node packages/api/dist/scripts/cargar.js"
+    "cargar:prod": "node packages/api/dist/scripts/cargar.js",
+    "bot:prod": "node packages/api/dist/scripts/bot.js"
   },
   "devDependencies": {
     "embedded-postgres": "16.14.0-beta.17",
