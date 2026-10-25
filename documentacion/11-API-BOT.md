@@ -1,7 +1,7 @@
 # 11 · API para bots
 
 Para que el bot de Telegram de Lucuma (o cualquier integración) consulte, cree y complete
-tareas. Decisión: D-63.
+tareas, y cree proyectos. El asistente de Telegram lo usa con `~/carlos/bin/proyectos.py`. Decisión: D-63.
 
 ## Cómo funciona
 
@@ -37,6 +37,7 @@ el bot pregunte.
 |---|---|
 | `GET /api/v1/bot/yo` | Probar la clave: nombre del bot, cuenta, zona horaria |
 | `GET /api/v1/bot/proyectos` | Proyectos activos con cuántas tareas pendientes tienen |
+| `POST /api/v1/bot/proyectos` | Crear proyecto: `{ nombre, descripcion? }`. Si ya hay uno activo con ese nombre (sin tildes ni mayúsculas), devuelve ese con `existia: true` |
 | `GET /api/v1/bot/personas` | El equipo (nombre, correo, rol), para asignar |
 | `GET /api/v1/bot/tareas` | Tareas. Filtros: `cuando=hoy\|manana\|semana\|vencidas\|todas`, `proyecto=`, `responsable=`, `completadas=1`, `limite=` (máx. 200) |
 | `POST /api/v1/bot/tareas` | Crear: `{ proyecto, titulo, lista?, vence?: "AAAA-MM-DD", responsables?: [..], notas? }`. Sin `lista`, va a la primera del proyecto; si la lista nombrada no existe, se crea |

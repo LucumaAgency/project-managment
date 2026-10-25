@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { conCuenta } from '../lib/contexto.js';
 import { leer } from '../lib/validar.js';
-import { completarTareaBot, crearTareaBot, exigirBot, tareasBot } from '../services/bot.js';
+import { completarTareaBot, crearProyectoBot, crearTareaBot, exigirBot, tareasBot } from '../services/bot.js';
 
 /**
  * API para bots (D-63, services/bot.ts). Autenticación: `Authorization: Bearer lpm_…`.
@@ -45,6 +45,13 @@ export default async function rutasBot(app: FastifyInstance) {
         })
       ).map((p) => ({ id: p.id, nombre: p.name, tareasPendientes: p._count.recordings })),
     }));
+  });
+
+  /** Crea un proyecto (si ya hay uno activo con ese nombre, devuelve ese: no duplica). */
+  app.post('/api/v1/bot/proyectos', async (req) => {
+    const a = await exigirBot(req);
+    const d = leer(z.object({ nombre: z.string().trim().min(1, 'Falta el nombre.').max(120), descripcion: z.string().max(2000).optional() }), req.body);
+    return crearProyectoBot(a, d);
   });
 
   /** El equipo (para asignar): nombre y correo. */
