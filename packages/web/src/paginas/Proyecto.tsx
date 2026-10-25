@@ -16,6 +16,8 @@ const SECCIONES: { clave: keyof ProyectoDetalle['secciones']; nombre: string; ic
   { clave: 'tareas', nombre: 'Tareas', icono: 'tareas', vacia: 'Las listas de tareas del proyecto aparecerán aquí.', uno: 'lista', varios: 'listas', ruta: 'tareas' },
   { clave: 'mensajes', nombre: 'Mensajes', icono: 'mensajes', vacia: 'Anuncios y temas para conversar con el equipo y el cliente.', uno: 'mensaje', varios: 'mensajes', ruta: 'mensajes' },
   { clave: 'archivos', nombre: 'Archivos', icono: 'archivo', vacia: 'Entregables, briefs y documentos, con sus versiones.', uno: 'elemento', varios: 'elementos', ruta: 'archivos' },
+  // Solo aparece si alguna tarea pide algo (D-65).
+  { clave: 'ficha', nombre: 'Ficha del cliente', icono: 'ficha', vacia: '', uno: 'tarea que pide algo', varios: 'tareas que piden algo', ruta: 'ficha' },
 ];
 
 /** Página de un proyecto: cabecera, personas, acciones y sus secciones. */
@@ -152,7 +154,7 @@ export default function Proyecto() {
       {d.vistaCliente && <VistaCliente v={d.vistaCliente} hayClientes={d.personas.some((x) => x.role === 'client')} />}
 
       <div className="secciones">
-        {SECCIONES.map((s) => {
+        {SECCIONES.filter((s) => s.clave !== 'ficha' || d.secciones.ficha > 0).map((s) => {
           const n = d.secciones[s.clave];
           const interior = (
             <>

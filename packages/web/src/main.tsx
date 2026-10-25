@@ -9,6 +9,7 @@ import Cuentas from './paginas/Cuentas';
 import Entrar from './paginas/Entrar';
 import Invitacion from './paginas/Invitacion';
 import MiCuenta from './paginas/MiCuenta';
+import Ficha from './paginas/Ficha';
 import Personas from './paginas/Personas';
 import Plantilla from './paginas/Plantilla';
 import Plantillas from './paginas/Plantillas';
@@ -50,6 +51,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/proyectos/:id/archivos" element={<Archivos />} />
             <Route path="/proyectos/:id/archivos/:archivoId" element={<Archivo />} />
             <Route path="/proyectos/:id/papelera" element={<Papelera />} />
+            <Route path="/proyectos/:id/ficha" element={<Ficha />} />
             <Route path="/buscar" element={<Buscar />} />
             <Route path="/personas" element={<Personas />} />
             <Route path="/plantillas" element={<Plantillas />} />

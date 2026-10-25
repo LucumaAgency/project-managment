@@ -381,6 +381,13 @@ app. La tabla `jobs` queda lista para cuando haga falta (correos, exportación).
 
 Los bots ya no aparecen entre las personas que se pueden mencionar o asignar (`mencionables`).
 
+**Tareas que piden algo (D-65):** campos en `TodoDetail.fields` / `ListTemplateItem.fields`,
+respuestas en `TaskAnswer` (`task_answers`, RLS), archivos como `RecordingAttachment` de la
+tarea (`blobParaLeer` los acepta con el permiso de la tarea). `services/campos.ts`;
+`PUT /tareas/:id/respuestas`, `POST /tareas/:id/campos/:campo/archivos` (en `routes/archivos.ts`
+por el lector binario), `GET /proyectos/:id/ficha`. Web: `componentes/Campos.tsx`,
+`paginas/Ficha.tsx`. Evento nuevo: `answered`.
+
 ## Archivos
 
 `lib/almacen.ts` (disco), `lib/tipos-archivo.ts` (tipo real, nombre limpio),

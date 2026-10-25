@@ -1,6 +1,6 @@
 # 12 · Plantillas y flujos
 
-Estado: **etapa 1 construida el 2026-10-25** (plantillas de lista; ver «Cómo funciona hoy» al final). Etapas 2 a 5, pendientes. Diseño confirmado por el usuario (D-64). Se abrió el 2026-10-24 a pedido del usuario: "algo que me
+Estado: **etapas 1 y 2 construidas el 2026-10-25** (plantillas de lista; tareas que piden algo y ficha del cliente; ver «Cómo funciona hoy» al final). Etapas 3 a 5, pendientes. Diseño confirmado por el usuario (D-64). Se abrió el 2026-10-24 a pedido del usuario: "algo que me
 gusta bastante de Basecamp es armar flujos, por ejemplo un onboarding de un cliente, y que haya
 una plantilla de cosas". Falta que el usuario responda las preguntas del final antes de decidir
 el alcance (luego va a 04-DECISIONES y al plan).
@@ -158,7 +158,7 @@ ahorra; el orden y las fechas que se corren se aprecian una vez que ya se usan p
 | Etapa | Qué | Días aprox. |
 |---|---|---|
 | 1 ✅ | Plantillas de lista: sección Plantillas, tareas "cliente / equipo / cualquiera", fechas relativas opcionales; "Agregar plantilla" en un proyecto; también por el bot | 2 |
-| 2 | Tareas que piden algo (datos, archivos, enlaces), se marcan solas al responder; ficha del cliente en el proyecto | 2 |
+| 2 ✅ | Tareas que piden algo (datos, archivos, enlaces), se marcan solas al responder; ficha del cliente en el proyecto | 2 |
 | 3 | Campo protegido para accesos (cifrado, ver con un clic, registro de quién lo vio) | 1 |
 | 4 | "Se activa cuando…" (ej. verificar el depósito tras la constancia) | 0,5 |
 | 5 | Cargar Onboarding y Desarrollo web como primeras plantillas; probar con un cliente real | 0,5 |
@@ -196,3 +196,38 @@ Cada etapa sale a producción por separado y se puede usar sin esperar a las sig
 `20261026090000_plantillas`); `services/plantillas.ts`, `routes/plantillas.ts`,
 `paginas/Plantillas.tsx`, `paginas/Plantilla.tsx`, modal en `paginas/Tareas.tsx`. Las
 plantillas van en la exportación de la cuenta (`cuenta.json`).
+
+## Cómo funciona hoy (etapa 2, 2026-10-25, D-65)
+
+**Pedir algo**
+- En cualquier tarea (el equipo): «+ Pedir datos, archivos o enlaces». Cada campo tiene un
+  nombre, un tipo (Texto corto, Párrafo, Archivos, Enlaces) y si es obligatorio.
+- En una plantilla: «+ pedir datos» en cada tarea; al agregarla, la tarea nace pidiendo eso.
+  «Guardar como plantilla» también copia lo que pide cada tarea.
+- Cambiar lo que pide conserva las respuestas de los campos que quedan. Las de los campos que
+  se quitan, o que cambian de tipo, se borran (la web avisa antes).
+
+**Responder**
+- Responde quien puede completar la tarea: el equipo o el cliente si la tiene asignada.
+- En la tarea aparece «Lo que se pide» con cada campo. Texto y enlaces se guardan con «Guardar
+  respuestas»; los archivos se suben al elegirlos (varios a la vez) y se pueden quitar.
+- Cuando están todos los obligatorios, la tarea se **completa sola** (a nombre de quien
+  respondió). Si después se borra una respuesta, no se reabre sola.
+- Cada respuesta queda en la actividad («respondió…») y avisa a quienes siguen la tarea.
+- En la lista, la tarea muestra «Pide 2/3».
+
+**Ficha del cliente**
+- En el proyecto aparece la sección **Ficha del cliente** cuando alguna tarea pide algo: junta
+  todo lo respondido, tarea por tarea, con un avance («4 de 10 respondidos»). Cada quien ve
+  solo lo de las tareas que puede ver (el cliente, las visibles).
+- Va en la exportación: `ficha.html` en cada proyecto y los archivos en `ficha/<tarea>/`.
+
+**Archivos de las respuestas**: cuelgan de la tarea (no aparecen en Archivos) y se abren con
+los mismos permisos que ella. Si se quitan, la purga los borra del disco al día siguiente.
+
+**Por ahora no**: las respuestas no entran en la búsqueda; el bot no responde campos.
+
+**Técnico**: `TodoDetail.fields` y `ListTemplateItem.fields` (JSON con los campos) y la tabla
+`task_answers` con RLS (migración `20261026120000_campos_y_respuestas`); `services/campos.ts`;
+`PUT /tareas/:id/respuestas`, `POST /tareas/:id/campos/:campo/archivos`,
+`GET /proyectos/:id/ficha`; `componentes/Campos.tsx`, `paginas/Ficha.tsx`.

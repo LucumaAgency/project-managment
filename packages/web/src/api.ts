@@ -155,7 +155,7 @@ export interface ProyectoDetalle {
     soyMiembro: boolean;
   };
   personas: PersonaProyecto[];
-  secciones: { tareas: number; mensajes: number; archivos: number };
+  secciones: { tareas: number; mensajes: number; archivos: number; ficha: number };
   permisos: { editar: boolean; archivar: boolean; papelera: boolean; personas: boolean; verPapelera: boolean };
   /** Solo para el equipo: qué ve el cliente en la raíz del proyecto. */
   vistaCliente: { listas: number; mensajes: number; carpetas: number; archivos: number } | null;
@@ -178,6 +178,11 @@ export interface Tarea {
   assignees: { userId: string; name: string }[];
   /** Solo en el listado de tareas. */
   comentarios?: number;
+  /** Cuántas cosas pide (D-65) y cuántas van respondidas (esto último, solo en el listado). */
+  pide: number;
+  respondidos?: number;
+  /** Solo en el detalle. */
+  campos?: CampoConRespuesta[];
 }
 export interface ListaTareas {
   id: string;
@@ -195,7 +200,7 @@ export interface TareasProyecto {
 }
 export interface TareaDetalle {
   tarea: Tarea;
-  permisos: { editar: boolean; completar: boolean; asignar: boolean; papelera: boolean; cambiarVisibilidad: boolean; mover: boolean };
+  permisos: { editar: boolean; completar: boolean; asignar: boolean; papelera: boolean; cambiarVisibilidad: boolean; mover: boolean; responder: boolean; pedir: boolean };
 }
 
 export interface MensajeResumen {
@@ -366,6 +371,7 @@ export interface TareaPlantilla {
   notes: string | null;
   audience: Audiencia;
   dayOffset: number | null;
+  campos?: Campo[];
 }
 export interface Plantillas {
   plantillas: PlantillaResumen[];
@@ -380,4 +386,37 @@ export interface PlantillaAplicada {
   tareas: number;
   inicio: string;
   sinCliente: boolean;
+}
+
+/** Lo que pide una tarea (D-65). */
+export type TipoCampo = 'texto' | 'parrafo' | 'archivo' | 'enlaces';
+export const NOMBRE_TIPO_CAMPO: Record<TipoCampo, string> = { texto: 'Texto corto', parrafo: 'Párrafo', archivo: 'Archivos', enlaces: 'Enlaces' };
+export interface Campo {
+  id?: string;
+  etiqueta: string;
+  tipo: TipoCampo;
+  obligatorio: boolean;
+  ayuda?: string;
+}
+export interface ArchivoRespuesta {
+  blobId: string;
+  nombre: string;
+  tipo: string;
+  bytes: number;
+}
+export interface EnlaceRespuesta {
+  url: string;
+  nota?: string;
+}
+export interface CampoConRespuesta extends Campo {
+  id: string;
+  respuesta: { valor: string | EnlaceRespuesta[] | ArchivoRespuesta[]; respondidoEl: string; respondidoPor: { id: string; name: string } } | null;
+}
+export interface RespuestaGuardada extends TareaDetalle {
+  cambiaron: string[];
+  seCompleto: boolean;
+}
+export interface Ficha {
+  proyecto: { id: string; name: string };
+  tareas: { id: string; title: string; lista: string | null; completada: boolean; respondidos: number; campos: CampoConRespuesta[] }[];
 }

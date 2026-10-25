@@ -19,6 +19,7 @@ export type AccionEvento =
   | 'moved'
   | 'completed'
   | 'reopened'
+  | 'answered' // respondió lo que pide una tarea (D-65)
   | 'assigned'
   | 'unassigned'
   | 'due_changed'

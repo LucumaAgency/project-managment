@@ -238,11 +238,11 @@ ni correos (D-59).
 
 Rutas y ejemplos: [11-API-BOT.md](11-API-BOT.md).
 
-## 5i. Plantillas (desde el 2026-10-25)
+## 5i. Plantillas y ficha del cliente (desde el 2026-10-25)
 
-Trae una migración (`plantillas`): Git → Desplegar → `prisma:generate` → `prisma:deploy` →
+Trae dos migraciones (`plantillas` y `campos_y_respuestas`; `prisma:deploy` corre las dos): Git → Desplegar → `prisma:generate` → `prisma:deploy` →
 `base:verificar:prod` → Reiniciar. No hay nada más que configurar: aparece **Plantillas** en el
-menú. Detalle en [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
+menú, y la ficha del cliente en los proyectos con tareas que piden algo. Detalle en [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
 
 ## 6. Lo que todavía no hace falta
 - **Subdominios por cuenta:** con `BASE_DOMAIN` vacío todo vive en un dominio. Para pasar a

@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, ErrorApi, NOMBRE_AUDIENCIA, type Audiencia, type PlantillaDetalle, type TareaPlantilla } from '../api';
+import { EditorCampos } from '../componentes/Campos';
 import Icono from '../componentes/Icono';
 
 const mensajeDe = (e: unknown) => (e instanceof ErrorApi ? e.message : 'No se pudo conectar.');
@@ -9,7 +10,7 @@ const AYUDA_AUDIENCIA: Record<Audiencia, string> = {
   client: 'Se le asigna al cliente y la ve.',
   any: 'Del equipo, pero el cliente la ve y también puede completarla.',
 };
-const vacia = (): TareaPlantilla => ({ title: '', notes: null, audience: 'team', dayOffset: null });
+const vacia = (): TareaPlantilla => ({ title: '', notes: null, audience: 'team', dayOffset: null, campos: [] });
 
 /** Ver o editar una plantilla: nombre, descripción y sus tareas en orden. */
 export default function Plantilla() {
@@ -66,7 +67,9 @@ export default function Plantilla() {
     const cuerpo = {
       name: nombre,
       description: descripcion || null,
-      items: items.filter((i) => i.title.trim()).map(({ id: _, ...i }) => ({ ...i, notes: i.notes?.trim() || null })),
+      items: items
+        .filter((i) => i.title.trim())
+        .map(({ id: _, ...i }) => ({ ...i, notes: i.notes?.trim() || null, campos: (i.campos ?? []).filter((c) => c.etiqueta.trim()) })),
     };
     try {
       const r = await api<PlantillaDetalle>(nueva ? '/plantillas' : `/plantillas/${id}`, { method: nueva ? 'POST' : 'PUT', body: cuerpo });
@@ -112,6 +115,7 @@ export default function Plantilla() {
                   <span className={`chip ${i.audience === 'team' ? 'chip-gris' : 'chip-verde'}`}>{NOMBRE_AUDIENCIA[i.audience]}</span>
                   {i.dayOffset && <span>Día {i.dayOffset}</span>}
                   {i.notes && <Icono nombre="notas" tam={13} />}
+                  {!!i.campos?.length && <span>Pide: {i.campos.map((c) => c.etiqueta).join(', ')}</span>}
                 </span>
               </li>
             ))}
@@ -158,6 +162,12 @@ export default function Plantilla() {
                   onChange={(e) => cambiar(n, { dayOffset: e.target.value ? Number(e.target.value) : null })}
                 />
               </div>
+              {!!i.campos?.length && (
+                <div className="plantilla-pide">
+                  <span className="ayuda" style={{ margin: '8px 0 4px', display: 'block' }}>Al responder, pide:</span>
+                  <EditorCampos campos={i.campos} onChange={(c) => cambiar(n, { campos: c })} prefijo={`pl-${n}-campo`} />
+                </div>
+              )}
               {conNotas.has(n) && (
                 <textarea aria-label={`Notas de la tarea ${n + 1}`} rows={2} maxLength={5000} placeholder="Qué se pide, enlaces, detalles" value={i.notes ?? ''} onChange={(e) => cambiar(n, { notes: e.target.value })} />
               )}
@@ -165,6 +175,9 @@ export default function Plantilla() {
                 <span className="ayuda" style={{ margin: 0, flex: 1 }}>{AYUDA_AUDIENCIA[i.audience]}</span>
                 {!conNotas.has(n) && (
                   <button type="button" className="btn-texto" onClick={() => setConNotas((s) => new Set(s).add(n))}>+ notas</button>
+                )}
+                {!i.campos?.length && (
+                  <button type="button" className="btn-texto" onClick={() => cambiar(n, { campos: [{ etiqueta: '', tipo: 'texto', obligatorio: true }] })}>+ pedir datos</button>
                 )}
                 <button type="button" className="btn btn-sec btn-chico" aria-label="Subir" disabled={n === 0} onClick={() => mover(n, -1)}><Icono nombre="subirFlecha" tam={14} /></button>
                 <button type="button" className="btn btn-sec btn-chico" aria-label="Bajar" disabled={n === items.length - 1} onClick={() => mover(n, 1)}><Icono nombre="bajarFlecha" tam={14} /></button>

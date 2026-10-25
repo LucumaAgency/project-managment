@@ -68,6 +68,7 @@ export function frase(e: Evento): string {
     case 'updated': return `editó ${algo}`;
     case 'completed': return `completó ${algo}`;
     case 'reopened': return `reabrió ${algo}`;
+    case 'answered': return `respondió ${algo}`;
     case 'assigned': return `asignó ${algo} a ${quienes}`;
     case 'unassigned': return `quitó a ${quienes} de ${algo}`;
     case 'due_changed': return e.detalles.to ? `puso fecha ${fechaCorta(e.detalles.to)} a ${algo}` : `quitó la fecha de ${algo}`;

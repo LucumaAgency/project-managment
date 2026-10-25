@@ -71,7 +71,10 @@ export async function sembrarCuenta(nombre: string): Promise<Semilla> {
     data: { ...base, type: 'comment', parentId: todo.id, bodyText: 'revisar', visibleToClients: true },
   });
 
-  await db.todoDetail.create({ data: { recordingId: todo.id, dueOn: new Date('2026-11-06') } });
+  await db.todoDetail.create({
+    data: { recordingId: todo.id, dueOn: new Date('2026-11-06'), fields: [{ id: 'c1', etiqueta: 'RUC', tipo: 'texto', obligatorio: true }] },
+  });
+  await db.taskAnswer.create({ data: { accountId, recordingId: todo.id, fieldId: 'c1', value: `2060${s}`, answeredById: member.id } });
   await db.todoAssignee.create({ data: { accountId, recordingId: todo.id, userId: member.id } });
 
   const blob = await db.blob.create({
