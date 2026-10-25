@@ -20,8 +20,8 @@ pendientes** del proyecto.
 | 11 | Bandeja de notificaciones | ✅ 2026-10-24 |
 | 12 | Recordatorios dentro de la app | ✅ 2026-10-24 |
 | 13 | Vista del cliente | ✅ 2026-10-24 |
-| 14 | Papelera, búsqueda, celular, exportación | Siguiente |
-| 15 | Servidor y salida a producción | Pendiente |
+| 14 | Papelera, búsqueda, celular, exportación | ✅ 2026-10-24 |
+| 15 | Servidor y salida a producción | ✅ 2026-10-24 |
 
 Detalle de cada día en [07-PLAN-MVP.md](07-PLAN-MVP.md).
 
@@ -633,7 +633,34 @@ responsable; completar/reabrir como el bot; otra cuenta no ve ni toca nada).
 Para desplegar (**con migración**): Git → Desplegar → `prisma:generate` → `prisma:deploy` →
 `base:verificar:prod` → Reiniciar. Después §5h de 10-DESPLIEGUE (crear el bot y su clave).
 
-Falta decidir: cómo convive con `tareas.md` del asistente de Telegram (hoy es su lista de tareas).
+Después se agregó crear proyectos por API (`POST /api/v1/bot/proyectos`, sin duplicar por
+nombre; commit `5b6760c`). 253 tests en verde, 1 omitido; CI en verde.
+
+### 2026-10-24 · En producción y en uso con el asistente de Telegram
+
+- **Desplegado** con migración (`claves_api`). Bot "Bot Lucuma" creado y su clave guardada solo
+  en el asistente (`~/carlos/.proyectos.env`, permisos 600). La clave se pegó una vez en el
+  chat: se puede revocar y crear otra cuando se quiera (`bot:prod -- revocar` / `clave`).
+- **Latido** en cron-job.org verificado (200 OK): corre recordatorios, purga y respaldo diario.
+  `base:verificar:prod` en el servidor: "OK pg_dump 12 (/usr/bin/pg_dump)"; el primer respaldo
+  sale con el latido.
+- **Convivencia con `tareas.md` resuelta (opción A, elegida por el usuario):** el trabajo de
+  clientes y de la agencia vive en la app; en `tareas.md` del asistente quedan solo reuniones y
+  llamadas con hora (la app no guarda horas) y lo personal. El usuario es "Equipo Lucuma"
+  (dev@lucumaagency.com) en la app y es el responsable por defecto de lo que anota el bot.
+- **Datos reales creados por el bot:** proyectos CRM / Bastión, RTC, Vaporis, D3K, Lucuma,
+  Gerencial y Comercial (ya existían Lucia EK, Proba y Vemas) y 19 tareas pasadas desde
+  `tareas.md` (copia previa en `~/carlos/docs/tareas-antes-de-la-app-2026-10-24.md`).
+- El resumen de las 8:00 del asistente incluye las tareas de la app (vencidas, hoy y próximos
+  7 días) y cuántas quedan sin fecha.
+- El borrador de carga con 10 proyectos (`privados/carga-lucuma.json`) **no se usará**
+  (decidido por el usuario): los proyectos se crearon desde el bot.
+
+### 2026-10-24 · Plantillas y flujos (conversación abierta)
+
+El usuario pidió armar flujos tipo Basecamp (ej. onboarding de un cliente) con plantillas.
+Propuesta por niveles y preguntas abiertas en [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
+No se construye nada hasta que el usuario responda y confirme el alcance.
 
 ## Para confirmar
 
@@ -648,8 +675,12 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
 ### MVP (en orden)
 
-- [ ] Poner en marcha en el servidor (lo hace el usuario en Plesk): latido en cron-job.org (§5c), verificar `pg_dump` y activar las copias de Plesk afuera (§5e), cargar los proyectos (§5f), Sentry (§5g).
+- [ ] Activar las copias de Plesk fuera del servidor (§5e; el latido y `pg_dump` ya están verificados).
+- [ ] Confirmar el primer respaldo (`respaldo:prod -- lista`) después del primer latido del día.
+- [ ] Sentry (§5g), opcional.
 - [ ] Probar una restauración real en el servidor (a una base aparte) antes de necesitarla.
+- [ ] Pantalla en la web para las claves de API (hoy solo por consola, `bot:prod`).
+- [ ] Revocar la clave del bot que se pegó en el chat y crear otra (cuando el usuario quiera).
 - [ ] Más adelante: cambiar las contraseñas de la base (quedaron en el chat; el usuario decidió no hacerlo todavía, D-46).
 
 ### Decisiones abiertas
@@ -660,5 +691,7 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 - [ ] Cuándo se activa el correo (remitente y dominio para Brevo).
 
 ### Antes de la fase 2
+
+- [ ] Plantillas y flujos: que el usuario responda las 4 preguntas de [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md) y decidir el alcance.
 
 - [ ] Iniciar el trámite con Meta para WhatsApp (número, verificación, plantillas) mientras se usa el MVP.
