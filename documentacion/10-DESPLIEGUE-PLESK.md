@@ -238,6 +238,12 @@ ni correos (D-59).
 
 Rutas y ejemplos: [11-API-BOT.md](11-API-BOT.md).
 
+## 5i. Plantillas (desde el 2026-10-25)
+
+Trae una migración (`plantillas`): Git → Desplegar → `prisma:generate` → `prisma:deploy` →
+`base:verificar:prod` → Reiniciar. No hay nada más que configurar: aparece **Plantillas** en el
+menú. Detalle en [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
+
 ## 6. Lo que todavía no hace falta
 - **Subdominios por cuenta:** con `BASE_DOMAIN` vacío todo vive en un dominio. Para pasar a
   `<cuenta>.dominio` se usa el mismo truco de nginx del CRM (`docs/21-DOS-ORGANIZACIONES-PLESK.md`).

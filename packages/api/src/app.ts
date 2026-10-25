@@ -23,6 +23,7 @@ import rutasMensajes from './routes/mensajes.js';
 import rutasPersonas from './routes/personas.js';
 import rutasProyectos from './routes/proyectos.js';
 import rutasTareas from './routes/tareas.js';
+import rutasPlantillas from './routes/plantillas.js';
 import rutasYo from './routes/yo.js';
 
 export interface OpcionesApp {
@@ -113,6 +114,7 @@ export async function buildApp(opciones: OpcionesApp = {}) {
   await app.register(rutasProyectos);
   await app.register(rutasElementos);
   await app.register(rutasTareas);
+  await app.register(rutasPlantillas);
   await app.register(rutasComentarios);
   await app.register(rutasMensajes);
   await app.register(rutasArchivos);

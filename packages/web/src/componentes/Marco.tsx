@@ -22,6 +22,8 @@ const TITULOS: [string, string][] = [
   ['/proyectos/:id/papelera', 'Papelera'],
   ['/proyectos/:id', 'Proyecto'],
   ['/personas', 'Personas'],
+  ['/plantillas/:id', 'Plantilla'],
+  ['/plantillas', 'Plantillas'],
   ['/bandeja', 'Bandeja'],
   ['/buscar', 'Buscar'],
   ['/mi-cuenta', 'Mi cuenta'],
@@ -121,6 +123,11 @@ export default function Marco() {
             {!esCliente(yo.rol) && (
               <NavLink to="/personas" className={enlace}>
                 <Icono nombre="personas" />Personas
+              </NavLink>
+            )}
+            {!esCliente(yo.rol) && (
+              <NavLink to="/plantillas" className={enlace}>
+                <Icono nombre="plantilla" />Plantillas
               </NavLink>
             )}
           </nav>

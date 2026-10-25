@@ -348,3 +348,36 @@ export function urlExportar() {
   const cuenta = cuentaLocal();
   return `/api/v1/cuenta/exportar${cuenta ? `?cuenta=${encodeURIComponent(cuenta)}` : ''}`;
 }
+
+/** Para quién es una tarea de plantilla (D-64). */
+export type Audiencia = 'team' | 'client' | 'any';
+export const NOMBRE_AUDIENCIA: Record<Audiencia, string> = { team: 'Equipo', client: 'Cliente', any: 'Cualquiera' };
+export interface PlantillaResumen {
+  id: string;
+  name: string;
+  description: string | null;
+  updatedAt: string;
+  tareas: number;
+  delCliente: number;
+}
+export interface TareaPlantilla {
+  id?: string;
+  title: string;
+  notes: string | null;
+  audience: Audiencia;
+  dayOffset: number | null;
+}
+export interface Plantillas {
+  plantillas: PlantillaResumen[];
+  permisos: { gestionar: boolean };
+}
+export interface PlantillaDetalle {
+  plantilla: PlantillaResumen & { items: TareaPlantilla[] };
+  permisos: { gestionar: boolean };
+}
+export interface PlantillaAplicada {
+  lista: { id: string; title: string };
+  tareas: number;
+  inicio: string;
+  sinCliente: boolean;
+}

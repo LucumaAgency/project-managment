@@ -8,7 +8,7 @@ actualiza aquí y se anota en la bitácora de [09-AVANCE.md](09-AVANCE.md).
 - **Fase:** MVP de 15 días terminado y en uso (beta). API para el bot de Telegram en producción.
 - **Repo:** https://github.com/LucumaAgency/project-managment (público, rama `main`).
 - **En línea:** https://proyectos.pruebalucuma.site (beta en Plesk, guía en [10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md)).
-- **Siguiente paso:** conversar plantillas y flujos ([12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md)), en diseño.
+- **Siguiente paso:** desplegar la etapa 1 de plantillas y seguir con la etapa 2 ([12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md)).
 - **Esperando tu confirmación:** ver «Para confirmar» en [09-AVANCE.md](09-AVANCE.md).
 
 ## Documentos
@@ -25,7 +25,7 @@ actualiza aquí y se anota en la bitácora de [09-AVANCE.md](09-AVANCE.md).
 | 08 | [Desarrollo](08-DESARROLLO.md) | Cómo correrlo en local, roles de la base, migraciones, servidor |
 | 10 | [Despliegue en Plesk](10-DESPLIEGUE-PLESK.md) | Requisitos, base, Git de Plesk, variables, primer arranque, verificación |
 | 11 | [API para bots](11-API-BOT.md) | Bot de Telegram: claves, rutas y ejemplos |
-| 12 | [Plantillas y flujos](12-PLANTILLAS-Y-FLUJOS.md) | Propuesta en conversación: plantillas de proyecto, fechas relativas, roles, flujos con orden |
+| 12 | [Plantillas y flujos](12-PLANTILLAS-Y-FLUJOS.md) | Plantillas de lista (onboarding, servicios): diseño, plan por etapas y cómo funciona |
 | 09 | [Avance](09-AVANCE.md) | Bitácora con fechas, qué se probó, problemas encontrados, **pendientes** |
 
 ## Cómo leerla

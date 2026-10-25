@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { esCliente } from '@lucuma-pm/shared';
 import type { JSONContent } from '@tiptap/react';
-import { api, ErrorApi, type ListaTareas, type Tarea, type TareaDetalle, type TareasProyecto } from '../api';
+import { api, ErrorApi, NOMBRE_AUDIENCIA, type ListaTareas, type PlantillaAplicada, type PlantillaDetalle, type Plantillas, type Tarea, type TareaDetalle, type TareasProyecto } from '../api';
 import Comentarios from '../componentes/Comentarios';
 import Editor, { Contenido } from '../componentes/Editor';
 import { useMencionables } from '../componentes/mencionables';
@@ -10,6 +10,7 @@ import { useLeerAvisosDe } from '../componentes/avisos';
 import Icono from '../componentes/Icono';
 import Modal from '../componentes/Modal';
 import { useYo } from '../contexto';
+import { veTodosLosProyectos } from '@lucuma-pm/shared';
 
 const hoy = () => new Date().toLocaleDateString('en-CA'); // AAAA-MM-DD en la hora local
 function fechaCorta(dia: string) {
@@ -44,6 +45,8 @@ export default function Tareas() {
     setParams(p, { replace: !id });
   };
   const [creandoLista, setCreandoLista] = useState(false);
+  const [desdePlantilla, setDesdePlantilla] = useState(false);
+  const [aviso, setAviso] = useState<{ texto: string; enlace?: string } | null>(null);
   const arrastrada = useRef<{ id: string; listaId: string } | null>(null);
   const [sobre, setSobre] = useState<string | null>(null);
 
@@ -91,6 +94,11 @@ export default function Tareas() {
       </p>
       <div className="herramientas">
         <div className="empuja"><h2 style={{ fontSize: 20 }}>Tareas</h2></div>
+        {datos.permisos.crearLista && !esCliente(yo.rol) && (
+          <button type="button" className="btn btn-sec" onClick={() => setDesdePlantilla(true)}>
+            <Icono nombre="plantilla" tam={16} />Desde plantilla
+          </button>
+        )}
         {datos.permisos.crearLista && (
           <button type="button" className="btn" onClick={() => setCreandoLista(true)}>
             <Icono nombre="mas" tam={16} />Nueva lista
@@ -98,6 +106,13 @@ export default function Tareas() {
         )}
       </div>
       {error && <p className="error" role="alert">{error}</p>}
+      {aviso && (
+        <p className="aviso-ok" role="status">
+          {aviso.texto}
+          {aviso.enlace && <> · <Link to={aviso.enlace}>Ver la plantilla</Link></>}
+          <button type="button" className="btn-texto" aria-label="Cerrar aviso" onClick={() => setAviso(null)}>×</button>
+        </p>
+      )}
 
       {datos.listas.length === 0 && (
         <div className="card vacio">
@@ -122,6 +137,15 @@ export default function Tareas() {
           onRenombrar={(title) => accion(() => api(`/elementos/${l.id}`, { method: 'PATCH', body: { title } }))}
           onPapelera={() => accion(() => api(`/elementos/${l.id}/papelera`, { body: {} }))}
           onVisibilidad={() => accion(() => api(`/elementos/${l.id}`, { method: 'PATCH', body: { visibleToClients: !l.visibleToClients } }))}
+          onGuardarPlantilla={
+            veTodosLosProyectos(yo.rol)
+              ? (name) =>
+                  accion(async () => {
+                    const r = await api<PlantillaDetalle>(`/listas/${l.id}/plantilla`, { body: { name } });
+                    setAviso({ texto: `Plantilla «${r.plantilla.name}» guardada con ${r.plantilla.tareas} tareas.`, enlace: `/plantillas/${r.plantilla.id}` });
+                  })
+              : undefined
+          }
           onArrastrar={(t) => (arrastrada.current = { id: t.id, listaId: l.id })}
           onSobre={setSobre}
           onSoltar={(antesDe) => soltar(l, antesDe)}
@@ -135,6 +159,19 @@ export default function Tareas() {
           onCrear={async (title, visibleToClients) => {
             await api(`/proyectos/${projectId}/listas`, { body: { title, visibleToClients } });
             setCreandoLista(false);
+            cargar();
+          }}
+        />
+      )}
+      {desdePlantilla && (
+        <AgregarPlantilla
+          projectId={projectId!}
+          onCerrar={() => setDesdePlantilla(false)}
+          onAgregada={(r) => {
+            setDesdePlantilla(false);
+            setAviso({
+              texto: `Lista «${r.lista.title}» creada con ${r.tareas} tareas.${r.sinCliente ? ' El proyecto no tiene clientes: sus tareas quedaron sin asignar (se asignan después o al invitarlo).' : ''}`,
+            });
             cargar();
           }}
         />
@@ -163,6 +200,8 @@ interface PropsLista {
   onRenombrar: (title: string) => void;
   onPapelera: () => void;
   onVisibilidad: () => void;
+  /** Solo dueño y admin. */
+  onGuardarPlantilla?: (nombre: string) => void;
   onArrastrar: (t: Tarea) => void;
   onSobre: (id: string | null) => void;
   onSoltar: (antesDe: string | null) => void;
@@ -207,7 +246,7 @@ function Lista(p: PropsLista) {
             {!p.esCliente && lista.visibleToClients && <span className="chip chip-verde" style={{ marginLeft: 8 }}><Icono nombre="ojo" tam={12} />Visible para el cliente</span>}
           </div>
         </div>
-        {(lista.permisos.editar || lista.permisos.papelera || lista.permisos.visibilidad) && (
+        {(lista.permisos.editar || lista.permisos.papelera || lista.permisos.visibilidad || p.onGuardarPlantilla) && (
           <div className="menu-acciones">
             <button type="button" className="btn btn-sec btn-chico" aria-label={`Acciones de ${lista.title}`} onClick={() => setMenu((v) => !v)}>
               <Icono nombre="puntos" tam={16} />
@@ -222,6 +261,11 @@ function Lista(p: PropsLista) {
                 {lista.permisos.visibilidad && (
                   <button type="button" role="menuitem" onClick={() => { setMenu(false); p.onVisibilidad(); }}>
                     <Icono nombre="ojo" tam={16} />{lista.visibleToClients ? 'Hacer interna (el cliente deja de verla)' : 'Mostrar al cliente'}
+                  </button>
+                )}
+                {p.onGuardarPlantilla && (
+                  <button type="button" role="menuitem" onClick={() => { setMenu(false); const t = window.prompt('Nombre de la plantilla (las fechas pasan a «día N» y las personas no se guardan)', lista.title); if (t?.trim()) p.onGuardarPlantilla!(t.trim()); }}>
+                    <Icono nombre="plantilla" tam={16} />Guardar como plantilla
                   </button>
                 )}
                 {lista.permisos.papelera && (
@@ -346,6 +390,146 @@ function NuevaLista({ esCliente: cliente, onCerrar, onCrear }: { esCliente: bool
           <button className="btn">Crear lista</button>
         </div>
       </form>
+    </Modal>
+  );
+}
+
+/** Agregar una plantilla: elige cuál, la fecha de inicio y quién lleva cada parte. */
+function AgregarPlantilla({ projectId, onCerrar, onAgregada }: { projectId: string; onCerrar: () => void; onAgregada: (r: PlantillaAplicada) => void }) {
+  const yo = useYo();
+  const [lista, setLista] = useState<Plantillas | null>(null);
+  const [elegida, setElegida] = useState('');
+  const [detalle, setDetalle] = useState<PlantillaDetalle | null>(null);
+  const [inicio, setInicio] = useState(hoy());
+  const [titulo, setTitulo] = useState('');
+  const [responsable, setResponsable] = useState(yo.usuario.id);
+  const [clientes, setClientes] = useState<string[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  const personas = useMencionables(projectId, false);
+  const equipo = personas.filter((x) => x.role !== 'client');
+  const delProyecto = personas.filter((x) => x.role === 'client');
+  const marcados = clientes ?? delProyecto.map((c) => c.userId);
+
+  useEffect(() => {
+    api<Plantillas>('/plantillas')
+      .then((r) => {
+        setLista(r);
+        if (r.plantillas.length === 1) setElegida(r.plantillas[0].id);
+      })
+      .catch((e) => setError(mensajeDe(e)));
+  }, []);
+  useEffect(() => {
+    setDetalle(null);
+    if (!elegida) return;
+    api<PlantillaDetalle>(`/plantillas/${elegida}`).then((r) => { setDetalle(r); setTitulo(r.plantilla.name); }).catch((e) => setError(mensajeDe(e)));
+  }, [elegida]);
+
+  const fechaDe = (dia: number | null) => {
+    if (!dia || !inicio) return null;
+    const d = new Date(`${inicio}T12:00:00`);
+    d.setDate(d.getDate() + dia - 1);
+    return d.toLocaleDateString('en-CA');
+  };
+  const conCliente = !!detalle?.plantilla.items.some((i) => i.audience !== 'team');
+
+  async function agregar(e: FormEvent) {
+    e.preventDefault();
+    setEnviando(true);
+    setError(null);
+    try {
+      const r = await api<PlantillaAplicada>(`/proyectos/${projectId}/plantillas`, {
+        body: { plantillaId: elegida, inicio, titulo: titulo.trim() || undefined, responsableId: responsable || null, clienteIds: marcados },
+      });
+      onAgregada(r);
+    } catch (err) {
+      setError(mensajeDe(err));
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <Modal titulo="Agregar desde plantilla" onCerrar={onCerrar}>
+      {!lista ? (
+        error ? <p className="error">{error}</p> : <p className="cargando">Cargando…</p>
+      ) : lista.plantillas.length === 0 ? (
+        <>
+          <p className="meta">Todavía no hay plantillas en la cuenta.</p>
+          <p><Link to="/plantillas">Ir a Plantillas</Link></p>
+        </>
+      ) : (
+        <form onSubmit={agregar}>
+          <label htmlFor="ap-plantilla">Plantilla</label>
+          <select id="ap-plantilla" required value={elegida} onChange={(e) => setElegida(e.target.value)}>
+            <option value="" disabled>Elige una…</option>
+            {lista.plantillas.map((p) => (
+              <option key={p.id} value={p.id}>{p.name} ({p.tareas} tareas)</option>
+            ))}
+          </select>
+
+          {detalle && (
+            <>
+              <div className="rejilla-2">
+                <div>
+                  <label htmlFor="ap-inicio">Fecha de inicio (día 1)</label>
+                  <input id="ap-inicio" type="date" required value={inicio} onChange={(e) => setInicio(e.target.value)} />
+                </div>
+                <div>
+                  <label htmlFor="ap-titulo">Nombre de la lista</label>
+                  <input id="ap-titulo" maxLength={300} value={titulo} onChange={(e) => setTitulo(e.target.value)} />
+                </div>
+              </div>
+
+              <label htmlFor="ap-resp">Tareas del equipo a cargo de</label>
+              <select id="ap-resp" value={responsable} onChange={(e) => setResponsable(e.target.value)}>
+                {equipo.map((p) => (
+                  <option key={p.userId} value={p.userId}>{p.name}{p.userId === yo.usuario.id ? ' (tú)' : ''}</option>
+                ))}
+                <option value="">Sin asignar</option>
+              </select>
+
+              {conCliente && (
+                <>
+                  <label>Tareas del cliente para</label>
+                  {delProyecto.length === 0 ? (
+                    <p className="ayuda" style={{ marginTop: 0 }}>Este proyecto todavía no tiene clientes: sus tareas quedan visibles pero sin asignar. Puedes invitarlo después desde el proyecto.</p>
+                  ) : (
+                    <div className="opciones-personas">
+                      {delProyecto.map((c) => (
+                        <label key={c.userId} className="casilla">
+                          <input
+                            type="checkbox"
+                            checked={marcados.includes(c.userId)}
+                            onChange={(e) => setClientes(e.target.checked ? [...marcados, c.userId] : marcados.filter((x) => x !== c.userId))}
+                          />
+                          {c.name}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              <label>Se crean estas tareas</label>
+              <ul className="vista-plantilla">
+                {detalle.plantilla.items.map((i, n) => (
+                  <li key={n}>
+                    <span>{i.title}</span>
+                    <span className={`chip ${i.audience === 'team' ? 'chip-gris' : 'chip-verde'}`}>{NOMBRE_AUDIENCIA[i.audience]}</span>
+                    {fechaDe(i.dayOffset) && <span className="meta">{fechaCorta(fechaDe(i.dayOffset)!)}</span>}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {error && <p className="error" role="alert">{error}</p>}
+          <div className="acciones" style={{ justifyContent: 'flex-end', marginBottom: 0 }}>
+            <button type="button" className="btn btn-sec" onClick={onCerrar}>Cancelar</button>
+            <button className="btn" disabled={!detalle || enviando}>{enviando ? 'Agregando…' : 'Agregar al proyecto'}</button>
+          </div>
+        </form>
+      )}
     </Modal>
   );
 }
