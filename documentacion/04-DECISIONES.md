@@ -444,6 +444,13 @@ hay varias coincidencias); el resto de la API exige sesión, así que lo delicad
 su alcance. Claves y bot se crean por consola (`bot:prod`); pantalla en la web, más adelante.
 Documentación: 11-API-BOT.md.
 
+**D-64 · Plantillas de lista con tareas para el cliente, sin roles** (2026-10-25, decidido por el usuario)
+Un proyecto por cliente; el onboarding y cada servicio son plantillas de lista que se agregan.
+Sin roles (Cuenta, Diseño…): cada tarea dice si es del cliente, del equipo o de cualquiera. Las
+tareas pueden pedir datos, archivos o enlaces y se completan al responder; lo respondido arma
+la ficha del cliente. Accesos en un campo protegido y cifrado (opción B). Primeras plantillas:
+Onboarding de cliente y Desarrollo web. Detalle: 12-PLANTILLAS-Y-FLUJOS.md.
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

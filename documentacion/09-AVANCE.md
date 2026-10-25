@@ -662,6 +662,13 @@ El usuario pidió armar flujos tipo Basecamp (ej. onboarding de un cliente) con 
 Propuesta por niveles y preguntas abiertas en [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
 No se construye nada hasta que el usuario responda y confirme el alcance.
 
+### 2026-10-25 · Plantillas: diseño confirmado
+
+El usuario respondió: el onboarding son los datos del cliente, el depósito, el contrato y la
+propuesta; luego lo de cada servicio. Sin roles; el cliente participa; accesos con campo
+protegido; contrato lo sube cualquiera; primera plantilla de servicio: Desarrollo web. Queda
+como D-64 con un plan de 5 etapas (unos 6 días) en 12-PLANTILLAS-Y-FLUJOS.md.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -692,6 +699,6 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
 ### Antes de la fase 2
 
-- [ ] Plantillas y flujos: que el usuario responda las 4 preguntas de [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md) y decidir el alcance.
+- [ ] Plantillas y flujos: diseño confirmado (D-64); falta el visto bueno del usuario para construir las 5 etapas de [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
 
 - [ ] Iniciar el trámite con Meta para WhatsApp (número, verificación, plantillas) mientras se usa el MVP.
