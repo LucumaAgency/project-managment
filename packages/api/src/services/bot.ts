@@ -24,7 +24,7 @@ import { crearElemento } from './elementos.js';
 import { registrarEvento } from './eventos.js';
 import { exigirCupoProyectos } from './proyectos.js';
 import type { Actor } from './permisos.js';
-import { aplicarPlantilla, listarPlantillas } from './plantillas.js';
+import { aplicarPlantilla, guardarPlantilla, listarPlantillas, type TareaPlantilla } from './plantillas.js';
 import { diaEn, sumarDias } from './recordatorios.js';
 import { completarTarea, crearTarea } from './tareas.js';
 
@@ -278,5 +278,47 @@ export async function aplicarPlantillaBot(a: AccesoBot, datos: { proyecto: strin
       sinCliente: r.sinCliente,
       enlace: urlEnCuenta(env.baseDomain, a.slug, `/proyectos/${proyecto.id}/tareas`),
     };
+  });
+}
+
+const PARA = { equipo: 'team', cliente: 'client', cualquiera: 'any' } as const;
+const TIPO: Record<string, string> = { texto: 'texto', parrafo: 'parrafo', 'párrafo': 'parrafo', archivo: 'archivo', archivos: 'archivo', enlaces: 'enlaces', acceso: 'acceso' };
+
+export interface PlantillaBot {
+  nombre: string;
+  descripcion?: string;
+  tareas: {
+    titulo: string;
+    para?: keyof typeof PARA;
+    dia?: number | null;
+    notas?: string;
+    /** Número de una tarea anterior (1 = la primera) a la que espera. */
+    espera?: number | null;
+    pide?: { nombre: string; tipo: string; obligatorio?: boolean; ayuda?: string }[];
+  }[];
+}
+
+/**
+ * Crea una plantilla o, si ya hay una con ese nombre (sin tildes ni mayúsculas), la reemplaza
+ * entera. Para cargar las plantillas desde un archivo (documentacion/11-API-BOT.md).
+ */
+export async function guardarPlantillaBot(a: AccesoBot, datos: PlantillaBot) {
+  return conCuenta(a.actor.ctx, async (tx) => {
+    const todas = await tx.listTemplate.findMany({ where: { accountId: a.actor.ctx.accountId }, select: { id: true, name: true } });
+    const igual = todas.find((p) => normal(p.name) === normal(datos.nombre));
+    const items: TareaPlantilla[] = datos.tareas.map((t) => ({
+      title: t.titulo,
+      notes: t.notas ?? null,
+      audience: PARA[t.para ?? 'equipo'],
+      dayOffset: t.dia ?? null,
+      waitsFor: t.espera ?? null,
+      campos: (t.pide ?? []).map((c) => {
+        const tipo = TIPO[c.tipo.toLowerCase()];
+        if (!tipo) throw new HttpError(400, `«${c.nombre}»: el tipo es texto, párrafo, archivo, enlaces o acceso.`);
+        return { etiqueta: c.nombre, tipo, obligatorio: c.obligatorio !== false, ...(c.ayuda ? { ayuda: c.ayuda } : {}) };
+      }),
+    }));
+    const r = await guardarPlantilla(tx, a.actor, igual?.id ?? null, { name: datos.nombre, description: datos.descripcion ?? null, items });
+    return { plantilla: { id: r.plantilla.id, nombre: r.plantilla.name, tareas: r.plantilla.tareas, delCliente: r.plantilla.delCliente }, existia: !!igual };
   });
 }

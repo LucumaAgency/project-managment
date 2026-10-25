@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { conCuenta } from '../lib/contexto.js';
 import { leer } from '../lib/validar.js';
-import { aplicarPlantillaBot, completarTareaBot, crearProyectoBot, crearTareaBot, exigirBot, plantillasBot, tareasBot } from '../services/bot.js';
+import { aplicarPlantillaBot, completarTareaBot, guardarPlantillaBot, crearProyectoBot, crearTareaBot, exigirBot, plantillasBot, tareasBot } from '../services/bot.js';
 
 /**
  * API para bots (D-63, services/bot.ts). Autenticación: `Authorization: Bearer lpm_…`.
@@ -91,6 +91,32 @@ export default async function rutasBot(app: FastifyInstance) {
   });
 
   app.get('/api/v1/bot/plantillas', async (req) => plantillasBot(await exigirBot(req)));
+
+  /** Crear una plantilla, o reemplazarla entera si ya hay una con ese nombre. */
+  app.post('/api/v1/bot/plantillas', async (req) => {
+    const a = await exigirBot(req);
+    const campo = z.object({ nombre: z.string().trim().min(1).max(120), tipo: z.string().max(20), obligatorio: z.boolean().optional(), ayuda: z.string().max(300).optional() });
+    const d = leer(
+      z.object({
+        nombre: z.string().trim().min(1, 'Falta el nombre.').max(200),
+        descripcion: z.string().max(2000).optional(),
+        tareas: z
+          .array(
+            z.object({
+              titulo: z.string().trim().min(1, 'Cada tarea necesita un título.').max(300),
+              para: z.enum(['equipo', 'cliente', 'cualquiera']).optional(),
+              dia: z.number().int().min(1).max(365).nullable().optional(),
+              notas: z.string().max(5000).optional(),
+              espera: z.number().int().min(1).max(100).nullable().optional(),
+              pide: z.array(campo).max(20).optional(),
+            })
+          )
+          .max(100),
+      }),
+      req.body
+    );
+    return guardarPlantillaBot(a, d);
+  });
 
   /** Agregar una plantilla a un proyecto (ambos por nombre). */
   app.post('/api/v1/bot/plantillas/aplicar', async (req) => {

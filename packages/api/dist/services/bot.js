@@ -21,7 +21,7 @@ import { HttpError } from '../lib/errores.js';
 import { crearElemento } from './elementos.js';
 import { registrarEvento } from './eventos.js';
 import { exigirCupoProyectos } from './proyectos.js';
-import { aplicarPlantilla, listarPlantillas } from './plantillas.js';
+import { aplicarPlantilla, guardarPlantilla, listarPlantillas } from './plantillas.js';
 import { diaEn, sumarDias } from './recordatorios.js';
 import { completarTarea, crearTarea } from './tareas.js';
 export const huella = (clave) => createHash('sha256').update(clave).digest('hex');
@@ -255,5 +255,32 @@ export async function aplicarPlantillaBot(a, datos) {
             sinCliente: r.sinCliente,
             enlace: urlEnCuenta(env.baseDomain, a.slug, `/proyectos/${proyecto.id}/tareas`),
         };
+    });
+}
+const PARA = { equipo: 'team', cliente: 'client', cualquiera: 'any' };
+const TIPO = { texto: 'texto', parrafo: 'parrafo', 'párrafo': 'parrafo', archivo: 'archivo', archivos: 'archivo', enlaces: 'enlaces', acceso: 'acceso' };
+/**
+ * Crea una plantilla o, si ya hay una con ese nombre (sin tildes ni mayúsculas), la reemplaza
+ * entera. Para cargar las plantillas desde un archivo (documentacion/11-API-BOT.md).
+ */
+export async function guardarPlantillaBot(a, datos) {
+    return conCuenta(a.actor.ctx, async (tx) => {
+        const todas = await tx.listTemplate.findMany({ where: { accountId: a.actor.ctx.accountId }, select: { id: true, name: true } });
+        const igual = todas.find((p) => normal(p.name) === normal(datos.nombre));
+        const items = datos.tareas.map((t) => ({
+            title: t.titulo,
+            notes: t.notas ?? null,
+            audience: PARA[t.para ?? 'equipo'],
+            dayOffset: t.dia ?? null,
+            waitsFor: t.espera ?? null,
+            campos: (t.pide ?? []).map((c) => {
+                const tipo = TIPO[c.tipo.toLowerCase()];
+                if (!tipo)
+                    throw new HttpError(400, `«${c.nombre}»: el tipo es texto, párrafo, archivo, enlaces o acceso.`);
+                return { etiqueta: c.nombre, tipo, obligatorio: c.obligatorio !== false, ...(c.ayuda ? { ayuda: c.ayuda } : {}) };
+            }),
+        }));
+        const r = await guardarPlantilla(tx, a.actor, igual?.id ?? null, { name: datos.nombre, description: datos.descripcion ?? null, items });
+        return { plantilla: { id: r.plantilla.id, nombre: r.plantilla.name, tareas: r.plantilla.tareas, delCliente: r.plantilla.delCliente }, existia: !!igual };
     });
 }

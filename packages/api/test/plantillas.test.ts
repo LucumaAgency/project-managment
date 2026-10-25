@@ -192,6 +192,26 @@ describe('bot', () => {
     expect((await bot('POST', '/bot/plantillas/aplicar', { proyecto: A.projectId, plantilla: 'onboarding' })).statusCode).toBe(409); // la de la semilla y esta
   });
 
+  it('crea una plantilla desde un archivo y, con el mismo nombre, la reemplaza', async () => {
+    const cuerpo = {
+      nombre: 'Desarrollo web',
+      tareas: [
+        { titulo: 'Manual de marca', para: 'cliente', dia: 1, pide: [{ nombre: 'Manual (PDF)', tipo: 'archivo', obligatorio: false }, { nombre: 'Colores', tipo: 'texto' }] },
+        { titulo: 'Acceso al hosting', para: 'cliente', dia: 2, pide: [{ nombre: 'Hosting', tipo: 'acceso' }] },
+        { titulo: 'Revisar materiales', espera: 1, dia: 2 },
+      ],
+    };
+    const r = await bot('POST', '/bot/plantillas', cuerpo);
+    expect(r.statusCode, r.body).toBe(200);
+    expect(r.json()).toMatchObject({ existia: false, plantilla: { nombre: 'Desarrollo web', tareas: 3, delCliente: 2 } });
+    const d = (await owner.get(`/plantillas/${r.json().plantilla.id}`)).json.plantilla;
+    expect(d.items.map((i: { audience: string; waitsFor: number | null }) => [i.audience, i.waitsFor])).toEqual([['client', null], ['client', null], ['team', 1]]);
+    expect(d.items[1].campos[0]).toMatchObject({ etiqueta: 'Hosting', tipo: 'acceso', obligatorio: true });
+    const otra = await bot('POST', '/bot/plantillas', { ...cuerpo, nombre: 'desarrollo WEB', tareas: cuerpo.tareas.slice(0, 1) });
+    expect(otra.json()).toMatchObject({ existia: true, plantilla: { id: r.json().plantilla.id, tareas: 1 } });
+    expect((await bot('POST', '/bot/plantillas', { nombre: 'x', tareas: [{ titulo: 'a', pide: [{ nombre: 'b', tipo: 'clave' }] }] })).statusCode).toBe(400);
+  });
+
   it('el bot no aparece entre las personas que se pueden asignar o mencionar', async () => {
     const r = await owner.get(`/proyectos/${A.projectId}/mencionables`);
     expect(r.json.personas.some((p: { name: string }) => p.name === 'Bot Lucuma')).toBe(false);

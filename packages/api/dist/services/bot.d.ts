@@ -133,3 +133,40 @@ export declare function aplicarPlantillaBot(a: AccesoBot, datos: {
     sinCliente: boolean;
     enlace: string;
 }>;
+declare const PARA: {
+    readonly equipo: "team";
+    readonly cliente: "client";
+    readonly cualquiera: "any";
+};
+export interface PlantillaBot {
+    nombre: string;
+    descripcion?: string;
+    tareas: {
+        titulo: string;
+        para?: keyof typeof PARA;
+        dia?: number | null;
+        notas?: string;
+        /** Número de una tarea anterior (1 = la primera) a la que espera. */
+        espera?: number | null;
+        pide?: {
+            nombre: string;
+            tipo: string;
+            obligatorio?: boolean;
+            ayuda?: string;
+        }[];
+    }[];
+}
+/**
+ * Crea una plantilla o, si ya hay una con ese nombre (sin tildes ni mayúsculas), la reemplaza
+ * entera. Para cargar las plantillas desde un archivo (documentacion/11-API-BOT.md).
+ */
+export declare function guardarPlantillaBot(a: AccesoBot, datos: PlantillaBot): Promise<{
+    plantilla: {
+        id: string;
+        nombre: string;
+        tareas: number;
+        delCliente: number;
+    };
+    existia: boolean;
+}>;
+export {};

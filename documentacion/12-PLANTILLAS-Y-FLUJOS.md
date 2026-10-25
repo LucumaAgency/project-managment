@@ -283,3 +283,20 @@ esperas en vuelta (A espera a B y B a A).
 `ListTemplateItem.waitsFor` (migración `20261026150000_se_activa_cuando`); `services/espera.ts`;
 `completarTarea` llama a `activarLasQueEsperan`; `POST /tareas/:id/activar`; `PATCH /tareas/:id`
 con `esperaA` y `diasDespues`. Evento nuevo: `activated`.
+
+## Etapa 5: las plantillas reales (2026-10-25, borrador para revisar)
+
+Borradores en `privados/plantillas/` (fuera del repo): `onboarding-de-cliente.json` y
+`desarrollo-web.json`, armados con lo que contó el usuario. Se cargan (o se reemplazan, si ya
+existen) con `~/carlos/bin/proyectos.py cargar-plantilla <archivo>`, que usa
+`POST /api/v1/bot/plantillas`. Probadas en la base local. Falta: que el usuario las revise y dé
+el visto bueno para cargarlas en producción.
+
+- **Onboarding de cliente** (7): datos de la empresa (razón social, RUC, contacto), redes y web
+  actual (enlaces), constancia del depósito (archivo) → verificar el depósito (espera a la
+  constancia) → contrato firmado (cualquiera, espera a la verificación); propuesta aprobada
+  (equipo); mensaje de bienvenida (espera al contrato).
+- **Desarrollo web** (7): manual de marca (o colores, tipografías y logo), referencias web
+  (enlaces), accesos al dominio, al hosting y a la web actual (protegidos; hosting y web
+  opcionales), contenidos (textos y fotos, opcionales) → revisar materiales (espera a los
+  contenidos).
