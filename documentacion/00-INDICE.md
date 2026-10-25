@@ -8,7 +8,7 @@ actualiza aquí y se anota en la bitácora de [09-AVANCE.md](09-AVANCE.md).
 - **Fase:** MVP de 15 días terminado y en uso (beta). API para el bot de Telegram en producción.
 - **Repo:** https://github.com/LucumaAgency/project-managment (público, rama `main`).
 - **En línea:** https://proyectos.pruebalucuma.site (beta en Plesk, guía en [10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md)).
-- **Siguiente paso:** desplegar el tablero y construir el timeline ([13-TABLERO-Y-TIMELINE.md](13-TABLERO-Y-TIMELINE.md)).
+- **Siguiente paso:** desplegar el tablero y el timeline, y usarlos con los shoots y el contenido de un cliente ([13-TABLERO-Y-TIMELINE.md](13-TABLERO-Y-TIMELINE.md)).
 - **Esperando tu confirmación:** ver «Para confirmar» en [09-AVANCE.md](09-AVANCE.md).
 
 ## Documentos

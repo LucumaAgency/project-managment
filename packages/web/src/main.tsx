@@ -11,6 +11,7 @@ import Invitacion from './paginas/Invitacion';
 import MiCuenta from './paginas/MiCuenta';
 import Ficha from './paginas/Ficha';
 import Personas from './paginas/Personas';
+import Timeline from './paginas/Timeline';
 import Plantilla from './paginas/Plantilla';
 import Plantillas from './paginas/Plantillas';
 import Portada from './paginas/Portada';
@@ -53,6 +54,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/proyectos/:id/papelera" element={<Papelera />} />
             <Route path="/proyectos/:id/ficha" element={<Ficha />} />
             <Route path="/buscar" element={<Buscar />} />
+            <Route path="/timeline" element={<Timeline />} />
             <Route path="/personas" element={<Personas />} />
             <Route path="/plantillas" element={<Plantillas />} />
             <Route path="/plantillas/:id" element={<Plantilla />} />

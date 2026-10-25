@@ -96,6 +96,7 @@ export default function Tareas() {
       </p>
       <div className="herramientas">
         <div className="empuja"><h2 style={{ fontSize: 20 }}>Tareas</h2></div>
+        <Link to={`/timeline?proyecto=${projectId}`} className="btn btn-sec"><Icono nombre="calendario" tam={16} />Timeline</Link>
         {datos.permisos.crearLista && !esCliente(yo.rol) && (
           <button type="button" className="btn btn-sec" onClick={() => setDesdePlantilla(true)}>
             <Icono nombre="plantilla" tam={16} />Desde plantilla
@@ -594,6 +595,8 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
   const [guardando, setGuardando] = useState(false);
   const [pidiendo, setPidiendo] = useState(false);
   const [esperaA, setEsperaA] = useState('');
+  const [desde, setDesde] = useState('');
+  const [mostrarDesde, setMostrarDesde] = useState(false);
   const [diasDespues, setDiasDespues] = useState('');
   const [campos, setCampos] = useState<Campo[]>([]);
   useLeerAvisosDe(id);
@@ -604,6 +607,7 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
         setD(r);
         setTitulo(r.tarea.title);
         setDia(r.tarea.dueOn ?? '');
+        setDesde(r.tarea.startsOn ?? '');
         // Mientras espera, "responsables" son los que se asignarán al activarse.
         setResponsables(r.tarea.espera ? r.tarea.espera.seAsignaraA.map((a) => a.userId) : r.tarea.assignees.map((a) => a.userId));
         setEsperaA(r.tarea.espera?.espera.id ?? '');
@@ -635,6 +639,7 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
     if (permisos.editar && notasCambiaron) cambios.body = notas;
     if (permisos.cambiarVisibilidad && visible !== t.visibleToClients) cambios.visibleToClients = visible;
     if (permisos.asignar && (dia || null) !== t.dueOn) cambios.dueOn = dia || null;
+    if (permisos.asignar && (desde || null) !== (t.startsOn ?? null)) cambios.startsOn = desde || null;
     const antes = (t.espera ? t.espera.seAsignaraA : t.assignees).map((a) => a.userId).sort().join();
     if (permisos.asignar) {
       const esperaAntes = t.espera?.espera.id ?? '';
@@ -742,6 +747,18 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
               <input id="t-dia" type="date" value={dia} onChange={(e) => setDia(e.target.value)} />
             ) : (
               <p className="meta" id="t-dia">{t.dueOn ? fechaCorta(t.dueOn) : 'Sin fecha'}</p>
+            )}
+            {permisos.asignar ? (
+              desde || mostrarDesde ? (
+                <>
+                  <label htmlFor="t-desde">Desde (opcional, para el timeline)</label>
+                  <input id="t-desde" type="date" value={desde} max={dia || undefined} onChange={(e) => setDesde(e.target.value)} />
+                </>
+              ) : (
+                <button type="button" className="btn-texto" style={{ marginTop: 6 }} onClick={() => setMostrarDesde(true)}>+ fecha de inicio</button>
+              )
+            ) : (
+              t.startsOn && <p className="meta">Desde {fechaCorta(t.startsOn)}</p>
             )}
           </div>
           {permisos.cambiarVisibilidad && (

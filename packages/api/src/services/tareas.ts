@@ -26,7 +26,7 @@ const SELECCION_TAREA = {
   position: true,
   createdAt: true,
   creator: { select: { id: true, name: true } },
-  todo: { select: { dueOn: true, completedAt: true, completedBy: { select: { id: true, name: true } }, fields: true, waitsForId: true, pendingAssigneeIds: true, dueAfterDays: true, columnId: true, steps: true } },
+  todo: { select: { dueOn: true, startsOn: true, completedAt: true, completedBy: { select: { id: true, name: true } }, fields: true, waitsForId: true, pendingAssigneeIds: true, dueAfterDays: true, columnId: true, steps: true } },
   assignees: { select: { user: { select: { id: true, name: true } } }, orderBy: { createdAt: 'asc' as const } },
 } as const;
 
@@ -40,7 +40,7 @@ type FilaTarea = {
   position: number;
   createdAt: Date;
   creator: { id: string; name: string };
-  todo: { dueOn: Date | null; completedAt: Date | null; completedBy: { id: string; name: string } | null; fields: unknown; waitsForId: string | null; pendingAssigneeIds: unknown; dueAfterDays: number | null; columnId: string | null; steps: unknown } | null;
+  todo: { dueOn: Date | null; startsOn: Date | null; completedAt: Date | null; completedBy: { id: string; name: string } | null; fields: unknown; waitsForId: string | null; pendingAssigneeIds: unknown; dueAfterDays: number | null; columnId: string | null; steps: unknown } | null;
   assignees: { user: { id: string; name: string } }[];
 };
 
@@ -67,6 +67,8 @@ function aTarea(f: FilaTarea, conCuerpo = false) {
     createdAt: f.createdAt,
     creator: f.creator,
     dueOn: aDia(f.todo?.dueOn),
+    /** Desde cuándo (para el timeline: con desde y vence es una barra). */
+    startsOn: aDia(f.todo?.startsOn),
     completedAt: f.todo?.completedAt ?? null,
     completedBy: f.todo?.completedBy ?? null,
     assignees: f.assignees.map((a) => ({ userId: a.user.id, name: a.user.name })),
@@ -252,6 +254,8 @@ export interface DatosTarea {
   body?: unknown;
   visibleToClients?: boolean;
   dueOn?: string | null;
+  /** Desde cuándo (timeline). Tiene que ser antes o igual que la entrega. */
+  startsOn?: string | null;
   assigneeIds?: string[];
   /** Lo que pide la tarea (D-65); null o [] = nada. Solo el equipo. */
   campos?: unknown;
@@ -264,7 +268,7 @@ export interface DatosTarea {
 export async function crearTarea(tx: Tx, actor: Actor, listaId: string, datos: DatosTarea) {
   const { proyecto, elemento: lista } = await elementoPara(tx, actor, listaId, 'elemento.ver');
   if (lista.type !== 'todolist') throw new HttpError(400, 'Las tareas van dentro de una lista.');
-  if ((datos.assigneeIds?.length || datos.dueOn) && esCliente(actor.rol)) {
+  if ((datos.assigneeIds?.length || datos.dueOn || datos.startsOn) && esCliente(actor.rol)) {
     throw new HttpError(403, 'Los responsables y la fecha los pone el equipo.');
   }
   if (datos.campos != null && esCliente(actor.rol)) throw new HttpError(403, 'Lo que pide una tarea lo define el equipo.');
@@ -277,7 +281,9 @@ export async function crearTarea(tx: Tx, actor: Actor, listaId: string, datos: D
     visibleToClients: datos.visibleToClients,
   });
   const visible = creada.visibleToClients && lista.visibleEnCadena;
-  await tx.todoDetail.create({ data: { recordingId: creada.id, dueOn: desdeDia(datos.dueOn ?? null), fields: columnaCampos(campos) } });
+  const [vence, empieza] = [desdeDia(datos.dueOn ?? null), desdeDia(datos.startsOn ?? null)];
+  if (vence && empieza && empieza > vence) throw new HttpError(400, 'La fecha de inicio va antes de la de entrega.');
+  await tx.todoDetail.create({ data: { recordingId: creada.id, dueOn: vence, startsOn: empieza, fields: columnaCampos(campos) } });
   if (datos.esperaA) {
     // Nace esperando: los responsables quedan previstos y no se les avisa todavía.
     await tx.todoAssignee.deleteMany({ where: { recordingId: creada.id } });
@@ -306,6 +312,14 @@ export async function editarTarea(tx: Tx, actor: Actor, id: string, datos: Datos
   }
   const espera = await tx.todoDetail.findUnique({ where: { recordingId: id }, select: { waitsForId: true } });
 
+  if (datos.startsOn !== undefined) {
+    exigir(actor, 'tarea.asignar', { proyecto, elemento }, 'Las fechas las pone el equipo.');
+    const empieza = desdeDia(datos.startsOn);
+    const actual = await tx.todoDetail.findUnique({ where: { recordingId: id }, select: { dueOn: true } });
+    const vence = datos.dueOn !== undefined ? desdeDia(datos.dueOn) : (actual?.dueOn ?? null);
+    if (empieza && vence && empieza > vence) throw new HttpError(400, 'La fecha de inicio va antes de la de entrega.');
+    await tx.todoDetail.upsert({ where: { recordingId: id }, create: { recordingId: id, startsOn: empieza }, update: { startsOn: empieza } });
+  }
   if (datos.dueOn !== undefined || datos.assigneeIds !== undefined) {
     exigir(actor, 'tarea.asignar', { proyecto, elemento }, 'Los responsables y la fecha los pone el equipo.');
   }

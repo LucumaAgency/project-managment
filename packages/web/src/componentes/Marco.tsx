@@ -27,6 +27,7 @@ const TITULOS: [string, string][] = [
   ['/plantillas', 'Plantillas'],
   ['/bandeja', 'Bandeja'],
   ['/buscar', 'Buscar'],
+  ['/timeline', 'Timeline'],
   ['/mi-cuenta', 'Mi cuenta'],
 ];
 
@@ -116,6 +117,9 @@ export default function Marco() {
             <div className="nav-seccion">Menú</div>
             <NavLink to="/" className={({ isActive }) => (isActive || location.pathname.startsWith('/proyectos') ? 'activo' : '')} end>
               <Icono nombre="proyectos" />Proyectos
+            </NavLink>
+            <NavLink to="/timeline" className={enlace}>
+              <Icono nombre="calendario" />Timeline
             </NavLink>
             <NavLink to="/buscar" className={enlace}>
               <Icono nombre="buscar" />Buscar
