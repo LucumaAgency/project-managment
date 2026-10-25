@@ -338,6 +338,11 @@ model TodoDetail {
   columnId           String?
   /// Pasos dentro de la tarea/tarjeta (D-68): `[{ id, texto, hecho, porId?, el? }]`.
   steps              Json?
+  /// Hora y lugar (D-69), para shoots y reuniones: "HH:MM" en la zona de la cuenta (sin
+  /// convertir), fin opcional, y el lugar como texto o enlace.
+  startTime          String?
+  endTime            String?
+  location           String?
 
   @@index([dueOn])
   @@index([waitsForId])

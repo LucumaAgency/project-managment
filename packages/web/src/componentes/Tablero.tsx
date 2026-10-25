@@ -1,5 +1,5 @@
 import { useRef, useState, type FormEvent } from 'react';
-import { api, ErrorApi, type Columna, type ListaTareas, type PasoVista, type Tarea, type TareaDetalle } from '../api';
+import { api, ErrorApi, textoHora, type Columna, type ListaTareas, type PasoVista, type Tarea, type TareaDetalle } from '../api';
 import Icono from './Icono';
 import Modal from './Modal';
 
@@ -150,7 +150,8 @@ function Tarjeta({
       <button type="button" className="tarjeta-cuerpo" onClick={onAbrir}>
         <span className="tarjeta-titulo">{t.title}</span>
         <span className="tarea-meta">
-          {t.dueOn && <span className={`chip ${vencida ? 'chip-rojo' : t.dueOn === hoy() ? 'chip-alerta' : 'chip-gris'}`}>{fechaCorta(t.dueOn)}</span>}
+          {t.dueOn && <span className={`chip ${vencida ? 'chip-rojo' : t.dueOn === hoy() ? 'chip-alerta' : 'chip-gris'}`}>{fechaCorta(t.dueOn)}{t.hora && ` · ${textoHora(t.hora, t.horaFin)}`}</span>}
+          {t.lugar && <span className="con-icono tarjeta-lugar" title={t.lugar}><Icono nombre="lugar" tam={11} />{t.lugar}</span>}
           {pasos.total > 0 && <span className={`chip ${pasos.hechos === pasos.total ? 'chip-verde' : 'chip-gris'}`}><Icono nombre="tareas" tam={11} />{pasos.hechos}/{pasos.total}</span>}
           {t.pide > 0 && <span className="chip chip-gris">Pide {t.respondidos ?? 0}/{t.pide}</span>}
           {t.espera && <span className="chip chip-gris">Espera</span>}

@@ -138,7 +138,7 @@ export async function tareasBot(
         projectId: true,
         project: { select: { name: true } },
         parent: { select: { title: true } },
-        todo: { select: { dueOn: true, completedAt: true } },
+        todo: { select: { dueOn: true, completedAt: true, startTime: true, endTime: true, location: true } },
         assignees: { select: { user: { select: { name: true, email: true } } } },
       },
       orderBy: filtros.completadas ? [{ todo: { completedAt: 'desc' } }] : [{ todo: { dueOn: { sort: 'asc', nulls: 'last' } } }, { createdAt: 'asc' }],
@@ -154,6 +154,9 @@ export async function tareasBot(
           proyecto: { id: t.projectId, nombre: t.project.name },
           lista: t.parent?.title ?? null,
           vence,
+          hora: t.todo?.startTime ?? null,
+          horaFin: t.todo?.endTime ?? null,
+          lugar: t.todo?.location ?? null,
           vencida: !!vence && vence < hoy && !t.todo?.completedAt,
           completada: t.todo?.completedAt ?? null,
           responsables: t.assignees.map((x) => ({ nombre: x.user.name, correo: x.user.email })),
@@ -167,7 +170,7 @@ export async function tareasBot(
 /** Crea una tarea. La lista se elige por nombre; sin lista, la primera del proyecto (o "Pendientes"). */
 export async function crearTareaBot(
   a: AccesoBot,
-  datos: { proyecto: string; lista?: string; titulo: string; vence?: string | null; responsables: string[]; notas?: string }
+  datos: { proyecto: string; lista?: string; titulo: string; vence?: string | null; hora?: string; horaFin?: string; lugar?: string; responsables: string[]; notas?: string }
 ) {
   return conCuenta(a.actor.ctx, async (tx) => {
     const proyecto = await proyectoPorNombre(tx, a, datos.proyecto);
@@ -185,6 +188,9 @@ export async function crearTareaBot(
     const tarea = await crearTarea(tx, a.actor, lista.id, {
       title: datos.titulo,
       dueOn: datos.vence ?? null,
+      ...(datos.hora ? { hora: datos.hora } : {}),
+      ...(datos.horaFin ? { horaFin: datos.horaFin } : {}),
+      ...(datos.lugar ? { lugar: datos.lugar } : {}),
       assigneeIds: responsables.map((r) => r.id),
       ...(datos.notas ? { body: { type: 'doc', content: datos.notas.split(/\n{2,}/).map((p) => ({ type: 'paragraph', content: [{ type: 'text', text: p }] })) } } : {}),
     });
@@ -194,6 +200,9 @@ export async function crearTareaBot(
       proyecto: { id: proyecto.id, nombre: proyecto.name },
       lista: lista.title,
       vence: datos.vence ?? null,
+      hora: datos.hora ?? null,
+      horaFin: datos.horaFin ?? null,
+      lugar: datos.lugar ?? null,
       responsables: responsables.map((r) => ({ nombre: r.name, correo: r.email })),
       enlace: enlaceTarea(a, proyecto.id, tarea.id),
     };

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { esCliente } from '@lucuma-pm/shared';
 import type { JSONContent } from '@tiptap/react';
-import { api, ErrorApi, NOMBRE_AUDIENCIA, type Campo, type ListaTareas, type PlantillaAplicada, type PlantillaDetalle, type Plantillas, type Tarea, type TareaDetalle, type TareasProyecto } from '../api';
+import { api, enlaceLugar, ErrorApi, NOMBRE_AUDIENCIA, textoHora, type Campo, type ListaTareas, type PlantillaAplicada, type PlantillaDetalle, type Plantillas, type Tarea, type TareaDetalle, type TareasProyecto } from '../api';
 import { EditorCampos, Formulario } from '../componentes/Campos';
 import Comentarios from '../componentes/Comentarios';
 import { ColumnaDeTarea, EditorColumnas, Pasos, Tablero } from '../componentes/Tablero';
@@ -377,7 +377,8 @@ function FilaTarea({ t, lista, esCliente: cliente, puedeCompletar, sobre, onAbri
         <span className="tarea-titulo">{t.title}</span>
         <span className="tarea-meta">
           {t.assignees.length > 0 && <span>{t.assignees.map((a) => a.name.split(' ')[0]).join(', ')}</span>}
-          {t.dueOn && <span className={`chip ${claseFecha(t)}`}>{fechaCorta(t.dueOn)}</span>}
+          {t.dueOn && <span className={`chip ${claseFecha(t)}`}>{fechaCorta(t.dueOn)}{t.hora && ` · ${textoHora(t.hora, t.horaFin)}`}</span>}
+          {t.lugar && <span className="con-icono" title={t.lugar}><Icono nombre="lugar" tam={12} />{t.lugar.length > 24 ? `${t.lugar.slice(0, 24)}…` : t.lugar}</span>}
           {!Array.isArray(t.pasos) && t.pasos.total > 0 && (
             <span className={`chip ${t.pasos.hechos === t.pasos.total ? 'chip-verde' : 'chip-gris'}`} title="Pasos">
               {t.pasos.hechos}/{t.pasos.total} pasos
@@ -596,6 +597,10 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
   const [pidiendo, setPidiendo] = useState(false);
   const [esperaA, setEsperaA] = useState('');
   const [desde, setDesde] = useState('');
+  const [hora, setHora] = useState('');
+  const [horaFin, setHoraFin] = useState('');
+  const [lugar, setLugar] = useState('');
+  const [mostrarHora, setMostrarHora] = useState(false);
   const [mostrarDesde, setMostrarDesde] = useState(false);
   const [diasDespues, setDiasDespues] = useState('');
   const [campos, setCampos] = useState<Campo[]>([]);
@@ -608,6 +613,9 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
         setTitulo(r.tarea.title);
         setDia(r.tarea.dueOn ?? '');
         setDesde(r.tarea.startsOn ?? '');
+        setHora(r.tarea.hora ?? '');
+        setHoraFin(r.tarea.horaFin ?? '');
+        setLugar(r.tarea.lugar ?? '');
         // Mientras espera, "responsables" son los que se asignarán al activarse.
         setResponsables(r.tarea.espera ? r.tarea.espera.seAsignaraA.map((a) => a.userId) : r.tarea.assignees.map((a) => a.userId));
         setEsperaA(r.tarea.espera?.espera.id ?? '');
@@ -640,6 +648,9 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
     if (permisos.cambiarVisibilidad && visible !== t.visibleToClients) cambios.visibleToClients = visible;
     if (permisos.asignar && (dia || null) !== t.dueOn) cambios.dueOn = dia || null;
     if (permisos.asignar && (desde || null) !== (t.startsOn ?? null)) cambios.startsOn = desde || null;
+    if (permisos.asignar && (hora || null) !== t.hora) cambios.hora = hora || null;
+    if (permisos.asignar && (horaFin || null) !== t.horaFin) cambios.horaFin = horaFin || null;
+    if (permisos.asignar && (lugar.trim() || null) !== t.lugar) cambios.lugar = lugar.trim() || null;
     const antes = (t.espera ? t.espera.seAsignaraA : t.assignees).map((a) => a.userId).sort().join();
     if (permisos.asignar) {
       const esperaAntes = t.espera?.espera.id ?? '';
@@ -759,6 +770,37 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
               )
             ) : (
               t.startsOn && <p className="meta">Desde {fechaCorta(t.startsOn)}</p>
+            )}
+            {permisos.asignar ? (
+              hora || lugar || mostrarHora ? (
+                <div className="hora-lugar">
+                  <div className="sumar">
+                    <div>
+                      <label htmlFor="t-hora">Hora</label>
+                      <input id="t-hora" type="time" value={hora} onChange={(e) => setHora(e.target.value)} />
+                    </div>
+                    <div>
+                      <label htmlFor="t-hora-fin">Hasta (opcional)</label>
+                      <input id="t-hora-fin" type="time" value={horaFin} disabled={!hora} min={hora || undefined} onChange={(e) => setHoraFin(e.target.value)} />
+                    </div>
+                  </div>
+                  <label htmlFor="t-lugar">Lugar</label>
+                  <input id="t-lugar" maxLength={200} placeholder="Dirección o enlace de Google Maps" value={lugar} onChange={(e) => setLugar(e.target.value)} />
+                </div>
+              ) : (
+                <button type="button" className="btn-texto" style={{ marginTop: 6, display: 'block' }} onClick={() => setMostrarHora(true)}>+ hora y lugar</button>
+              )
+            ) : (
+              (t.hora || t.lugar) && (
+                <p className="meta">
+                  {textoHora(t.hora, t.horaFin)}
+                  {t.hora && t.lugar && ' · '}
+                  {t.lugar && <a href={enlaceLugar(t.lugar)} target="_blank" rel="noopener noreferrer">{t.lugar}</a>}
+                </p>
+              )
+            )}
+            {permisos.asignar && t.lugar && (
+              <p className="ayuda" style={{ margin: '4px 0 0' }}><a href={enlaceLugar(t.lugar)} target="_blank" rel="noopener noreferrer">Abrir en el mapa</a></p>
             )}
           </div>
           {permisos.cambiarVisibilidad && (

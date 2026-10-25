@@ -22,6 +22,9 @@ const nuevaTarea = z.object({
   vence: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha va como AAAA-MM-DD.').nullable().optional(),
   responsables: z.array(z.string().max(200)).max(20).default([]),
   notas: z.string().max(10_000).optional(),
+  hora: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'La hora va como HH:MM (24 horas).').optional(),
+  horaFin: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'La hora va como HH:MM (24 horas).').optional(),
+  lugar: z.string().max(200).optional(),
 });
 
 export default async function rutasBot(app: FastifyInstance) {

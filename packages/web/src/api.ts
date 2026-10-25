@@ -176,6 +176,10 @@ export interface Tarea {
   creator: { id: string; name: string };
   dueOn: string | null;
   startsOn: string | null;
+  /** Hora y lugar (D-69): "HH:MM" en la hora de la cuenta. */
+  hora: string | null;
+  horaFin: string | null;
+  lugar: string | null;
   completedAt: string | null;
   completedBy: { id: string; name: string } | null;
   assignees: { userId: string; name: string }[];
@@ -489,6 +493,9 @@ export interface TareaTimeline {
   desde: string;
   hasta: string;
   completada: boolean;
+  hora: string | null;
+  horaFin: string | null;
+  lugar: string | null;
   columna: { nombre: string; tipo: 'revision' | 'hecho' | null } | null;
   visibleToClients: boolean;
   responsables: { userId: string; name: string }[];
@@ -500,3 +507,9 @@ export interface DatosTimeline {
   tareas: TareaTimeline[];
   recortado: boolean;
 }
+
+/** "9:00" / "9:00–13:00" a partir de "09:00" y "13:00". */
+export const textoHora = (hora: string | null, fin?: string | null) => (hora ? `${hora.replace(/^0/, '')}${fin ? `–${fin.replace(/^0/, '')}` : ''}` : '');
+/** Enlace para abrir un lugar: el mismo si ya es un enlace; si no, una búsqueda en Google Maps. */
+export const enlaceLugar = (lugar: string) =>
+  /^https?:\/\//i.test(lugar) ? lugar : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lugar)}`;

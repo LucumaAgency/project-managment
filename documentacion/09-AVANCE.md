@@ -818,6 +818,16 @@ Recorrido en navegador sin errores, escritorio y celular.
 
 Para desplegar: va junto con el tablero (la migración `tablero` es la única).
 
+### 2026-10-25 · Decisiones del usuario, hora y lugar, plan de la fase 3
+
+- El usuario desplegó el tablero y el timeline, y probó las plantillas reales. Decidió (D-70):
+  no revocar las claves todavía, no hacer el correo todavía, no hacer el trámite con Meta.
+- **Hora y lugar** en las tareas (D-69): hora, hora de fin y lugar con enlace al mapa; en lista,
+  tarjeta, detalle, timeline (ordenado por hora) y bot. 318 tests en verde (1 nuevo).
+  Para desplegar (**con migración** `hora_y_lugar`).
+- **Fase 3** (venderlo a otras agencias) planificada paso a paso en
+  [14-FASE-3-VENDER.md](14-FASE-3-VENDER.md).
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -850,7 +860,6 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
 ### Antes de la fase 2
 
-- [ ] Desplegar tablero y timeline (migración `tablero`).
-- [ ] Probar las plantillas Onboarding de cliente y Desarrollo web con un cliente real y ajustar lo que haga falta (ver [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md)).
+- [ ] Desplegar hora y lugar (migración `hora_y_lugar`).
 
-- [ ] Iniciar el trámite con Meta para WhatsApp (número, verificación, plantillas) mientras se usa el MVP.
+- [ ] Fase 3 (vender a otras agencias): empezar por el paso 1 de [14-FASE-3-VENDER.md](14-FASE-3-VENDER.md) cuando el usuario lo decida. (WhatsApp/Meta: descartado por ahora, D-70.)
