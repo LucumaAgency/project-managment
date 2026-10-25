@@ -762,6 +762,12 @@ Para desplegar (**con migración**): Git → Desplegar → `prisma:generate` →
 
 Probado: 299 tests en verde (1 nuevo).
 
+### 2026-10-25 · Plantillas, etapa 5: cargadas en producción
+
+El usuario desplegó la etapa 4 y aprobó los borradores tal cual (los días se quedan como
+están). Cargadas con el bot: **Onboarding de cliente** (7 tareas, 4 del cliente) y **Desarrollo
+web** (7 tareas, 6 del cliente). Se editan en la web, en Plantillas.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -794,7 +800,6 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
 ### Antes de la fase 2
 
-- [ ] Desplegar la etapa 4 de plantillas (con migración `se_activa_cuando`).
-- [ ] Plantillas, etapa 5: el usuario revisa los borradores (Onboarding de cliente y Desarrollo web, en `privados/plantillas/`), se cargan en producción con `proyectos.py cargar-plantilla` y se prueban con un cliente real: [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
+- [ ] Probar las plantillas Onboarding de cliente y Desarrollo web con un cliente real y ajustar lo que haga falta (ver [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md)).
 
 - [ ] Iniciar el trámite con Meta para WhatsApp (número, verificación, plantillas) mientras se usa el MVP.
