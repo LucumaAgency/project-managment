@@ -396,6 +396,12 @@ por el lector binario), `GET /proyectos/:id/ficha`. Web: `componentes/Campos.tsx
 `ListTemplateItem.waitsFor`; `services/espera.ts` (activar, esperas, vueltas);
 `completarTarea` activa las que esperan; `POST /tareas/:id/activar`. Evento `activated`.
 
+## Página del proyecto: vista previa
+
+`services/vista-previa.ts` arma `vistaPrevia` en `GET /proyectos/:id`: primeras listas con sus
+pendientes, últimos mensajes, últimos archivos (con su cadena viva y, para el cliente, visible)
+y el avance de la ficha. Filtra igual que cada sección.
+
 ## Archivos
 
 `lib/almacen.ts` (disco), `lib/tipos-archivo.ts` (tipo real, nombre limpio),

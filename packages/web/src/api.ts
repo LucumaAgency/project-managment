@@ -157,6 +157,8 @@ export interface ProyectoDetalle {
   personas: PersonaProyecto[];
   secciones: { tareas: number; mensajes: number; archivos: number; ficha: number };
   permisos: { editar: boolean; archivar: boolean; papelera: boolean; personas: boolean; verPapelera: boolean };
+  /** Lo que muestra cada sección en la página del proyecto (lo que ve cada quien). */
+  vistaPrevia: VistaPrevia;
   /** Solo para el equipo: qué ve el cliente en la raíz del proyecto. */
   vistaCliente: { listas: number; mensajes: number; carpetas: number; archivos: number } | null;
 }
@@ -447,4 +449,11 @@ export interface RespuestaGuardada extends TareaDetalle {
 export interface Ficha {
   proyecto: { id: string; name: string };
   tareas: { id: string; title: string; lista: string | null; completada: boolean; respondidos: number; campos: CampoConRespuesta[] }[];
+}
+
+export interface VistaPrevia {
+  tareas: { pendientes: number; listas: { id: string; title: string; total: number; hechas: number; tareas: { id: string; title: string; dueOn: string | null }[] }[] };
+  mensajes: { id: string; title: string; autor: string; createdAt: string; extracto: string }[];
+  archivos: { id: string; title: string; blobId: string | null; tipo: string | null }[];
+  ficha: { respondidos: number; total: number };
 }

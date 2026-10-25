@@ -664,3 +664,25 @@ mark { background: #fff1b8; color: inherit; border-radius: 3px; padding: 0 1px; 
 .plantilla-espera label { margin: 0; font-size: 13px; }
 .plantilla-espera select { margin: 0; }
 @media (min-width: 620px) { .plantilla-espera { grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 10px; } .plantilla-espera .ayuda { grid-column: 2; } }
+
+/* ------------------------------------------------- vista previa de secciones */
+.previa { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 10px; font-size: 13px; min-width: 0; }
+.previa-titulo { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.previa-lista-cab { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; min-width: 0; }
+.previa-tareas { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 4px; }
+.previa-tareas li { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.casilla-previa { flex: none; width: 13px; height: 13px; border: 1.5px solid var(--tenue); border-radius: 3px; }
+.previa-texto { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--texto); }
+.previa-nada, .previa-mas { margin: 0; font-size: 12px; }
+.previa-mensajes li { display: grid; gap: 1px; min-width: 0; }
+.previa-mensajes .meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.previa-archivos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.previa-archivo { display: grid; gap: 4px; min-width: 0; }
+.previa-archivo img, .previa-ext { width: 100%; aspect-ratio: 4 / 3; border-radius: 6px; border: 1px solid var(--borde-suave); background: var(--fondo); object-fit: cover; }
+.previa-ext { display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: var(--suave); }
+.previa-nombre { font-size: 11.5px; color: var(--suave); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.previa-ficha { gap: 4px; }
+.previa-cifra { font-size: 26px; font-weight: 700; color: var(--texto); }
+.previa-ficha .progreso { margin-top: 6px; }
+@media (min-width: 620px) { .secciones.cuatro { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1200px) { .secciones.cuatro { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
