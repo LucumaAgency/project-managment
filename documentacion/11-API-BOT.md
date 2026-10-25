@@ -44,6 +44,7 @@ el bot pregunte.
 | `POST /api/v1/bot/tareas/:id/completar` | Completar |
 | `POST /api/v1/bot/tareas/:id/reabrir` | Reabrir |
 | `GET /api/v1/bot/plantillas` | Plantillas de lista (D-64), con cuántas tareas tienen y cuántas son del cliente |
+| `POST /api/v1/bot/plantillas` | Crear una plantilla, o reemplazarla entera si ya hay una con ese nombre (sin tildes ni mayúsculas): `{ nombre, descripcion?, tareas: [{ titulo, para?: "equipo"\|"cliente"\|"cualquiera", dia?, notas?, espera?: <n.º de una tarea anterior>, pide?: [{ nombre, tipo: "texto"\|"parrafo"\|"archivo"\|"enlaces"\|"acceso", obligatorio?, ayuda? }] }] }`. Desde el asistente: `proyectos.py cargar-plantilla archivo.json` |
 | `POST /api/v1/bot/plantillas/aplicar` | Agregar una plantilla a un proyecto: `{ proyecto, plantilla, inicio?: "AAAA-MM-DD", responsable?, lista? }`. Ambos por nombre. Las tareas del equipo van al `responsable` (sin él quedan sin asignar: el bot no se las asigna); las del cliente, a los clientes del proyecto. Devuelve la lista creada y su `enlace` |
 
 Cada tarea devuelve `id`, `titulo`, `proyecto`, `lista`, `vence`, `vencida`, `completada`,
