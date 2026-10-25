@@ -81,3 +81,17 @@ export declare function completarTareaBot(a: AccesoBot, id: string, completar: b
     completada: Date | null;
     enlace: string;
 }>;
+/**
+ * Crea un proyecto. Con el mismo nombre (sin tildes ni mayúsculas) que uno activo, devuelve
+ * ese y `existia: true`: el bot puede repetir el pedido sin duplicar. Respeta el límite del plan.
+ */
+export declare function crearProyectoBot(a: AccesoBot, datos: {
+    nombre: string;
+    descripcion?: string;
+}): Promise<{
+    proyecto: {
+        id: string;
+        nombre: string;
+    };
+    existia: boolean;
+}>;

@@ -82,8 +82,8 @@ export declare const esquemaCarga: z.ZodObject<{
         descripcion?: string | undefined;
     }, {
         nombre: string;
-        personas?: string[] | undefined;
         descripcion?: string | undefined;
+        personas?: string[] | undefined;
         listas?: {
             titulo: string;
             tareas?: (string | {
@@ -123,8 +123,8 @@ export declare const esquemaCarga: z.ZodObject<{
     cuenta: string;
     proyectos: {
         nombre: string;
-        personas?: string[] | undefined;
         descripcion?: string | undefined;
+        personas?: string[] | undefined;
         listas?: {
             titulo: string;
             tareas?: (string | {

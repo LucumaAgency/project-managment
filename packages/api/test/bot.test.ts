@@ -123,6 +123,15 @@ describe('consultar', () => {
 });
 
 describe('crear y completar', () => {
+  it('crea un proyecto; pedirlo otra vez (con otra escritura) devuelve el mismo', async () => {
+    const r = (await pedir('POST', '/bot/proyectos', clave, { nombre: 'Comercial' })).json();
+    expect(r).toMatchObject({ existia: false, proyecto: { nombre: 'Comercial' } });
+    const otra = (await pedir('POST', '/bot/proyectos', clave, { nombre: 'comercial ' })).json();
+    expect(otra).toMatchObject({ existia: true, proyecto: { id: r.proyecto.id } });
+    expect((await prismaAdmin.project.findUniqueOrThrow({ where: { id: r.proyecto.id } })).createdById).toBe(botId);
+    expect((await pedir('POST', '/bot/proyectos', clave, { nombre: '' })).statusCode).toBe(400);
+  });
+
   it('crea con proyecto por nombre, en la primera lista, con fecha y responsable; figura como el bot', async () => {
     const r = await pedir('POST', '/bot/tareas', clave, { proyecto: 'google ads', titulo: 'Revisar títulos', vence: '2030-01-01', responsables: [memberNombre] });
     expect(r.statusCode).toBe(200);

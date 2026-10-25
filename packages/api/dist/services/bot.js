@@ -19,6 +19,8 @@ import { conCuenta } from '../lib/contexto.js';
 import { urlEnCuenta } from '../lib/enlaces.js';
 import { HttpError } from '../lib/errores.js';
 import { crearElemento } from './elementos.js';
+import { registrarEvento } from './eventos.js';
+import { exigirCupoProyectos } from './proyectos.js';
 import { diaEn, sumarDias } from './recordatorios.js';
 import { completarTarea, crearTarea } from './tareas.js';
 export const huella = (clave) => createHash('sha256').update(clave).digest('hex');
@@ -179,5 +181,30 @@ export async function completarTareaBot(a, id, completar) {
         await completarTarea(tx, a.actor, id, completar);
         const t = await tx.recording.findUniqueOrThrow({ where: { id }, select: { title: true, projectId: true, todo: { select: { completedAt: true } } } });
         return { id, titulo: t.title, completada: t.todo?.completedAt ?? null, enlace: enlaceTarea(a, t.projectId, id) };
+    });
+}
+/**
+ * Crea un proyecto. Con el mismo nombre (sin tildes ni mayúsculas) que uno activo, devuelve
+ * ese y `existia: true`: el bot puede repetir el pedido sin duplicar. Respeta el límite del plan.
+ */
+export async function crearProyectoBot(a, datos) {
+    return conCuenta(a.actor.ctx, async (tx) => {
+        const activos = await tx.project.findMany({ where: { accountId: a.actor.ctx.accountId, status: 'active' }, select: { id: true, name: true } });
+        const igual = activos.find((p) => normal(p.name) === normal(datos.nombre));
+        if (igual)
+            return { proyecto: { id: igual.id, nombre: igual.name }, existia: true };
+        await exigirCupoProyectos(tx, a.actor.ctx.accountId);
+        const p = await tx.project.create({
+            data: {
+                accountId: a.actor.ctx.accountId,
+                name: datos.nombre,
+                description: datos.descripcion || null,
+                createdById: a.actor.ctx.userId,
+                members: { create: { accountId: a.actor.ctx.accountId, userId: a.actor.ctx.userId } },
+            },
+            select: { id: true, name: true },
+        });
+        await registrarEvento(tx, { accountId: a.actor.ctx.accountId, projectId: p.id, actorId: a.actor.ctx.userId, action: 'created' });
+        return { proyecto: { id: p.id, nombre: p.name }, existia: false };
     });
 }
