@@ -24,6 +24,8 @@ type FilaTarea = {
         waitsForId: string | null;
         pendingAssigneeIds: unknown;
         dueAfterDays: number | null;
+        columnId: string | null;
+        steps: unknown;
     } | null;
     assignees: {
         user: {
@@ -54,6 +56,11 @@ declare function aTarea(f: FilaTarea, conCuerpo?: boolean): {
     }[];
     /** Cuántas cosas pide (D-65); 0 = tarea normal. */
     pide: number;
+    /** Pasos dentro de la tarea (D-68): cuántos y cuántos hechos. */
+    pasos: {
+        total: number;
+        hechos: number;
+    };
     body?: unknown;
     id: string;
     listaId: string | null;
@@ -78,10 +85,15 @@ export declare function listarTareas(tx: Tx, actor: Actor, proyecto: ProyectoCar
             mover: boolean;
             visibilidad: boolean;
         };
+        tablero: {
+            enabled: boolean;
+            columnas: import("./tablero.js").Columna[];
+        } | null;
         tareas: {
             comentarios: number;
             respondidos: number;
             espera: import("./espera.js").InfoEspera | null;
+            columna: string | null;
             visibleToClients: boolean;
             position: number;
             createdAt: Date;
@@ -101,6 +113,11 @@ export declare function listarTareas(tx: Tx, actor: Actor, proyecto: ProyectoCar
             }[];
             /** Cuántas cosas pide (D-65); 0 = tarea normal. */
             pide: number;
+            /** Pasos dentro de la tarea (D-68): cuántos y cuántos hechos. */
+            pasos: {
+                total: number;
+                hechos: number;
+            };
             body?: unknown;
             id: string;
             listaId: string | null;
@@ -133,6 +150,18 @@ export declare function tareaDetalle(tx: Tx, actor: Actor, id: string): Promise<
             ayuda?: string;
         }[];
         espera: import("./espera.js").InfoEspera | null;
+        pasos: {
+            id: string;
+            texto: string;
+            hecho: boolean;
+            por: string | null;
+            el: string | null;
+        }[];
+        tablero: {
+            enabled: boolean;
+            columnas: import("./tablero.js").Columna[];
+            columna: string;
+        } | null;
         visibleToClients: boolean;
         position: number;
         createdAt: Date;
@@ -167,6 +196,8 @@ export declare function tareaDetalle(tx: Tx, actor: Actor, id: string): Promise<
         cambiarVisibilidad: boolean;
         mover: boolean;
         responder: boolean;
+        pasos: boolean;
+        marcarPasos: boolean;
         pedir: boolean;
     };
 }>;
@@ -199,6 +230,18 @@ export declare function crearTarea(tx: Tx, actor: Actor, listaId: string, datos:
         ayuda?: string;
     }[];
     espera: import("./espera.js").InfoEspera | null;
+    pasos: {
+        id: string;
+        texto: string;
+        hecho: boolean;
+        por: string | null;
+        el: string | null;
+    }[];
+    tablero: {
+        enabled: boolean;
+        columnas: import("./tablero.js").Columna[];
+        columna: string;
+    } | null;
     visibleToClients: boolean;
     position: number;
     createdAt: Date;
@@ -241,6 +284,18 @@ export declare function editarTarea(tx: Tx, actor: Actor, id: string, datos: Dat
         ayuda?: string;
     }[];
     espera: import("./espera.js").InfoEspera | null;
+    pasos: {
+        id: string;
+        texto: string;
+        hecho: boolean;
+        por: string | null;
+        el: string | null;
+    }[];
+    tablero: {
+        enabled: boolean;
+        columnas: import("./tablero.js").Columna[];
+        columna: string;
+    } | null;
     visibleToClients: boolean;
     position: number;
     createdAt: Date;
@@ -283,6 +338,18 @@ export declare function completarTarea(tx: Tx, actor: Actor, id: string, complet
         ayuda?: string;
     }[];
     espera: import("./espera.js").InfoEspera | null;
+    pasos: {
+        id: string;
+        texto: string;
+        hecho: boolean;
+        por: string | null;
+        el: string | null;
+    }[];
+    tablero: {
+        enabled: boolean;
+        columnas: import("./tablero.js").Columna[];
+        columna: string;
+    } | null;
     visibleToClients: boolean;
     position: number;
     createdAt: Date;
@@ -309,6 +376,15 @@ export declare function completarTarea(tx: Tx, actor: Actor, id: string, complet
     bodyHtml: string | null;
     tieneNotas: boolean;
 }>;
+/**
+ * Completar o reabrir SIN revisar permisos (lo revisa quien llama: completarTarea, o aprobar
+ * en el tablero). Registra el evento, avisa, activa las que esperaban y pone la tarjeta en la
+ * columna que corresponde.
+ */
+export declare function cambiarCompletada(tx: Tx, actor: Actor, donde: {
+    projectId: string;
+    visible: boolean;
+}, id: string, completar: boolean, accion?: 'approved'): Promise<void>;
 /** Para campos.ts: completar cuando ya está todo lo que pide. */
 export declare const completarPorRespuestas: (tx: Tx, actor: Actor, id: string) => Promise<{
     vistasAccesos?: {
@@ -326,6 +402,18 @@ export declare const completarPorRespuestas: (tx: Tx, actor: Actor, id: string) 
         ayuda?: string;
     }[];
     espera: import("./espera.js").InfoEspera | null;
+    pasos: {
+        id: string;
+        texto: string;
+        hecho: boolean;
+        por: string | null;
+        el: string | null;
+    }[];
+    tablero: {
+        enabled: boolean;
+        columnas: import("./tablero.js").Columna[];
+        columna: string;
+    } | null;
     visibleToClients: boolean;
     position: number;
     createdAt: Date;
@@ -369,6 +457,18 @@ export declare function activarAhora(tx: Tx, actor: Actor, id: string): Promise<
         ayuda?: string;
     }[];
     espera: import("./espera.js").InfoEspera | null;
+    pasos: {
+        id: string;
+        texto: string;
+        hecho: boolean;
+        por: string | null;
+        el: string | null;
+    }[];
+    tablero: {
+        enabled: boolean;
+        columnas: import("./tablero.js").Columna[];
+        columna: string;
+    } | null;
     visibleToClients: boolean;
     position: number;
     createdAt: Date;

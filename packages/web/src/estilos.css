@@ -686,3 +686,30 @@ mark { background: #fff1b8; color: inherit; border-radius: 3px; padding: 0 1px; 
 .previa-ficha .progreso { margin-top: 6px; }
 @media (min-width: 620px) { .secciones.cuatro { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1200px) { .secciones.cuatro { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* ------------------------------------------------------------- tablero (D-68) */
+.tablero { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 8px; margin: 8px -2px 0; scroll-snap-type: x proximity; }
+.columna { flex: 0 0 260px; scroll-snap-align: start; background: var(--fondo); border: 1px solid var(--borde-suave); border-radius: var(--radio); padding: 10px; display: flex; flex-direction: column; gap: 8px; max-height: 70vh; }
+.columna.soltar-aqui { border-color: var(--azul); background: var(--azul-tinte); }
+.columna-revision { background: var(--ambar-tinte); }
+.columna-hecho { background: var(--verde-tinte); }
+.columna-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.columna-nombre { font-weight: 700; font-size: 13.5px; }
+.columna-ayuda { margin: -4px 0 0; }
+.tarjetas { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; overflow-y: auto; }
+.tarjeta { background: var(--blanco); border: 1px solid var(--borde); border-radius: 8px; box-shadow: var(--sombra); }
+.tarjeta[draggable='true'] { cursor: grab; }
+.tarjeta.hecha .tarjeta-titulo { color: var(--suave); }
+.tarjeta-cuerpo { display: grid; gap: 6px; width: 100%; text-align: left; padding: 9px 10px; background: none; border: 0; cursor: pointer; font: inherit; color: inherit; }
+.tarjeta-titulo { font-size: 13.5px; font-weight: 600; overflow-wrap: anywhere; }
+.tarjeta-personas { color: var(--suave); font-size: 12px; }
+.tarjeta-revision { display: flex; gap: 6px; padding: 0 10px 10px; flex-wrap: wrap; }
+.agregar-tarjeta input { margin: 0; background: transparent; border-style: dashed; font-size: 13px; }
+.columna-tarea { margin: 14px 0 12px; }
+.columna-tarea select { max-width: 280px; }
+.revision-cliente { margin-top: 8px; padding: 10px 12px; border-radius: var(--radio); background: var(--ambar-tinte); }
+.pasos { margin: 14px 0 12px; }
+.lista-pasos { list-style: none; margin: 6px 0; padding: 0; display: grid; gap: 4px; }
+.lista-pasos li { display: flex; align-items: center; gap: 8px; }
+.lista-pasos li .casilla { margin: 0; flex: 1; }
+.lista-pasos li.hecho .casilla span { color: var(--suave); text-decoration: line-through; }

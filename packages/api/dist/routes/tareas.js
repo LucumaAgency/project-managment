@@ -5,6 +5,7 @@ import { crearElemento } from '../services/elementos.js';
 import { proyectoPara } from '../services/proyectos.js';
 import { activarAhora, completarPorRespuestas, completarTarea, crearTarea, editarTarea, listarTareas, tareaDetalle } from '../services/tareas.js';
 import { MAX_CAMPOS, fichaProyecto, responder, verAcceso } from '../services/campos.js';
+import { aprobar, fijarColumnas, fijarPasos, moverAColumna, pedirCambios, verComoTablero } from '../services/tablero.js';
 import { exigirCuenta } from '../plugins/contexto.js';
 const titulo = z.string().max(300, 'Máximo 300 caracteres.');
 const documento = z.record(z.unknown()).nullable();
@@ -63,6 +64,49 @@ export default async function rutasTareas(app) {
         return conCuenta(actor.ctx, async (tx) => {
             const r = await responder(tx, actor, req.params.id, datos.respuestas, completarPorRespuestas);
             return { ...r, ...(await tareaDetalle(tx, actor, req.params.id)) };
+        });
+    });
+    // ------------------------------------------------------------ tablero y pasos (D-68)
+    /** Ver la lista como tablero (enabled: true) o como lista (false). */
+    app.post('/api/v1/listas/:id/tablero', async (req) => {
+        const actor = exigirCuenta(req);
+        const { enabled } = leer(z.object({ enabled: z.boolean() }), req.body);
+        return conCuenta(actor.ctx, async (tx) => ({ tablero: await verComoTablero(tx, actor, req.params.id, enabled) }));
+    });
+    app.put('/api/v1/listas/:id/columnas', async (req) => {
+        const actor = exigirCuenta(req);
+        const { columnas } = leer(z.object({ columnas: z.array(z.record(z.unknown())).max(12) }), req.body);
+        return conCuenta(actor.ctx, async (tx) => ({ tablero: await fijarColumnas(tx, actor, req.params.id, columnas) }));
+    });
+    app.post('/api/v1/tareas/:id/columna', async (req) => {
+        const actor = exigirCuenta(req);
+        const { columnaId } = leer(z.object({ columnaId: z.string().min(1).max(10) }), req.body);
+        return conCuenta(actor.ctx, async (tx) => {
+            await moverAColumna(tx, actor, req.params.id, columnaId);
+            return tareaDetalle(tx, actor, req.params.id);
+        });
+    });
+    app.post('/api/v1/tareas/:id/aprobar', async (req) => {
+        const actor = exigirCuenta(req);
+        return conCuenta(actor.ctx, async (tx) => {
+            await aprobar(tx, actor, req.params.id);
+            return tareaDetalle(tx, actor, req.params.id);
+        });
+    });
+    app.post('/api/v1/tareas/:id/pedir-cambios', async (req) => {
+        const actor = exigirCuenta(req);
+        const { comentario } = leer(z.object({ comentario: z.string().max(5000) }), req.body);
+        return conCuenta(actor.ctx, async (tx) => {
+            await pedirCambios(tx, actor, req.params.id, comentario);
+            return tareaDetalle(tx, actor, req.params.id);
+        });
+    });
+    app.put('/api/v1/tareas/:id/pasos', async (req) => {
+        const actor = exigirCuenta(req);
+        const { pasos } = leer(z.object({ pasos: z.array(z.object({ id: z.string().max(10).optional(), texto: z.string().max(200), hecho: z.boolean().optional() })).max(30) }), req.body);
+        return conCuenta(actor.ctx, async (tx) => {
+            await fijarPasos(tx, actor, req.params.id, pasos);
+            return tareaDetalle(tx, actor, req.params.id);
         });
     });
     /** Activar ahora una tarea que espera a otra (D-67). */

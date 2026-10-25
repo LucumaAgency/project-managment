@@ -787,6 +787,25 @@ auditoría de fugas ya recorre esa ruta). Revisado en navegador, escritorio y ce
 
 Para desplegar: Git → Desplegar → Reiniciar (sin migración).
 
+### 2026-10-25 · Tablero tipo Trello, revisión del cliente y pasos
+
+Pedido por el usuario (para contenido y shoots de clientes). Hecho (D-68, detalle en
+[13-TABLERO-Y-TIMELINE.md](13-TABLERO-Y-TIMELINE.md)):
+
+- Cualquier lista se ve **como tablero**: columnas Sin empezar / En proceso / En revisión /
+  Hecho, editables por tablero. Las tarjetas son las mismas tareas.
+- El equipo **arrastra** las tarjetas; Hecho completa la tarea. En la actividad queda cada paso.
+- El cliente ve el tablero y, en revisión, **aprueba** o **pide cambios** (vuelve a la columna
+  anterior con su comentario).
+- **Pasos** dentro de cada tarea o tarjeta.
+
+Probado: 312 tests en verde (11 nuevos). Recorrido en navegador sin errores: ver como tablero,
+arrastrar, pasos, mover a revisión; el cliente aprueba uno y pide cambios en otro desde el
+celular; la actividad lo cuenta.
+
+Para desplegar (**con migración**): Git → Desplegar → `prisma:generate` → `prisma:deploy` →
+`base:verificar:prod` → Reiniciar.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -819,6 +838,7 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
 ### Antes de la fase 2
 
+- [ ] Timeline (vista por fechas para shoots y entregas): [13-TABLERO-Y-TIMELINE.md](13-TABLERO-Y-TIMELINE.md).
 - [ ] Probar las plantillas Onboarding de cliente y Desarrollo web con un cliente real y ajustar lo que haga falta (ver [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md)).
 
 - [ ] Iniciar el trámite con Meta para WhatsApp (número, verificación, plantillas) mientras se usa el MVP.

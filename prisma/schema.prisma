@@ -307,6 +307,7 @@ model Recording {
   events        Event[]
   notifications Notification[]
   answers       TaskAnswer[]
+  board         ListBoard?
 
   @@index([projectId, type, status])
   @@index([parentId, position])
@@ -333,6 +334,10 @@ model TodoDetail {
   waitsForId         String?
   pendingAssigneeIds Json?
   dueAfterDays       Int?
+  /// Columna del tablero en que está (D-68), si su lista se ve como tablero. Null = la primera.
+  columnId           String?
+  /// Pasos dentro de la tarea/tarjeta (D-68): `[{ id, texto, hecho, porId?, el? }]`.
+  steps              Json?
 
   @@index([dueOn])
   @@index([waitsForId])
@@ -400,6 +405,21 @@ model ListTemplateItem {
 
   @@index([templateId, position])
   @@map("list_template_items")
+}
+
+/// Tablero de una lista (D-68): la misma lista de tareas vista por columnas, tipo Trello. Las
+/// columnas son `[{ id, nombre, tipo? }]`; tipo = "revision" (el cliente aprueba o pide cambios)
+/// o "hecho" (la última: llegar ahí completa la tarea). `enabled` = se ve como tablero.
+model ListBoard {
+  recordingId String    @id
+  recording   Recording @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+  accountId   String
+  enabled     Boolean   @default(true)
+  columns     Json
+  updatedAt   DateTime  @updatedAt
+
+  @@index([accountId])
+  @@map("list_boards")
 }
 
 /// Respuesta a un campo de una tarea que pide algo (D-65). Una por tarea y campo; se reemplaza

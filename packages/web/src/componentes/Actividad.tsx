@@ -69,6 +69,9 @@ export function frase(e: Evento): string {
     case 'completed': return `completó ${algo}`;
     case 'reopened': return `reabrió ${algo}`;
     case 'answered': return `respondió ${algo}`;
+    case 'column_changed': return `movió ${algo} a «${String(e.detalles.to ?? '')}»`;
+    case 'approved': return `aprobó ${algo}`;
+    case 'changes_requested': return `pidió cambios en ${algo}`;
     case 'activated': return `${e.detalles.porOtra ? 'completó el paso anterior y se activó' : 'activó'} ${algo}${e.detalles.personas.length ? ` para ${quienes}` : ''}`;
     case 'assigned': return `asignó ${algo} a ${quienes}`;
     case 'unassigned': return `quitó a ${quienes} de ${algo}`;

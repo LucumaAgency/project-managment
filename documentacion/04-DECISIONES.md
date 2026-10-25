@@ -480,6 +480,15 @@ parte de completar, no depende de los permisos de quien completa (puede ser el c
 una tarea anterior por tarea (no "espera a todas estas"): cubre los flujos de onboarding y
 servicios sin un editor de diagramas.
 
+**D-68 · Tablero = la misma lista vista por columnas** (2026-10-25, pedido por el usuario)
+No se hace una herramienta aparte como el card table de Basecamp: una lista se puede ver como
+tablero y las tarjetas son las mismas tareas, con todo lo que ya tienen. Columnas por tablero
+(JSON con ids estables en `list_boards`), por defecto Sin empezar / En proceso / En revisión /
+Hecho; la última completa la tarea. El cliente aprueba o pide cambios en la columna de revisión
+(aprobar completa sin pedir el permiso de completar: basta con ver la tarjeta). Pasos dentro de
+cada tarea en `TodoDetail.steps`. Descartado: cards como un tipo de elemento nuevo (duplicaría
+asignar, fechas, avisos, plantillas y visibilidad).
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

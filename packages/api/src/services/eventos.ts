@@ -21,6 +21,9 @@ export type AccionEvento =
   | 'reopened'
   | 'answered' // respondió lo que pide una tarea (D-65)
   | 'activated' // una tarea que esperaba a otra se activó (D-67)
+  | 'column_changed' // una tarjeta pasó a otra columna del tablero (D-68)
+  | 'approved' // el cliente aprobó una tarjeta en revisión (D-68)
+  | 'changes_requested' // el cliente pidió cambios en revisión (D-68)
   | 'assigned'
   | 'unassigned'
   | 'due_changed'
