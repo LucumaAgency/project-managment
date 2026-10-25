@@ -41,6 +41,8 @@ export declare const env: {
     /** Errores a Sentry (D-59). Vacío = no se manda nada. La web usa su propio proyecto. */
     sentryDsn: string;
     sentryDsnWeb: string;
+    /** Clave para cifrar los accesos protegidos (D-66): 32 bytes en hex. Sin ella, no se guardan. */
+    accesosClave: string;
 };
 /** Hay correo saliente de verdad. Sin él, la web oculta el acceso por enlace al correo. */
 export declare const correoActivo: () => boolean;

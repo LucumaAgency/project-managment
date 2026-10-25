@@ -114,6 +114,11 @@ export declare function listarTareas(tx: Tx, actor: Actor, proyecto: ProyectoCar
 /** Detalle de una tarea con el documento de las notas (para editarlo) y lo que puedo hacer. */
 export declare function tareaDetalle(tx: Tx, actor: Actor, id: string): Promise<{
     tarea: {
+        vistasAccesos?: {
+            campoId: string | null;
+            nombre: string;
+            el: Date;
+        }[] | undefined;
         visibleParaCliente: boolean;
         campos: {
             respuesta: import("./campos.js").RespuestaVista | null;
@@ -170,6 +175,11 @@ export interface DatosTarea {
     campos?: unknown;
 }
 export declare function crearTarea(tx: Tx, actor: Actor, listaId: string, datos: DatosTarea): Promise<{
+    vistasAccesos?: {
+        campoId: string | null;
+        nombre: string;
+        el: Date;
+    }[] | undefined;
     visibleParaCliente: boolean;
     campos: {
         respuesta: import("./campos.js").RespuestaVista | null;
@@ -206,6 +216,11 @@ export declare function crearTarea(tx: Tx, actor: Actor, listaId: string, datos:
     tieneNotas: boolean;
 }>;
 export declare function editarTarea(tx: Tx, actor: Actor, id: string, datos: DatosTarea): Promise<{
+    vistasAccesos?: {
+        campoId: string | null;
+        nombre: string;
+        el: Date;
+    }[] | undefined;
     visibleParaCliente: boolean;
     campos: {
         respuesta: import("./campos.js").RespuestaVista | null;
@@ -242,6 +257,11 @@ export declare function editarTarea(tx: Tx, actor: Actor, id: string, datos: Dat
     tieneNotas: boolean;
 }>;
 export declare function completarTarea(tx: Tx, actor: Actor, id: string, completar: boolean): Promise<{
+    vistasAccesos?: {
+        campoId: string | null;
+        nombre: string;
+        el: Date;
+    }[] | undefined;
     visibleParaCliente: boolean;
     campos: {
         respuesta: import("./campos.js").RespuestaVista | null;
@@ -279,6 +299,11 @@ export declare function completarTarea(tx: Tx, actor: Actor, id: string, complet
 }>;
 /** Para campos.ts: completar cuando ya está todo lo que pide. */
 export declare const completarPorRespuestas: (tx: Tx, actor: Actor, id: string) => Promise<{
+    vistasAccesos?: {
+        campoId: string | null;
+        nombre: string;
+        el: Date;
+    }[] | undefined;
     visibleParaCliente: boolean;
     campos: {
         respuesta: import("./campos.js").RespuestaVista | null;

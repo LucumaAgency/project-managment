@@ -10,6 +10,8 @@ export declare function auditar(datos: {
     accountId?: string | null;
     userId?: string | null;
     action: string;
+    entity?: string;
+    entityId?: string;
     ip?: string;
     meta?: object;
 }, tx?: Tx): Promise<void>;

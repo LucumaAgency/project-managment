@@ -709,6 +709,25 @@ responder como cliente (se completa sola), subir la constancia, ver la ficha y l
 Para desplegar (**con migración**): §5i de 10-DESPLIEGUE (si la etapa 1 no se desplegó todavía,
 el mismo paso aplica las dos).
 
+### 2026-10-25 · Plantillas, etapa 3: accesos protegidos
+
+Hecho (D-66, detalle en [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md)):
+
+- Tipo de campo **Acceso (protegido)**: proveedor a la vista; enlace, usuario, contraseña y
+  notas cifrados (AES-256-GCM, `ACCESOS_CLAVE`).
+- Solo el equipo lo abre con **Ver acceso**; queda registrado y la tarea dice quién lo vio.
+- No sale en detalle, lista, ficha, actividad, avisos ni exportación. El cliente que lo cargó
+  puede reemplazarlo, no verlo.
+- `base:verificar:prod` revisa la clave y sugiere una si falta.
+
+Probado: 289 tests en verde (10 nuevos: la clave no aparece en ninguna respuesta, ni en la base
+en claro, ni en eventos ni en el ZIP; ver con registro; cliente 403; otra cuenta 404; otra
+clave del servidor → error claro; sin clave → 503). La auditoría de fugas suma un acceso en una
+tarea que el cliente sí ve. Recorrido en navegador sin errores: el cliente carga el acceso desde
+el celular, el equipo lo ve y aparece «Lo vieron».
+
+Para desplegar: §5i de 10-DESPLIEGUE (sin migración nueva) **más el paso de `ACCESOS_CLAVE`**.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -741,7 +760,7 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
 ### Antes de la fase 2
 
-- [ ] Desplegar las etapas 1 y 2 de plantillas (§5i de 10-DESPLIEGUE, con migraciones).
-- [ ] Plantillas, etapas 3 a 5 (accesos protegidos; "se activa cuando"; cargar Onboarding y Desarrollo web): [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
+- [ ] Desplegar las etapas 1 a 3 de plantillas (§5i de 10-DESPLIEGUE: migraciones y `ACCESOS_CLAVE`).
+- [ ] Plantillas, etapas 4 y 5 ("se activa cuando"; cargar Onboarding y Desarrollo web): [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
 
 - [ ] Iniciar el trámite con Meta para WhatsApp (número, verificación, plantillas) mientras se usa el MVP.

@@ -20,7 +20,7 @@ import yazl from 'yazl';
 import { almacen } from '../lib/almacen.js';
 import { conCuenta } from '../lib/contexto.js';
 import { nombreLimpio } from '../lib/tipos-archivo.js';
-import { leerCampos } from './campos.js';
+import { leerCampos, valorPublico } from './campos.js';
 /** Nombre seguro para una carpeta o archivo dentro del ZIP. */
 export function nombreZip(crudo, porDefecto = 'sin-nombre') {
     const n = nombreLimpio(crudo).replace(/[<>:"/\\|?*]/g, '-').replace(/^\.+/, '').trim();
@@ -193,11 +193,13 @@ export async function exportarCuenta(ctx, log) {
             if (conFicha.length) {
                 const valorHtml = (v) => typeof v === 'string'
                     ? escapar(v).replace(/\n/g, '<br>')
-                    : Array.isArray(v)
-                        ? v
-                            .map((x) => x.url ? `${escapar(x.url)}${x.nota ? ` · ${escapar(x.nota)}` : ''}` : x.blobId ? escapar(enZip.get(x.blobId)?.split('/').slice(-1)[0] ?? 'archivo') : '')
-                            .join('<br>')
-                        : '';
+                    : v && typeof v === 'object' && !Array.isArray(v)
+                        ? `<span class="meta">Acceso protegido${valorPublico(v).proveedor ? ` (${escapar(valorPublico(v).proveedor)})` : ''}: no se exporta</span>`
+                        : Array.isArray(v)
+                            ? v
+                                .map((x) => x.url ? `${escapar(x.url)}${x.nota ? ` · ${escapar(x.nota)}` : ''}` : x.blobId ? escapar(enZip.get(x.blobId)?.split('/').slice(-1)[0] ?? 'archivo') : '')
+                                .join('<br>')
+                            : '';
                 const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Ficha · ${escapar(p.name)}</title>
 <style>body{font-family:system-ui,sans-serif;max-width:720px;margin:32px auto;padding:0 16px;line-height:1.55;color:#1d2433}dt{font-weight:600;margin-top:8px}dd{margin:0}.meta{color:#667085;font-size:14px}</style></head><body>
 <h1>Ficha · ${escapar(p.name)}</h1>
@@ -219,7 +221,8 @@ ${conFicha
                     todo: e.todo ?? undefined,
                     assignees: e.assignees.map((a) => a.userId),
                     attachments: undefined,
-                    answers: e.answers.length ? e.answers : undefined,
+                    // Los accesos protegidos no se exportan (D-66): solo el proveedor.
+                    answers: e.answers.length ? e.answers.map((a) => ({ ...a, value: valorPublico(a.value) })) : undefined,
                     versions: e.versions.map((v) => ({
                         version: v.version,
                         nota: v.note,

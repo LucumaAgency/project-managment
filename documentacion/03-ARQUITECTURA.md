@@ -388,6 +388,10 @@ tarea (`blobParaLeer` los acepta con el permiso de la tarea). `services/campos.t
 por el lector binario), `GET /proyectos/:id/ficha`. Web: `componentes/Campos.tsx`,
 `paginas/Ficha.tsx`. Evento nuevo: `answered`.
 
+**Accesos protegidos (D-66):** campo `acceso`; `lib/cifrado.ts` (AES-256-GCM con
+`ACCESOS_CLAVE`); `valorPublico()` en `services/campos.ts` filtra toda salida;
+`POST /tareas/:id/campos/:campo/ver` solo para el equipo, con registro `acceso.ver`.
+
 ## Archivos
 
 `lib/almacen.ts` (disco), `lib/tipos-archivo.ts` (tipo real, nombre limpio),

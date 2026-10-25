@@ -13,6 +13,8 @@ export async function auditar(datos, tx) {
                 accountId: datos.accountId ?? null,
                 userId: datos.userId ?? null,
                 action: datos.action,
+                entity: datos.entity,
+                entityId: datos.entityId,
                 ip: datos.ip,
                 meta: datos.meta,
             },

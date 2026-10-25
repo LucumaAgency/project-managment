@@ -637,6 +637,8 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
           tareaId={t.id}
           campos={t.campos}
           puedeResponder={permisos.responder}
+          esEquipo={permisos.pedir}
+          vistas={t.vistasAccesos}
           onGuardado={(r) => {
             setD(r);
             onCambio();

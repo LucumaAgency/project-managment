@@ -1,6 +1,8 @@
 import { esCliente } from '@lucuma-pm/shared';
 import { Prisma } from '@prisma/client';
 import { conCuenta } from '../lib/contexto.js';
+import { auditar } from '../lib/auditoria.js';
+import { cifrar, descifrar } from '../lib/cifrado.js';
 import { enlaceSeguro } from '../lib/documento.js';
 import { HttpError } from '../lib/errores.js';
 import { conBytes, crearBlob, exigirCupo } from './archivos.js';
@@ -9,7 +11,7 @@ import { elementoPara } from './elementos.js';
 import { registrarEvento } from './eventos.js';
 import { exigir, puede } from './permisos.js';
 import { proyectoPara } from './proyectos.js';
-export const TIPOS_CAMPO = ['texto', 'parrafo', 'archivo', 'enlaces'];
+export const TIPOS_CAMPO = ['texto', 'parrafo', 'archivo', 'enlaces', 'acceso'];
 export const MAX_CAMPOS = 20;
 const MAX_ARCHIVOS = 20;
 const MAX_ENLACES = 30;
@@ -55,6 +57,14 @@ export function normalizarCampos(entrada, existentes = []) {
     return campos.length ? campos : null;
 }
 export const columnaCampos = (campos) => (campos ? campos : Prisma.DbNull);
+const esAcceso = (v) => !!v && typeof v === 'object' && !Array.isArray(v) && typeof v.cifrado === 'string';
+/**
+ * Lo que se puede mostrar de una respuesta. Un acceso NUNCA sale con su texto cifrado: solo el
+ * proveedor y que está protegido (para verlo está verAcceso, que deja registro).
+ */
+export function valorPublico(v) {
+    return esAcceso(v) ? { proveedor: v.proveedor, protegido: true } : v;
+}
 const vacio = (v) => v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0);
 /** Valida y limpia una respuesta. Devuelve null si quedó vacía (= borrar la respuesta). */
 function limpiarValor(campo, valor, adjuntos) {
@@ -87,6 +97,22 @@ function limpiarValor(campo, valor, adjuntos) {
                 enlaces.push({ url, ...(nota ? { nota } : {}) });
             }
             return enlaces.length ? enlaces : null;
+        }
+        case 'acceso': {
+            if (!valor || typeof valor !== 'object' || Array.isArray(valor))
+                throw new HttpError(400, `«${campo.etiqueta}» va como un acceso.`);
+            const o = valor;
+            const texto = (k, max) => (typeof o[k] === 'string' ? o[k].trim().slice(0, max) : '');
+            const proveedor = texto('proveedor', 120);
+            const datos = {};
+            for (const [k, max] of [['url', 500], ['usuario', 200], ['clave', 500], ['notas', 1000]]) {
+                const t = k === 'clave' && typeof o.clave === 'string' ? o.clave.slice(0, max) : texto(k, max);
+                if (t)
+                    datos[k] = t;
+            }
+            if (!datos.usuario && !datos.clave && !datos.notas && !datos.url)
+                return null;
+            return { proveedor: proveedor || null, cifrado: cifrar(datos) };
         }
         case 'archivo': {
             if (!Array.isArray(valor))
@@ -128,7 +154,7 @@ export async function respuestasDe(tx, tareaIds) {
         }
         if (!porTarea.has(f.recordingId))
             porTarea.set(f.recordingId, new Map());
-        porTarea.get(f.recordingId).set(f.fieldId, { valor, respondidoEl: f.answeredAt, respondidoPor: { id: f.answeredById, name: nombre.get(f.answeredById) ?? '' } });
+        porTarea.get(f.recordingId).set(f.fieldId, { valor: valorPublico(valor), respondidoEl: f.answeredAt, respondidoPor: { id: f.answeredById, name: nombre.get(f.answeredById) ?? '' } });
     }
     return porTarea;
 }
@@ -173,6 +199,9 @@ export async function responder(tx, actor, tareaId, respuestas, completar) {
         const valor = limpiarValor(campo, crudo, adjuntos);
         const antes = await tx.taskAnswer.findUnique({ where: { recordingId_fieldId: { recordingId: tareaId, fieldId } }, select: { value: true } });
         if (JSON.stringify(antes?.value ?? null) === JSON.stringify(valor))
+            continue;
+        // Un acceso no se borra sin querer: vacío = se deja el que había (para quitarlo, { borrar: true }).
+        if (campo.tipo === 'acceso' && valor === null && !(crudo && typeof crudo === 'object' && crudo.borrar === true))
             continue;
         if (valor === null)
             await tx.taskAnswer.deleteMany({ where: { recordingId: tareaId, fieldId } });
@@ -311,4 +340,33 @@ export async function fichaProyecto(tx, actor, projectId) {
             };
         }),
     };
+}
+/**
+ * Ver un acceso protegido (D-66): solo el equipo, y cada vez queda en el registro de seguridad
+ * con quién, cuándo y cuál. El cliente que lo cargó no lo vuelve a ver.
+ */
+export async function verAcceso(tx, actor, tareaId, campoId, ip) {
+    const { campos } = await cargarTarea(tx, actor, tareaId);
+    if (esCliente(actor.rol))
+        throw new HttpError(403, 'Los accesos solo los ve el equipo.');
+    const campo = campos.find((c) => c.id === campoId && c.tipo === 'acceso');
+    if (!campo)
+        throw new HttpError(404, 'Ese campo no es un acceso.');
+    const r = await tx.taskAnswer.findUnique({ where: { recordingId_fieldId: { recordingId: tareaId, fieldId: campoId } }, select: { value: true } });
+    if (!r || !esAcceso(r.value))
+        throw new HttpError(404, 'Todavía no hay un acceso guardado.');
+    const datos = descifrar(r.value.cifrado);
+    await auditar({ accountId: actor.ctx.accountId, userId: actor.ctx.userId, action: 'acceso.ver', entity: 'tarea', entityId: tareaId, ip, meta: { campoId, etiqueta: campo.etiqueta } }, tx);
+    return { acceso: { proveedor: r.value.proveedor, ...datos }, vistas: await vistasDeAccesos(tx, tareaId) };
+}
+/** Quién vio los accesos de una tarea (lo más nuevo primero), para el equipo. */
+export async function vistasDeAccesos(tx, tareaId) {
+    const filas = await tx.auditLog.findMany({
+        where: { action: 'acceso.ver', entity: 'tarea', entityId: tareaId },
+        select: { userId: true, createdAt: true, meta: true },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+    });
+    const nombres = new Map((await tx.user.findMany({ where: { id: { in: [...new Set(filas.flatMap((f) => (f.userId ? [f.userId] : [])))] } }, select: { id: true, name: true } })).map((u) => [u.id, u.name]));
+    return filas.map((f) => ({ campoId: f.meta?.campoId ?? null, nombre: nombres.get(f.userId ?? '') ?? 'Alguien', el: f.createdAt }));
 }

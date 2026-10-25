@@ -6,8 +6,11 @@ import {
   subirBinario,
   tamano,
   urlArchivo,
+  type AccesoProtegido,
   type ArchivoRespuesta,
   type Campo,
+  type DatosAcceso,
+  type VistaAcceso,
   type CampoConRespuesta,
   type EnlaceRespuesta,
   type RespuestaGuardada,
@@ -17,7 +20,7 @@ import Icono from './Icono';
 
 const mensajeDe = (e: unknown) => (e instanceof ErrorApi ? e.message : 'No se pudo conectar.');
 const fechaHora = (iso: string) => new Date(iso).toLocaleString('es-PE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-const EJEMPLO: Record<TipoCampo, string> = { texto: 'Ej.: RUC', parrafo: 'Ej.: Cuéntanos de tu negocio', archivo: 'Ej.: Manual de marca (PDF)', enlaces: 'Ej.: Webs que te gustan' };
+const EJEMPLO: Record<TipoCampo, string> = { texto: 'Ej.: RUC', parrafo: 'Ej.: Cuéntanos de tu negocio', archivo: 'Ej.: Manual de marca (PDF)', enlaces: 'Ej.: Webs que te gustan', acceso: 'Ej.: Acceso al hosting' };
 
 /**
  * Qué pide una tarea (o una tarea de plantilla): una lista de campos con nombre, tipo y si es
@@ -57,11 +60,72 @@ export function EditorCampos({ campos, onChange, prefijo = 'campo' }: { campos: 
   );
 }
 
+/**
+ * Acceso protegido (D-66): se ve solo el proveedor. El equipo lo abre con un clic, el servidor
+ * lo deja registrado, y se oculta solo al minuto.
+ */
+function AccesoGuardado({ valor, tareaId, campoId, puedeVer }: { valor: AccesoProtegido; tareaId?: string; campoId: string; puedeVer: boolean }) {
+  const [abierto, setAbierto] = useState<DatosAcceso | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [copiado, setCopiado] = useState<string | null>(null);
+  useEffect(() => {
+    if (!abierto) return;
+    const t = setTimeout(() => setAbierto(null), 60_000);
+    return () => clearTimeout(t);
+  }, [abierto]);
+  async function ver() {
+    setError(null);
+    try {
+      setAbierto((await api<{ acceso: DatosAcceso }>(`/tareas/${tareaId}/campos/${campoId}/ver`, { body: {} })).acceso);
+    } catch (e) {
+      setError(mensajeDe(e));
+    }
+  }
+  const copiar = async (que: string, texto: string) => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      setCopiado(que);
+      setTimeout(() => setCopiado(null), 1500);
+    } catch {
+      /* sin portapapeles: se puede seleccionar a mano */
+    }
+  };
+  return (
+    <div className="acceso-guardado">
+      <span className="con-icono"><Icono nombre="candado" tam={14} />Acceso guardado{valor.proveedor ? ` · ${valor.proveedor}` : ''}</span>
+      {puedeVer && tareaId && !abierto && (
+        <button type="button" className="btn-texto" onClick={ver}>Ver acceso</button>
+      )}
+      {abierto && (
+        <dl className="acceso-datos">
+          {(['url', 'usuario', 'clave', 'notas'] as const).map((k) =>
+            abierto[k] ? (
+              <div key={k}>
+                <dt>{{ url: 'Dónde se entra', usuario: 'Usuario', clave: 'Contraseña', notas: 'Notas' }[k]}</dt>
+                <dd>
+                  <code>{abierto[k]}</code>
+                  {k !== 'notas' && (
+                    <button type="button" className="btn-texto" onClick={() => copiar(k, abierto[k]!)}>{copiado === k ? 'Copiado' : 'Copiar'}</button>
+                  )}
+                </dd>
+              </div>
+            ) : null
+          )}
+          <button type="button" className="btn-texto" onClick={() => setAbierto(null)}>Ocultar</button>
+        </dl>
+      )}
+      {!puedeVer && <span className="ayuda" style={{ margin: 0 }}>Solo lo ve el equipo de la agencia.</span>}
+      {error && <p className="error">{error}</p>}
+    </div>
+  );
+}
+
 /** Lo que respondieron en un campo, para leer (ficha, o quien no puede responder). */
-export function ValorCampo({ campo }: { campo: CampoConRespuesta }) {
+export function ValorCampo({ campo, tareaId, puedeVer = false }: { campo: CampoConRespuesta; tareaId?: string; puedeVer?: boolean }) {
   const r = campo.respuesta;
   if (!r) return <span className="meta">Sin responder</span>;
   const v = r.valor;
+  if (campo.tipo === 'acceso') return <AccesoGuardado valor={v as AccesoProtegido} tareaId={tareaId} campoId={campo.id} puedeVer={puedeVer} />;
   if (typeof v === 'string') return <span className="valor-texto">{v}</span>;
   if (campo.tipo === 'enlaces') {
     return (
@@ -87,12 +151,38 @@ const quien = (c: CampoConRespuesta) => c.respuesta && <span className="ayuda" s
  * Responder lo que pide una tarea, ahí mismo. Texto y enlaces se guardan con un botón; los
  * archivos se suben al elegirlos. Cuando está todo lo obligatorio, la tarea se completa sola.
  */
-export function Formulario({ tareaId, campos, puedeResponder, onGuardado }: { tareaId: string; campos: CampoConRespuesta[]; puedeResponder: boolean; onGuardado: (r: RespuestaGuardada) => void }) {
+export function Formulario({
+  tareaId,
+  campos,
+  puedeResponder,
+  esEquipo,
+  vistas = [],
+  onGuardado,
+}: {
+  tareaId: string;
+  campos: CampoConRespuesta[];
+  puedeResponder: boolean;
+  esEquipo: boolean;
+  vistas?: VistaAcceso[];
+  onGuardado: (r: RespuestaGuardada) => void;
+}) {
   const inicial = () =>
     Object.fromEntries(
-      campos.filter((c) => c.tipo !== 'archivo').map((c) => [c.id, c.tipo === 'enlaces' ? ((c.respuesta?.valor as EnlaceRespuesta[]) ?? []).concat([{ url: '' }]) : ((c.respuesta?.valor as string) ?? '')])
-    ) as Record<string, string | EnlaceRespuesta[]>;
+      campos
+        .filter((c) => c.tipo !== 'archivo')
+        .map((c) => [
+          c.id,
+          c.tipo === 'enlaces'
+            ? ((c.respuesta?.valor as EnlaceRespuesta[]) ?? []).concat([{ url: '' }])
+            : c.tipo === 'acceso'
+              ? ({ proveedor: (c.respuesta?.valor as AccesoProtegido | undefined)?.proveedor ?? '' } as DatosAcceso)
+              : ((c.respuesta?.valor as string) ?? ''),
+        ])
+    ) as Record<string, string | EnlaceRespuesta[] | DatosAcceso>;
   const [borrador, setBorrador] = useState(inicial);
+  const [verClave, setVerClave] = useState(false);
+  // Un acceso ya guardado se muestra cerrado; "Cambiar" abre los campos para reemplazarlo.
+  const [cambiando, setCambiando] = useState<Set<string>>(new Set());
   const [subiendo, setSubiendo] = useState<{ campo: string; avance: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
@@ -100,15 +190,27 @@ export function Formulario({ tareaId, campos, puedeResponder, onGuardado }: { ta
   const archivoRef = useRef<Record<string, HTMLInputElement | null>>({});
   // Si la tarea cambió afuera (otra respuesta, otro campo), se vuelve a partir de lo guardado.
   const firma = JSON.stringify(campos.map((c) => [c.id, c.respuesta?.respondidoEl]));
-  useEffect(() => setBorrador(inicial()), [firma]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setBorrador(inicial());
+    setCambiando(new Set());
+  }, [firma]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pendientes = campos.filter((c) => c.obligatorio && !c.respuesta).length;
   const limpio = (c: CampoConRespuesta) => {
     const b = borrador[c.id];
+    if (c.tipo === 'acceso') return b;
     return c.tipo === 'enlaces' ? (b as EnlaceRespuesta[]).filter((e) => e.url.trim()) : (b as string).trim();
   };
   const guardadoDe = (c: CampoConRespuesta) => (c.tipo === 'enlaces' ? ((c.respuesta?.valor as EnlaceRespuesta[]) ?? []) : ((c.respuesta?.valor as string) ?? ''));
-  const cambiados = campos.filter((c) => c.tipo !== 'archivo' && JSON.stringify(limpio(c)) !== JSON.stringify(guardadoDe(c)));
+  // Un acceso cuenta como cambio si se escribió algo además del proveedor.
+  const accesoEscrito = (c: CampoConRespuesta) => {
+    const a = borrador[c.id] as DatosAcceso;
+    return !!(a.url?.trim() || a.usuario?.trim() || a.clave || a.notas?.trim());
+  };
+  const cambiados = campos.filter((c) =>
+    c.tipo === 'archivo' ? false : c.tipo === 'acceso' ? accesoEscrito(c) : JSON.stringify(limpio(c)) !== JSON.stringify(guardadoDe(c))
+  );
+  const escribirAcceso = (id: string, k: keyof DatosAcceso, v: string) => setBorrador((b) => ({ ...b, [id]: { ...(b[id] as DatosAcceso), [k]: v } }));
 
   const terminar = (r: RespuestaGuardada) => {
     setAviso(r.seCompleto ? 'Listo: con esto la tarea quedó completa.' : 'Guardado.');
@@ -172,7 +274,35 @@ export function Formulario({ tareaId, campos, puedeResponder, onGuardado }: { ta
           </label>
           {c.ayuda && <p className="ayuda" style={{ marginTop: 0 }}>{c.ayuda}</p>}
           {!puedeResponder ? (
-            <ValorCampo campo={c} />
+            <ValorCampo campo={c} tareaId={tareaId} puedeVer={esEquipo} />
+          ) : c.tipo === 'acceso' ? (
+            <div className="acceso-respuesta">
+              {c.respuesta && <ValorCampo campo={c} tareaId={tareaId} puedeVer={esEquipo} />}
+              {c.respuesta && !cambiando.has(c.id) ? (
+                <button type="button" className="btn-texto" onClick={() => setCambiando((x) => new Set(x).add(c.id))}>Cambiar este acceso</button>
+              ) : (
+              <>
+              <p className="ayuda" style={{ margin: '4px 0' }}>
+                {c.respuesta ? 'El nuevo reemplaza al anterior.' : 'Se guarda cifrado y solo lo ve el equipo de la agencia.'}
+              </p>
+              <div className="acceso-campos">
+                <input id={`r-${c.id}`} aria-label={`Proveedor de ${c.etiqueta}`} placeholder="Proveedor (ej.: Hostinger, Punto.pe)" maxLength={120} value={(borrador[c.id] as DatosAcceso).proveedor ?? ''} onChange={(e) => escribirAcceso(c.id, 'proveedor', e.target.value)} />
+                <input aria-label={`Dónde se entra a ${c.etiqueta}`} placeholder="Dónde se entra (enlace)" inputMode="url" maxLength={500} value={(borrador[c.id] as DatosAcceso).url ?? ''} onChange={(e) => escribirAcceso(c.id, 'url', e.target.value)} />
+                <input aria-label={`Usuario de ${c.etiqueta}`} placeholder="Usuario o correo" autoComplete="off" maxLength={200} value={(borrador[c.id] as DatosAcceso).usuario ?? ''} onChange={(e) => escribirAcceso(c.id, 'usuario', e.target.value)} />
+                <div className="sumar">
+                  <input aria-label={`Contraseña de ${c.etiqueta}`} placeholder="Contraseña" type={verClave ? 'text' : 'password'} autoComplete="new-password" maxLength={500} value={(borrador[c.id] as DatosAcceso).clave ?? ''} onChange={(e) => escribirAcceso(c.id, 'clave', e.target.value)} />
+                  <button type="button" className="btn btn-sec" onClick={() => setVerClave((v) => !v)}>{verClave ? 'Ocultar' : 'Mostrar'}</button>
+                </div>
+                <textarea aria-label={`Notas de ${c.etiqueta}`} placeholder="Notas (ej.: el código llega al celular de Rosa)" rows={2} maxLength={1000} value={(borrador[c.id] as DatosAcceso).notas ?? ''} onChange={(e) => escribirAcceso(c.id, 'notas', e.target.value)} />
+              </div>
+              </>
+              )}
+              {esEquipo && vistas.some((x) => x.campoId === c.id) && (
+                <p className="ayuda" style={{ margin: '4px 0 0' }}>
+                  Lo vieron: {vistas.filter((x) => x.campoId === c.id).slice(0, 3).map((x) => `${x.nombre} (${fechaHora(x.el)})`).join(', ')}
+                </p>
+              )}
+            </div>
           ) : c.tipo === 'texto' ? (
             <input id={`r-${c.id}`} maxLength={500} value={borrador[c.id] as string} onChange={(e) => setBorrador((b) => ({ ...b, [c.id]: e.target.value }))} />
           ) : c.tipo === 'parrafo' ? (

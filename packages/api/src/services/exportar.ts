@@ -20,7 +20,7 @@ import yazl from 'yazl';
 import { almacen } from '../lib/almacen.js';
 import { conCuenta, type Contexto } from '../lib/contexto.js';
 import { nombreLimpio } from '../lib/tipos-archivo.js';
-import { leerCampos } from './campos.js';
+import { leerCampos, valorPublico } from './campos.js';
 
 /** Nombre seguro para una carpeta o archivo dentro del ZIP. */
 export function nombreZip(crudo: string, porDefecto = 'sin-nombre'): string {
@@ -211,6 +211,8 @@ export async function exportarCuenta(ctx: Contexto, log?: (msg: string) => void)
         const valorHtml = (v: unknown) =>
           typeof v === 'string'
             ? escapar(v).replace(/\n/g, '<br>')
+            : v && typeof v === 'object' && !Array.isArray(v)
+              ? `<span class="meta">Acceso protegido${(valorPublico(v) as { proveedor?: string }).proveedor ? ` (${escapar((valorPublico(v) as { proveedor: string }).proveedor)})` : ''}: no se exporta</span>`
             : Array.isArray(v)
               ? v
                   .map((x: { url?: string; nota?: string; blobId?: string }) =>
@@ -240,7 +242,8 @@ ${conFicha
           todo: e.todo ?? undefined,
           assignees: e.assignees.map((a) => a.userId),
           attachments: undefined,
-          answers: e.answers.length ? e.answers : undefined,
+          // Los accesos protegidos no se exportan (D-66): solo el proveedor.
+          answers: e.answers.length ? e.answers.map((a) => ({ ...a, value: valorPublico(a.value) })) : undefined,
           versions: e.versions.map((v) => ({
             version: v.version,
             nota: v.note,

@@ -13,6 +13,8 @@ import type { Readable } from 'node:stream';
 import { esCliente } from '@lucuma-pm/shared';
 import { Prisma } from '@prisma/client';
 import { conCuenta, type Tx } from '../lib/contexto.js';
+import { auditar } from '../lib/auditoria.js';
+import { cifrar, descifrar } from '../lib/cifrado.js';
 import { enlaceSeguro } from '../lib/documento.js';
 import { HttpError } from '../lib/errores.js';
 import { conBytes, crearBlob, exigirCupo } from './archivos.js';
@@ -22,7 +24,7 @@ import { registrarEvento } from './eventos.js';
 import { exigir, puede, type Actor, type ElementoCargado, type ProyectoCargado } from './permisos.js';
 import { proyectoPara } from './proyectos.js';
 
-export const TIPOS_CAMPO = ['texto', 'parrafo', 'archivo', 'enlaces'] as const;
+export const TIPOS_CAMPO = ['texto', 'parrafo', 'archivo', 'enlaces', 'acceso'] as const;
 export type TipoCampo = (typeof TIPOS_CAMPO)[number];
 export interface Campo {
   id: string;
@@ -75,7 +77,28 @@ export function normalizarCampos(entrada: unknown, existentes: Campo[] = []): Ca
 export const columnaCampos = (campos: Campo[] | null) => (campos ? (campos as unknown as Prisma.InputJsonValue) : Prisma.DbNull);
 
 type Enlace = { url: string; nota?: string };
-type Valor = string | Enlace[] | { blobId: string }[];
+/** Acceso protegido (D-66): el proveedor queda a la vista; lo demás, cifrado. */
+export interface AccesoGuardado {
+  proveedor: string | null;
+  cifrado: string;
+}
+export interface DatosAcceso {
+  url?: string;
+  usuario?: string;
+  clave?: string;
+  notas?: string;
+}
+type Valor = string | Enlace[] | { blobId: string }[] | AccesoGuardado;
+
+const esAcceso = (v: unknown): v is AccesoGuardado => !!v && typeof v === 'object' && !Array.isArray(v) && typeof (v as AccesoGuardado).cifrado === 'string';
+
+/**
+ * Lo que se puede mostrar de una respuesta. Un acceso NUNCA sale con su texto cifrado: solo el
+ * proveedor y que está protegido (para verlo está verAcceso, que deja registro).
+ */
+export function valorPublico(v: unknown): unknown {
+  return esAcceso(v) ? { proveedor: v.proveedor, protegido: true } : v;
+}
 
 const vacio = (v: unknown) => v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0);
 
@@ -103,6 +126,19 @@ function limpiarValor(campo: Campo, valor: unknown, adjuntos: Set<string>): Valo
         enlaces.push({ url, ...(nota ? { nota } : {}) });
       }
       return enlaces.length ? enlaces : null;
+    }
+    case 'acceso': {
+      if (!valor || typeof valor !== 'object' || Array.isArray(valor)) throw new HttpError(400, `«${campo.etiqueta}» va como un acceso.`);
+      const o = valor as Record<string, unknown>;
+      const texto = (k: string, max: number) => (typeof o[k] === 'string' ? (o[k] as string).trim().slice(0, max) : '');
+      const proveedor = texto('proveedor', 120);
+      const datos: DatosAcceso = {};
+      for (const [k, max] of [['url', 500], ['usuario', 200], ['clave', 500], ['notas', 1000]] as const) {
+        const t = k === 'clave' && typeof o.clave === 'string' ? (o.clave as string).slice(0, max) : texto(k, max);
+        if (t) datos[k] = t;
+      }
+      if (!datos.usuario && !datos.clave && !datos.notas && !datos.url) return null;
+      return { proveedor: proveedor || null, cifrado: cifrar(datos) };
     }
     case 'archivo': {
       if (!Array.isArray(valor)) throw new HttpError(400, `«${campo.etiqueta}» va como una lista de archivos.`);
@@ -142,7 +178,7 @@ export async function respuestasDe(tx: Tx, tareaIds: string[]) {
       valor = (valor as { blobId: string }[]).flatMap((v) => (blob.has(v.blobId) ? [blob.get(v.blobId)!] : []));
     }
     if (!porTarea.has(f.recordingId)) porTarea.set(f.recordingId, new Map());
-    porTarea.get(f.recordingId)!.set(f.fieldId, { valor, respondidoEl: f.answeredAt, respondidoPor: { id: f.answeredById, name: nombre.get(f.answeredById) ?? '' } });
+    porTarea.get(f.recordingId)!.set(f.fieldId, { valor: valorPublico(valor), respondidoEl: f.answeredAt, respondidoPor: { id: f.answeredById, name: nombre.get(f.answeredById) ?? '' } });
   }
   return porTarea;
 }
@@ -201,6 +237,8 @@ export async function responder(
     const valor = limpiarValor(campo, crudo, adjuntos);
     const antes = await tx.taskAnswer.findUnique({ where: { recordingId_fieldId: { recordingId: tareaId, fieldId } }, select: { value: true } });
     if (JSON.stringify(antes?.value ?? null) === JSON.stringify(valor)) continue;
+    // Un acceso no se borra sin querer: vacío = se deja el que había (para quitarlo, { borrar: true }).
+    if (campo.tipo === 'acceso' && valor === null && !(crudo && typeof crudo === 'object' && (crudo as { borrar?: unknown }).borrar === true)) continue;
     if (valor === null) await tx.taskAnswer.deleteMany({ where: { recordingId: tareaId, fieldId } });
     else {
       await tx.taskAnswer.upsert({
@@ -345,4 +383,34 @@ export async function fichaProyecto(tx: Tx, actor: Actor, projectId: string) {
         };
       }),
   };
+}
+
+/**
+ * Ver un acceso protegido (D-66): solo el equipo, y cada vez queda en el registro de seguridad
+ * con quién, cuándo y cuál. El cliente que lo cargó no lo vuelve a ver.
+ */
+export async function verAcceso(tx: Tx, actor: Actor, tareaId: string, campoId: string, ip?: string) {
+  const { campos } = await cargarTarea(tx, actor, tareaId);
+  if (esCliente(actor.rol)) throw new HttpError(403, 'Los accesos solo los ve el equipo.');
+  const campo = campos.find((c) => c.id === campoId && c.tipo === 'acceso');
+  if (!campo) throw new HttpError(404, 'Ese campo no es un acceso.');
+  const r = await tx.taskAnswer.findUnique({ where: { recordingId_fieldId: { recordingId: tareaId, fieldId: campoId } }, select: { value: true } });
+  if (!r || !esAcceso(r.value)) throw new HttpError(404, 'Todavía no hay un acceso guardado.');
+  const datos = descifrar<DatosAcceso>(r.value.cifrado);
+  await auditar({ accountId: actor.ctx.accountId, userId: actor.ctx.userId, action: 'acceso.ver', entity: 'tarea', entityId: tareaId, ip, meta: { campoId, etiqueta: campo.etiqueta } }, tx);
+  return { acceso: { proveedor: r.value.proveedor, ...datos }, vistas: await vistasDeAccesos(tx, tareaId) };
+}
+
+/** Quién vio los accesos de una tarea (lo más nuevo primero), para el equipo. */
+export async function vistasDeAccesos(tx: Tx, tareaId: string) {
+  const filas = await tx.auditLog.findMany({
+    where: { action: 'acceso.ver', entity: 'tarea', entityId: tareaId },
+    select: { userId: true, createdAt: true, meta: true },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+  });
+  const nombres = new Map(
+    (await tx.user.findMany({ where: { id: { in: [...new Set(filas.flatMap((f) => (f.userId ? [f.userId] : [])))] } }, select: { id: true, name: true } })).map((u) => [u.id, u.name])
+  );
+  return filas.map((f) => ({ campoId: (f.meta as { campoId?: string } | null)?.campoId ?? null, nombre: nombres.get(f.userId ?? '') ?? 'Alguien', el: f.createdAt }));
 }

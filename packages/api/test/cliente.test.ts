@@ -111,7 +111,9 @@ beforeAll(async () => {
   });
   ids.blobRespuestaInterna = sub.json().blobId;
   if (!ids.blobRespuestaInterna) throw new Error(`no se subió la captura: ${sub.body}`);
-  ids.pideVisible = (await member.post(`/listas/${ids.listaVisible}/tareas`, { title: 'Datos VISIBLE', visibleToClients: true, campos: [{ etiqueta: 'RUC', tipo: 'texto' }] })).json.tarea.id;
+  ids.pideVisible = (await member.post(`/listas/${ids.listaVisible}/tareas`, { title: 'Datos VISIBLE', visibleToClients: true, campos: [{ etiqueta: 'RUC', tipo: 'texto' }, { etiqueta: 'Hosting', tipo: 'acceso' }] })).json.tarea.id;
+  // Un acceso protegido en una tarea que el cliente SÍ ve: ve el campo, nunca la clave (D-66).
+  await member.put(`/tareas/${ids.pideVisible}/respuestas`, { respuestas: { c2: { proveedor: 'Hostinger', usuario: `u-${MARCA}`, clave: `clave-${MARCA}` } } });
 
   // Cosas del equipo que mencionan / asignan, para que existan avisos internos.
   await member.post(`/elementos/${ids.msgInterno}/comentarios`, { body: doc(texto(`otra ${MARCA}`)) });
@@ -209,6 +211,7 @@ describe('ninguna ruta del cliente muestra lo interno', () => {
       ['editar interno', () => client.patch(`/elementos/${ids.msgInterno}`, { title: 'x' })],
       ['papelera interno', () => client.post(`/elementos/${ids.msgInterno}/papelera`)],
       ['marcar leído ajeno', () => client.post('/bandeja/leer', { recordingId: ids.msgInterno })],
+      ['ver acceso', () => client.post(`/tareas/${ids.pideVisible}/campos/c2/ver`)],
       ['responder interna', () => client.put(`/tareas/${ids.pideInterna}/respuestas`, { respuestas: { c1: 'x' } })],
       ['agregar plantilla', () => client.post(`/proyectos/${p}/plantillas`, { plantillaId: ids.plantilla })],
       ['guardar como plantilla', () => client.post(`/listas/${ids.listaVisible}/plantilla`, {})],
@@ -218,7 +221,9 @@ describe('ninguna ruta del cliente muestra lo interno', () => {
     for (const [que, f] of intentos) {
       const r = await f();
       // "marcar leído" no revela nada (marca 0): responde 200 sin efecto.
-      if (que === 'marcar leído ajeno' ? r.status !== 200 : r.status !== 404) mal.push(`${que} → ${r.status}`);
+      // "ver acceso": la tarea la ve, así que no es 404, pero el acceso es solo del equipo (403).
+      const esperado = que === 'marcar leído ajeno' ? 200 : que === 'ver acceso' ? 403 : 404;
+      if (r.status !== esperado) mal.push(`${que} → ${r.status}`);
     }
     expect(mal).toEqual([]);
   });

@@ -461,6 +461,16 @@ limpia. La ficha del cliente es una vista de lo respondido en el proyecto, no un
 Descartado: un formulario como tipo de elemento nuevo (más superficie de permisos y de
 pantallas para lo mismo).
 
+**D-66 · Accesos protegidos: cifrados con una clave del servidor y vistos con registro** (2026-10-25, etapa 3 de D-64, opción B elegida por el usuario)
+Un tipo de campo `acceso` cuyo contenido (enlace, usuario, contraseña, notas) se cifra con
+AES-256-GCM y `ACCESOS_CLAVE` del `.env`; queda en claro solo el proveedor. Toda salida pasa
+por `valorPublico()`, así que el cifrado no llega ni al navegador. Verlo es una acción aparte,
+solo del equipo, que se registra en `audit_log`; el cliente que lo cargó no lo vuelve a ver.
+No se exporta (la exportación es para llevarse los datos, no las claves de terceros).
+Descartado: derivar la clave de `SESSION_SECRET` (cambiarla para cerrar sesiones haría
+ilegibles los accesos) y cifrar en el navegador con una clave por persona (sin recuperación
+si alguien se va).
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

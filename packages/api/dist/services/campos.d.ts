@@ -13,7 +13,7 @@ import type { Readable } from 'node:stream';
 import { Prisma } from '@prisma/client';
 import { type Tx } from '../lib/contexto.js';
 import { type Actor, type ElementoCargado, type ProyectoCargado } from './permisos.js';
-export declare const TIPOS_CAMPO: readonly ["texto", "parrafo", "archivo", "enlaces"];
+export declare const TIPOS_CAMPO: readonly ["texto", "parrafo", "archivo", "enlaces", "acceso"];
 export type TipoCampo = (typeof TIPOS_CAMPO)[number];
 export interface Campo {
     id: string;
@@ -31,6 +31,22 @@ export declare function leerCampos(json: unknown): Campo[];
  */
 export declare function normalizarCampos(entrada: unknown, existentes?: Campo[]): Campo[] | null;
 export declare const columnaCampos: (campos: Campo[] | null) => Prisma.NullTypes.DbNull | Prisma.InputJsonValue;
+/** Acceso protegido (D-66): el proveedor queda a la vista; lo demás, cifrado. */
+export interface AccesoGuardado {
+    proveedor: string | null;
+    cifrado: string;
+}
+export interface DatosAcceso {
+    url?: string;
+    usuario?: string;
+    clave?: string;
+    notas?: string;
+}
+/**
+ * Lo que se puede mostrar de una respuesta. Un acceso NUNCA sale con su texto cifrado: solo el
+ * proveedor y que está protegido (para verlo está verAcceso, que deja registro).
+ */
+export declare function valorPublico(v: unknown): unknown;
 /** ¿Están todos los obligatorios? */
 export declare function completa(campos: Campo[], respondidos: Set<string>): boolean;
 /** Respuestas de varias tareas, con los datos de cada archivo y de quién respondió. */
@@ -102,3 +118,27 @@ export declare function fichaProyecto(tx: Tx, actor: Actor, projectId: string): 
         }[];
     }[];
 }>;
+/**
+ * Ver un acceso protegido (D-66): solo el equipo, y cada vez queda en el registro de seguridad
+ * con quién, cuándo y cuál. El cliente que lo cargó no lo vuelve a ver.
+ */
+export declare function verAcceso(tx: Tx, actor: Actor, tareaId: string, campoId: string, ip?: string): Promise<{
+    acceso: {
+        url?: string;
+        usuario?: string;
+        clave?: string;
+        notas?: string;
+        proveedor: string | null;
+    };
+    vistas: {
+        campoId: string | null;
+        nombre: string;
+        el: Date;
+    }[];
+}>;
+/** Quién vio los accesos de una tarea (lo más nuevo primero), para el equipo. */
+export declare function vistasDeAccesos(tx: Tx, tareaId: string): Promise<{
+    campoId: string | null;
+    nombre: string;
+    el: Date;
+}[]>;

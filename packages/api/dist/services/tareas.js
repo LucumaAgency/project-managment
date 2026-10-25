@@ -10,7 +10,7 @@ import { registrarEvento } from './eventos.js';
 import { mencionables } from './menciones.js';
 import { suscribir } from './suscripciones.js';
 import { avisar, seguidoresComo } from './avisos.js';
-import { camposConRespuestas, columnaCampos, fijarCampos, leerCampos, normalizarCampos, puedeResponder, respuestasDe } from './campos.js';
+import { camposConRespuestas, columnaCampos, fijarCampos, leerCampos, normalizarCampos, puedeResponder, respuestasDe, vistasDeAccesos } from './campos.js';
 import { exigir, puede } from './permisos.js';
 const SELECCION_TAREA = {
     id: true,
@@ -131,7 +131,13 @@ export async function tareaDetalle(tx, actor, id) {
     const campos = leerCampos(fila.todo?.fields);
     const respuestas = campos.length ? (await respuestasDe(tx, [id])).get(id) : undefined;
     return {
-        tarea: { ...aTarea(fila, true), visibleParaCliente: elemento.visibleEnCadena, campos: camposConRespuestas(campos, respuestas) },
+        tarea: {
+            ...aTarea(fila, true),
+            visibleParaCliente: elemento.visibleEnCadena,
+            campos: camposConRespuestas(campos, respuestas),
+            // Quién vio los accesos protegidos (D-66): solo para el equipo.
+            ...(campos.some((c) => c.tipo === 'acceso') && !esCliente(actor.rol) ? { vistasAccesos: await vistasDeAccesos(tx, id) } : {}),
+        },
         permisos: {
             editar: puede(actor, 'elemento.editar', { proyecto, elemento }),
             completar: puede(actor, 'tarea.completar', { proyecto, elemento, esAsignado: asignado }),

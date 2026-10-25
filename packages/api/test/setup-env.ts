@@ -14,3 +14,5 @@ process.env.ARCHIVOS_MAX_MB = '1';
 // si el sistema tiene uno igual o más nuevo que el Postgres de los tests.
 process.env.RESPALDOS_DIR = path.join(os.tmpdir(), `pm-test-respaldos-${process.pid}`);
 if (process.env.TEST_PG_BIN_DIR) process.env.PG_BIN_DIR = process.env.TEST_PG_BIN_DIR;
+// Accesos protegidos (D-66): una clave fija solo para los tests.
+process.env.ACCESOS_CLAVE = 'a'.repeat(64);

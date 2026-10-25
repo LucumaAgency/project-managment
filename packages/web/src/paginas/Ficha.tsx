@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import { api, ErrorApi, type Ficha as DatosFicha } from '../api';
 import { ValorCampo } from '../componentes/Campos';
 import Icono from '../componentes/Icono';
+import { esCliente } from '@lucuma-pm/shared';
+import { useYo } from '../contexto';
 
 /**
  * Ficha del cliente (D-65): todo lo que respondieron en las tareas que piden algo, en un solo
@@ -10,6 +12,7 @@ import Icono from '../componentes/Icono';
  */
 export default function Ficha() {
   const { id } = useParams<{ id: string }>();
+  const yo = useYo();
   const [d, setD] = useState<DatosFicha | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
@@ -44,7 +47,7 @@ export default function Ficha() {
             {t.campos.map((c) => (
               <div key={c.id}>
                 <dt>{c.etiqueta}</dt>
-                <dd><ValorCampo campo={c} /></dd>
+                <dd><ValorCampo campo={c} tareaId={t.id} puedeVer={!esCliente(yo.rol)} /></dd>
               </div>
             ))}
           </dl>
