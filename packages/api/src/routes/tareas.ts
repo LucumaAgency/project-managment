@@ -5,7 +5,7 @@ import { leer } from '../lib/validar.js';
 import { crearElemento } from '../services/elementos.js';
 import { proyectoPara } from '../services/proyectos.js';
 import { completarPorRespuestas, completarTarea, crearTarea, editarTarea, listarTareas, tareaDetalle } from '../services/tareas.js';
-import { MAX_CAMPOS, fichaProyecto, responder } from '../services/campos.js';
+import { MAX_CAMPOS, fichaProyecto, responder, verAcceso } from '../services/campos.js';
 import { exigirCuenta } from '../plugins/contexto.js';
 
 const titulo = z.string().max(300, 'Máximo 300 caracteres.');
@@ -73,6 +73,13 @@ export default async function rutasTareas(app: FastifyInstance) {
       const r = await responder(tx, actor, req.params.id, datos.respuestas, completarPorRespuestas);
       return { ...r, ...(await tareaDetalle(tx, actor, req.params.id)) };
     });
+  });
+
+  /** Ver un acceso protegido (D-66): solo el equipo; queda registrado quién lo vio. */
+  app.post<{ Params: { id: string; campo: string } }>('/api/v1/tareas/:id/campos/:campo/ver', async (req, reply) => {
+    const actor = exigirCuenta(req);
+    reply.header('Cache-Control', 'no-store');
+    return conCuenta(actor.ctx, (tx) => verAcceso(tx, actor, req.params.id, req.params.campo, req.ip));
   });
 
   /** Ficha del cliente: lo respondido en el proyecto. */

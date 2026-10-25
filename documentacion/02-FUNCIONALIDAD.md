@@ -132,7 +132,7 @@ cómo técnico está en [03-ARQUITECTURA.md](03-ARQUITECTURA.md).
 | Chat por proyecto | Lo más caro técnicamente (tiempo real, no leídos, reconexión), compite con WhatsApp y dispersa decisiones. Decidido 2026-10-24 | 2, si el uso lo pide |
 | WhatsApp | Depende de trámites con Meta; ver [06](06-WHATSAPP-FUTURO.md). Decidido 2026-10-24 | 2 |
 | Aprobaciones de piezas | Diferenciador; conviene diseñarlo con uso real | 2 |
-| Plantillas: etapas 3 a 5 (accesos protegidos, "se activa cuando", cargar las primeras plantillas) | Las etapas 1 (plantillas de lista) y 2 (tareas que piden algo, ficha del cliente) ya están; ver [12](12-PLANTILLAS-Y-FLUJOS.md) | 2 (adelantado) |
+| Plantillas: etapas 4 y 5 ("se activa cuando", cargar las primeras plantillas) | Las etapas 1 (plantillas de lista), 2 (tareas que piden algo, ficha del cliente) y 3 (accesos protegidos) ya están; ver [12](12-PLANTILLAS-Y-FLUJOS.md) | 2 (adelantado) |
 | Calendario e hitos | No bloquea el uso diario | 2 |
 | Check-ins automáticos ("¿qué hiciste hoy?") | Útil para equipos más grandes | 2 |
 | Hill charts o barra de progreso | Opcional | 2 |

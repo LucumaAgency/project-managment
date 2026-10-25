@@ -183,6 +183,8 @@ export interface Tarea {
   respondidos?: number;
   /** Solo en el detalle. */
   campos?: CampoConRespuesta[];
+  /** Quién vio los accesos protegidos (solo el equipo). */
+  vistasAccesos?: VistaAcceso[];
 }
 export interface ListaTareas {
   id: string;
@@ -389,8 +391,8 @@ export interface PlantillaAplicada {
 }
 
 /** Lo que pide una tarea (D-65). */
-export type TipoCampo = 'texto' | 'parrafo' | 'archivo' | 'enlaces';
-export const NOMBRE_TIPO_CAMPO: Record<TipoCampo, string> = { texto: 'Texto corto', parrafo: 'Párrafo', archivo: 'Archivos', enlaces: 'Enlaces' };
+export type TipoCampo = 'texto' | 'parrafo' | 'archivo' | 'enlaces' | 'acceso';
+export const NOMBRE_TIPO_CAMPO: Record<TipoCampo, string> = { texto: 'Texto corto', parrafo: 'Párrafo', archivo: 'Archivos', enlaces: 'Enlaces', acceso: 'Acceso (protegido)' };
 export interface Campo {
   id?: string;
   etiqueta: string;
@@ -408,9 +410,26 @@ export interface EnlaceRespuesta {
   url: string;
   nota?: string;
 }
+/** Un acceso protegido nunca llega con sus datos: solo el proveedor (D-66). */
+export interface AccesoProtegido {
+  proveedor: string | null;
+  protegido: true;
+}
+export interface DatosAcceso {
+  proveedor?: string | null;
+  url?: string;
+  usuario?: string;
+  clave?: string;
+  notas?: string;
+}
+export interface VistaAcceso {
+  campoId: string | null;
+  nombre: string;
+  el: string;
+}
 export interface CampoConRespuesta extends Campo {
   id: string;
-  respuesta: { valor: string | EnlaceRespuesta[] | ArchivoRespuesta[]; respondidoEl: string; respondidoPor: { id: string; name: string } } | null;
+  respuesta: { valor: string | EnlaceRespuesta[] | ArchivoRespuesta[] | AccesoProtegido; respondidoEl: string; respondidoPor: { id: string; name: string } } | null;
 }
 export interface RespuestaGuardada extends TareaDetalle {
   cambiaron: string[];

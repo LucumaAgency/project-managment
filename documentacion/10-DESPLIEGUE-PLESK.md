@@ -244,6 +244,14 @@ Trae dos migraciones (`plantillas` y `campos_y_respuestas`; `prisma:deploy` corr
 `base:verificar:prod` → Reiniciar. No hay nada más que configurar: aparece **Plantillas** en el
 menú, y la ficha del cliente en los proyectos con tareas que piden algo. Detalle en [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
 
+**Accesos protegidos (una vez):** después de `base:verificar:prod`, en la sección «Accesos
+protegidos» aparece `AVISO falta ACCESOS_CLAVE` con una línea `ACCESOS_CLAVE="…"` lista.
+1. Copiar esa línea al `.env` del servidor y Reiniciar.
+2. Guardar la misma línea fuera del servidor (gestor de contraseñas): si se pierde, los
+   accesos guardados no se pueden leer.
+3. `base:verificar:prod` otra vez: tiene que decir `OK ACCESOS_CLAVE configurada`.
+No cambiarla después: los accesos ya guardados dejarían de leerse.
+
 ## 6. Lo que todavía no hace falta
 - **Subdominios por cuenta:** con `BASE_DOMAIN` vacío todo vive en un dominio. Para pasar a
   `<cuenta>.dominio` se usa el mismo truco de nginx del CRM (`docs/21-DOS-ORGANIZACIONES-PLESK.md`).

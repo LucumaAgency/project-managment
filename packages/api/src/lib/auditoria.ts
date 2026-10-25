@@ -9,7 +9,7 @@ import type { Tx } from './contexto.js';
  * cuenta fijada se pasa el `tx` de `conCuenta`.
  */
 export async function auditar(
-  datos: { accountId?: string | null; userId?: string | null; action: string; ip?: string; meta?: object },
+  datos: { accountId?: string | null; userId?: string | null; action: string; entity?: string; entityId?: string; ip?: string; meta?: object },
   tx?: Tx
 ) {
   await (tx ?? prisma).auditLog.createMany({
@@ -18,6 +18,8 @@ export async function auditar(
         accountId: datos.accountId ?? null,
         userId: datos.userId ?? null,
         action: datos.action,
+        entity: datos.entity,
+        entityId: datos.entityId,
         ip: datos.ip,
         meta: datos.meta,
       },

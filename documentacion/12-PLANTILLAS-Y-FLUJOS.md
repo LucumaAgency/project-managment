@@ -1,6 +1,6 @@
 # 12 · Plantillas y flujos
 
-Estado: **etapas 1 y 2 construidas el 2026-10-25** (plantillas de lista; tareas que piden algo y ficha del cliente; ver «Cómo funciona hoy» al final). Etapas 3 a 5, pendientes. Diseño confirmado por el usuario (D-64). Se abrió el 2026-10-24 a pedido del usuario: "algo que me
+Estado: **etapas 1, 2 y 3 construidas el 2026-10-25** (plantillas de lista; tareas que piden algo y ficha del cliente; accesos protegidos; ver «Cómo funciona hoy» al final). Etapas 4 y 5, pendientes. Diseño confirmado por el usuario (D-64). Se abrió el 2026-10-24 a pedido del usuario: "algo que me
 gusta bastante de Basecamp es armar flujos, por ejemplo un onboarding de un cliente, y que haya
 una plantilla de cosas". Falta que el usuario responda las preguntas del final antes de decidir
 el alcance (luego va a 04-DECISIONES y al plan).
@@ -159,7 +159,7 @@ ahorra; el orden y las fechas que se corren se aprecian una vez que ya se usan p
 |---|---|---|
 | 1 ✅ | Plantillas de lista: sección Plantillas, tareas "cliente / equipo / cualquiera", fechas relativas opcionales; "Agregar plantilla" en un proyecto; también por el bot | 2 |
 | 2 ✅ | Tareas que piden algo (datos, archivos, enlaces), se marcan solas al responder; ficha del cliente en el proyecto | 2 |
-| 3 | Campo protegido para accesos (cifrado, ver con un clic, registro de quién lo vio) | 1 |
+| 3 ✅ | Campo protegido para accesos (cifrado, ver con un clic, registro de quién lo vio) | 1 |
 | 4 | "Se activa cuando…" (ej. verificar el depósito tras la constancia) | 0,5 |
 | 5 | Cargar Onboarding y Desarrollo web como primeras plantillas; probar con un cliente real | 0,5 |
 
@@ -231,3 +231,28 @@ los mismos permisos que ella. Si se quitan, la purga los borra del disco al día
 `task_answers` con RLS (migración `20261026120000_campos_y_respuestas`); `services/campos.ts`;
 `PUT /tareas/:id/respuestas`, `POST /tareas/:id/campos/:campo/archivos`,
 `GET /proyectos/:id/ficha`; `componentes/Campos.tsx`, `paginas/Ficha.tsx`.
+
+## Cómo funciona hoy (etapa 3, 2026-10-25, D-66)
+
+**Pedir un acceso**: en lo que pide una tarea, el tipo **Acceso (protegido)**. Quien responde
+llena proveedor, dónde se entra, usuario, contraseña y notas.
+
+**Quién ve qué**
+- El proveedor (ej. «Hostinger») queda a la vista de quien ve la tarea.
+- Lo demás se guarda **cifrado** y no sale nunca en el detalle, la lista, la ficha, la
+  actividad, los avisos, la búsqueda ni la exportación (ahí dice «Acceso protegido: no se
+  exporta»).
+- **Solo el equipo** lo abre, con **Ver acceso** (con botón Copiar; se oculta solo al minuto).
+  Cada vez queda en el registro de seguridad, y la tarea muestra «Lo vieron: …».
+- El cliente que lo cargó no lo vuelve a ver: ve «Acceso guardado · Hostinger» y puede
+  reemplazarlo con **Cambiar este acceso**. Un acceso vacío no borra el anterior.
+
+**La clave del servidor**: `ACCESOS_CLAVE` en el `.env` (64 caracteres hex). Sin ella, los
+accesos no se pueden guardar (la app lo dice). Si se pierde o se cambia, los accesos guardados
+ya no se pueden leer: hay que guardar una copia fuera del servidor. `base:verificar:prod` dice
+si está y, si falta, sugiere una.
+
+**Técnico**: `lib/cifrado.ts` (AES-256-GCM, `v1.<iv>.<tag>.<cifrado>`); en `task_answers` el
+valor es `{ proveedor, cifrado }`; `valorPublico()` lo reduce a `{ proveedor, protegido }` en
+toda salida; `POST /tareas/:id/campos/:campo/ver` (equipo, `audit_log` con `acceso.ver`). Sin
+migración: es un tipo de campo más.

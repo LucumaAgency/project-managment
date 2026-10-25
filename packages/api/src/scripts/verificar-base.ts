@@ -8,6 +8,8 @@
  */
 import { prisma, prismaAdmin } from '../db.js';
 import { buscarHerramienta, listarRespaldos } from '../services/respaldo.js';
+import { claveNueva, hayClaveAccesos } from '../lib/cifrado.js';
+import { env } from '../env.js';
 
 type Fila = Record<string, unknown>;
 let fallas = 0;
@@ -95,6 +97,12 @@ async function main() {
   const respaldos = await listarRespaldos();
   if (respaldos.length) ok(`último respaldo: ${respaldos[0].dia} (${respaldos.length} guardados)`);
   else aviso('todavía no hay respaldos', 'Se hace solo con el latido (una vez al día) o a mano: respaldo:prod.');
+
+  // Accesos protegidos (D-66): sin clave, las tareas no pueden guardar accesos.
+  console.log('\nAccesos protegidos');
+  if (hayClaveAccesos()) ok('ACCESOS_CLAVE configurada');
+  else if (env.accesosClave) aviso('ACCESOS_CLAVE no sirve (tiene que ser de 64 caracteres hex)', `Reemplazarla en el .env, por ejemplo con: ACCESOS_CLAVE="${claveNueva()}" y reiniciar.`);
+  else aviso('falta ACCESOS_CLAVE', `Agregar al .env esta línea (es nueva, sirve una sola vez) y reiniciar: ACCESOS_CLAVE="${claveNueva()}". Guardar una copia fuera del servidor: si se pierde, los accesos guardados no se pueden leer.`);
 
   console.log(fallas ? `\n${fallas} punto(s) con FALLA.` : '\nTodo en orden.');
   process.exitCode = fallas ? 1 : 0;

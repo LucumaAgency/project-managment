@@ -23,7 +23,7 @@ try {
 const VARIABLES = [
   'NODE_ENV', 'PORT', 'DATABASE_URL', 'DATABASE_ADMIN_URL', 'APP_URL', 'SESSION_SECRET', 'BASE_DOMAIN',
   'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'MAIL_FROM', 'SOPORTE_BETA', 'ARCHIVOS_DIR', 'ARCHIVOS_MAX_MB', 'CRON_TOKEN',
-  'RESPALDOS_DIR', 'RESPALDOS_MANTENER', 'PG_BIN_DIR', 'SENTRY_DSN', 'SENTRY_DSN_WEB',
+  'RESPALDOS_DIR', 'RESPALDOS_MANTENER', 'PG_BIN_DIR', 'SENTRY_DSN', 'SENTRY_DSN_WEB', 'ACCESOS_CLAVE',
 ];
 for (const nombre of VARIABLES) {
   const v = process.env[nombre];
@@ -101,6 +101,8 @@ export const env = {
   /** Errores a Sentry (D-59). Vacío = no se manda nada. La web usa su propio proyecto. */
   sentryDsn: process.env.SENTRY_DSN?.trim() || '',
   sentryDsnWeb: process.env.SENTRY_DSN_WEB?.trim() || '',
+  /** Clave para cifrar los accesos protegidos (D-66): 32 bytes en hex. Sin ella, no se guardan. */
+  accesosClave: process.env.ACCESOS_CLAVE?.trim() || '',
 };
 
 /** Hay correo saliente de verdad. Sin él, la web oculta el acceso por enlace al correo. */

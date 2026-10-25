@@ -649,3 +649,14 @@ mark { background: #fff1b8; color: inherit; border-radius: 3px; padding: 0 1px; 
 .ficha-campos dt { font-weight: 600; font-size: 13px; color: var(--suave); }
 .ficha-campos dd { margin: 2px 0 0; }
 .plantilla-pide { margin-top: 4px; }
+
+/* ------------------------------------------------- accesos protegidos (D-66) */
+.acceso-guardado { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.acceso-datos { width: 100%; margin: 6px 0 0; padding: 8px 10px; border: 1px dashed var(--borde); border-radius: var(--radio-btn); background: var(--blanco); display: grid; gap: 6px; }
+.acceso-datos dt { font-size: 12px; color: var(--suave); }
+.acceso-datos dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; overflow-wrap: anywhere; }
+.acceso-datos code { font-size: 14px; }
+.acceso-datos > .btn-texto { justify-self: start; }
+.acceso-campos { display: grid; gap: 6px; }
+.acceso-campos input, .acceso-campos textarea { margin: 0; }
+@media (min-width: 620px) { .acceso-campos { grid-template-columns: 1fr 1fr; } .acceso-campos textarea { grid-column: 1 / -1; } }
