@@ -1,6 +1,6 @@
 # 12 · Plantillas y flujos (diseño en conversación)
 
-Estado: **propuesta, sin construir.** Se abrió el 2026-10-24 a pedido del usuario: "algo que me
+Estado: **propuesta, sin construir** (ajustada con las respuestas del 2026-10-25). Se abrió el 2026-10-24 a pedido del usuario: "algo que me
 gusta bastante de Basecamp es armar flujos, por ejemplo un onboarding de un cliente, y que haya
 una plantilla de cosas". Falta que el usuario responda las preguntas del final antes de decidir
 el alcance (luego va a 04-DECISIONES y al plan).
@@ -73,7 +73,65 @@ ahorra; el orden y las fechas que se corren se aprecian una vez que ya se usan p
   que dependían de ella.
 - API de bots: `POST /api/v1/bot/proyectos` con `plantilla`, `inicio` y `roles`.
 
-## Preguntas abiertas al usuario
+## Respuestas del usuario (2026-10-25)
+
+1. **Onboarding:** primero, los datos del cliente (nombre, redes sociales, RUC), la foto del
+   depósito, el contrato y la propuesta. Después, lo de cada servicio. Por ejemplo, para
+   desarrollo web: manual de marca (o colores y fuentes), referencias web, accesos al proveedor
+   de dominio, al hosting y a la web actual si tiene.
+2. **Roles (Cuenta, Diseño, Desarrollo…): no** por ahora, no le hace sentido.
+3. **El cliente participa:** sí, completa sus propias tareas.
+4. **Flujos:** uno de onboarding de cliente y uno por servicio.
+
+## Propuesta ajustada (2026-10-25, a confirmar)
+
+- **Un proyecto por cliente**, como ya se usa (Vaporis, Proba). El onboarding y cada servicio
+  son **plantillas de lista** que se agregan al proyecto (el nivel 2 pasa a ser el principal).
+  Un cliente que contrata web y redes recibe tres listas: Onboarding, Desarrollo web y Redes.
+- **Sin roles.** Cada tarea de la plantilla dice solo si la hace el **cliente** o el **equipo**.
+  Las del cliente se le asignan a él y las ve. Las del equipo van a quien agrega la plantilla,
+  y se pueden reasignar.
+- **Tareas que piden algo** (lo nuevo frente a Basecamp): además de la tarea normal, una tarea
+  puede pedir
+  - **datos** (un pequeño formulario: RUC, razón social, redes…);
+  - **archivos** (foto del depósito, manual de marca, logo);
+  - **enlaces** (referencias web, con un comentario de qué le gusta).
+
+  El cliente la completa respondiendo o subiendo ahí mismo, y la tarea se marca sola. Lo que
+  responde queda en una **ficha del cliente** dentro del proyecto (datos de la empresa, marca,
+  accesos), para no buscarlo después entre comentarios.
+- **Fechas relativas** a cuando se agrega la plantilla ("día 2"). Opcionales.
+- **Accesos (dominio, hosting, web):** no conviene pedir contraseñas en texto normal: quedan en
+  comentarios, búsqueda, exportación y avisos. Opciones:
+  - pedir que el cliente invite al correo de Lucuma en el proveedor, sin compartir claves;
+  - o un campo protegido: solo lo ve el equipo, se muestra con un clic, no entra en búsqueda,
+    avisos ni actividad, y queda registrado quién lo vio.
+
+### Borrador: Onboarding de cliente
+
+| Quién | Tarea | Pide |
+|---|---|---|
+| Cliente | Datos de la empresa | Razón social, nombre comercial, RUC, contacto (nombre, cargo, WhatsApp, correo) |
+| Cliente | Redes sociales y web actual | Enlaces de cada red y de la web |
+| Cliente | Constancia del depósito (50 %) | Archivo (foto o PDF) |
+| Equipo | Verificar el depósito | Se activa cuando el cliente sube la constancia |
+| Equipo | Contrato firmado | Archivo |
+| Equipo | Propuesta aprobada | Archivo |
+| Equipo | Mensaje de bienvenida (visible al cliente) | Qué sigue y en qué plazos |
+
+### Borrador: Servicio de desarrollo web
+
+| Quién | Tarea | Pide |
+|---|---|---|
+| Cliente | Manual de marca | Archivo; si no hay: colores, tipografías y logo en alta |
+| Cliente | Referencias web | Enlaces + qué le gusta de cada una |
+| Cliente | Acceso al dominio | Proveedor + acceso (ver accesos) |
+| Cliente | Acceso al hosting | Proveedor + acceso |
+| Cliente | Acceso a la web actual (si tiene) | URL de administración + acceso |
+| Cliente | Contenidos | Textos y fotos, o "los hace Lucuma" |
+| Equipo | Revisar materiales y pedir lo que falte | — |
+
+## Preguntas abiertas al usuario (primera ronda, ya respondidas arriba)
 
 1. **Pasos del onboarding de Lucuma hoy.** Por ejemplo: contrato y 50 % → accesos (web, redes,
    GMB) → brief → kickoff → … (O se arma un borrador con lo que se sabe de las políticas y
