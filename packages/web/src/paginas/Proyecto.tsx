@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { NOMBRE_ROL, esCliente } from '@lucuma-pm/shared';
-import { api, ErrorApi, type Evento, type InvitacionCreada, type Personas as DatosPersonas, type ProyectoDetalle } from '../api';
+import { api, ErrorApi, urlArchivo, type Evento, type InvitacionCreada, type Personas as DatosPersonas, type ProyectoDetalle, type VistaPrevia } from '../api';
 import ListaActividad from '../componentes/Actividad';
 import { olvidarMencionables } from '../componentes/mencionables';
 import EnlaceCompartir, { mensajeInvitacion } from '../componentes/EnlaceCompartir';
@@ -17,7 +17,7 @@ const SECCIONES: { clave: keyof ProyectoDetalle['secciones']; nombre: string; ic
   { clave: 'mensajes', nombre: 'Mensajes', icono: 'mensajes', vacia: 'Anuncios y temas para conversar con el equipo y el cliente.', uno: 'mensaje', varios: 'mensajes', ruta: 'mensajes' },
   { clave: 'archivos', nombre: 'Archivos', icono: 'archivo', vacia: 'Entregables, briefs y documentos, con sus versiones.', uno: 'elemento', varios: 'elementos', ruta: 'archivos' },
   // Solo aparece si alguna tarea pide algo (D-65).
-  { clave: 'ficha', nombre: 'Ficha del cliente', icono: 'ficha', vacia: '', uno: 'tarea que pide algo', varios: 'tareas que piden algo', ruta: 'ficha' },
+  { clave: 'ficha', nombre: 'Ficha del cliente', icono: 'ficha', vacia: '', uno: 'tarea', varios: 'tareas', ruta: 'ficha' },
 ];
 
 /** Página de un proyecto: cabecera, personas, acciones y sus secciones. */
@@ -153,7 +153,7 @@ export default function Proyecto() {
 
       {d.vistaCliente && <VistaCliente v={d.vistaCliente} hayClientes={d.personas.some((x) => x.role === 'client')} />}
 
-      <div className="secciones">
+      <div className={`secciones${d.secciones.ficha > 0 ? ' cuatro' : ''}`}>
         {SECCIONES.filter((s) => s.clave !== 'ficha' || d.secciones.ficha > 0).map((s) => {
           const n = d.secciones[s.clave];
           const interior = (
@@ -163,7 +163,7 @@ export default function Proyecto() {
                 {s.nombre}
                 {n > 0 && <span className="cuenta">{n} {n === 1 ? s.uno : s.varios}</span>}
               </div>
-              <div className="vacia">{s.ruta ? (n === 0 ? s.vacia : `Abrir ${s.nombre.toLowerCase()}`) : n === 0 ? s.vacia : 'Muy pronto vas a poder abrir esta sección.'}</div>
+              {n === 0 ? <div className="vacia">{s.vacia}</div> : <Previa clave={s.clave} v={d.vistaPrevia} />}
             </>
           );
           return s.ruta ? (
@@ -376,4 +376,93 @@ function VistaCliente({ v, hayClientes }: { v: NonNullable<ProyectoDetalle['vist
       </span>
     </p>
   );
+}
+
+const diaCorto = (dia: string) => {
+  const [a, m, x] = dia.split('-').map(Number);
+  return new Date(a, m - 1, x).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
+};
+const hace = (iso: string) => new Date(iso).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
+const IMAGENES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+const extension = (nombre: string) => (nombre.includes('.') ? nombre.split('.').pop()!.slice(0, 4).toUpperCase() : 'ARCH');
+
+/** Miniatura si es una imagen; si no (o si no carga), la extensión. */
+function PreviaArchivo({ a }: { a: VistaPrevia['archivos'][number] }) {
+  const [fallo, setFallo] = useState(false);
+  const imagen = !fallo && a.blobId && a.tipo && IMAGENES.includes(a.tipo);
+  return (
+    <div className="previa-archivo" title={a.title}>
+      {imagen ? (
+        <img src={urlArchivo(a.blobId!)} alt="" loading="lazy" onError={() => setFallo(true)} />
+      ) : (
+        <span className="previa-ext">{a.tipo === 'application/pdf' ? 'PDF' : extension(a.title)}</span>
+      )}
+      <span className="previa-nombre">{a.title}</span>
+    </div>
+  );
+}
+
+/** Lo que se ve dentro de cada tarjeta (sin enlaces adentro: la tarjeta entera es el enlace). */
+function Previa({ clave, v }: { clave: string; v: VistaPrevia }) {
+  if (clave === 'tareas') {
+    return (
+      <div className="previa">
+        {v.tareas.listas.map((l) => (
+          <div key={l.id} className="previa-lista">
+            <div className="previa-lista-cab">
+              <span className="previa-titulo">{l.title}</span>
+              <span className="meta">{l.hechas}/{l.total}</span>
+            </div>
+            {l.tareas.length ? (
+              <ul className="previa-tareas">
+                {l.tareas.map((t) => (
+                  <li key={t.id}>
+                    <span className="casilla-previa" aria-hidden="true" />
+                    <span className="previa-texto">{t.title}</span>
+                    {t.dueOn && <span className="meta">{diaCorto(t.dueOn)}</span>}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="meta previa-nada">Todo completado</p>
+            )}
+          </div>
+        ))}
+        {v.tareas.pendientes > v.tareas.listas.reduce((n, l) => n + l.tareas.length, 0) && <p className="meta previa-mas">{v.tareas.pendientes} pendientes en total</p>}
+      </div>
+    );
+  }
+  if (clave === 'mensajes') {
+    return (
+      <ul className="previa previa-mensajes">
+        {v.mensajes.map((m) => (
+          <li key={m.id}>
+            <span className="previa-titulo">{m.title}</span>
+            <span className="meta">{m.autor.split(' ')[0]} · {hace(m.createdAt)}{m.extracto ? ` · ${m.extracto}` : ''}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  if (clave === 'archivos') {
+    if (!v.archivos.length) return <p className="meta previa-nada">Solo carpetas por ahora</p>;
+    return (
+      <div className="previa previa-archivos">
+        {v.archivos.map((a) => (
+          <PreviaArchivo key={a.id} a={a} />
+        ))}
+      </div>
+    );
+  }
+  if (clave === 'ficha') {
+    const { respondidos, total } = v.ficha;
+    return (
+      <div className="previa previa-ficha">
+        <span className="previa-cifra">{respondidos}<span className="meta"> de {total}</span></span>
+        <span className="meta">datos respondidos</span>
+        <div className="progreso" aria-hidden="true"><i style={{ width: `${total ? (respondidos / total) * 100 : 0}%` }} /></div>
+      </div>
+    );
+  }
+  return null;
 }

@@ -768,6 +768,25 @@ El usuario desplegó la etapa 4 y aprobó los borradores tal cual (los días se 
 están). Cargadas con el bot: **Onboarding de cliente** (7 tareas, 4 del cliente) y **Desarrollo
 web** (7 tareas, 6 del cliente). Se editan en la web, en Plantillas.
 
+### 2026-10-25 · Vista previa en las secciones del proyecto
+
+Pedido por el usuario: las tarjetas de Tareas, Mensajes y Archivos del proyecto decían solo
+un texto («Abrir tareas», «Anuncios y temas…»). Ahora muestran una vista previa, como Basecamp:
+
+- **Tareas**: las dos primeras listas con su avance (5/8) y sus tres primeras pendientes, con
+  fecha; abajo, cuántas pendientes hay en total.
+- **Mensajes**: los tres últimos, con autor, fecha y el comienzo del texto.
+- **Archivos**: los cuatro últimos, con miniatura si es imagen (si no, la extensión).
+- **Ficha del cliente**: cuántos datos van respondidos, con una barra.
+- Vacía, la tarjeta sigue con su texto de ayuda.
+
+Cada quien ve en la vista previa lo mismo que en la sección (el cliente, solo lo visible con
+toda su cadena; un archivo en una carpeta borrada no aparece). `services/vista-previa.ts`,
+campo `vistaPrevia` en `GET /proyectos/:id`. Probado: 301 tests en verde (2 nuevos; la
+auditoría de fugas ya recorre esa ruta). Revisado en navegador, escritorio y celular.
+
+Para desplegar: Git → Desplegar → Reiniciar (sin migración).
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { Prisma } from '@prisma/client';
+import { vistaPrevia } from '../services/vista-previa.js';
 import { esCliente, veTodosLosProyectos } from '@lucuma-pm/shared';
 import { z } from 'zod';
 import { conCuenta, type Tx } from '../lib/contexto.js';
@@ -173,6 +174,7 @@ export default async function rutasProyectos(app: FastifyInstance) {
         // Para el equipo: qué ve el cliente en la raíz del proyecto (lo de adentro depende,
         // además, de que cada cosa esté marcada visible).
         vistaCliente: cliente ? null : await vistaCliente(tx, p.id),
+        vistaPrevia: await vistaPrevia(tx, actor, p),
       };
     });
   });
