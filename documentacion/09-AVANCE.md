@@ -828,6 +828,17 @@ Para desplegar: va junto con el tablero (la migración `tablero` es la única).
 - **Fase 3** (venderlo a otras agencias) planificada paso a paso en
   [14-FASE-3-VENDER.md](14-FASE-3-VENDER.md).
 
+### 2026-10-25 · Servidor en Vultr y espacio para archivos (preparado, sin ejecutar)
+
+- Guía [15-SERVIDOR-VULTR.md](15-SERVIDOR-VULTR.md): Vultr São Paulo $10 + copias (~$13 al mes),
+  sin panel, Cloudflare con certificado comodín, latido con un timer del propio servidor, y la
+  mudanza desde Plesk paso a paso.
+- Scripts en `deploy/vultr/`: `instalar.sh`, `actualizar.sh`, `nginx.conf`, `permisos-app.sql`.
+  Revisados en sintaxis, sin probar en un servidor real (falta el dominio).
+- [16-ESPACIO-DE-ARCHIVOS.md](16-ESPACIO-DE-ARCHIVOS.md): cómo limitan Basecamp, Slack, Notion,
+  Trello, ClickUp y monday; propuesta de topes por plan, video crudo como enlace, y pasar a
+  Cloudflare R2 cuando el disco no alcance (D-71).
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -857,6 +868,8 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 - [ ] Dominio de la app (para subdominios por cuenta).
 - [ ] Precios y planes reales (hoy son de ejemplo en `planes.ts`).
 - [ ] Cuándo se activa el correo (remitente y dominio para Brevo).
+- [ ] Servidor: uno solo para Proyectos o compartido con el CRM durante la beta ([15 §1](15-SERVIDOR-VULTR.md)).
+- [ ] Topes de archivos por plan mientras se esté en disco ([16 §3.2](16-ESPACIO-DE-ARCHIVOS.md)).
 
 ### Antes de la fase 2
 

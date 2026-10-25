@@ -20,12 +20,13 @@ registre sola, pague y la use. El orden importa: cada paso se apoya en el anteri
 
 - **Dominio** del producto y DNS con comodín (`*.dominio.com`), para que cada agencia tenga su
   subdominio (`suagencia.dominio.com`; ya está programado).
-- **Servidor propio** (VPS, p. ej. Vultr con CloudPanel, como el resto de los servidores de
-  Lucuma): PostgreSQL 16, Node 22, certificado SSL comodín. Plesk compartido no da cron real
-  ni comodines cómodos.
+- **Servidor propio**: Vultr São Paulo de $10, **sin panel** (como el CRM inmobiliario),
+  PostgreSQL 16, Node 22, certificado comodín de Cloudflare. Plesk compartido no da cron real
+  ni comodines cómodos. Guía y scripts listos: [15-SERVIDOR-VULTR.md](15-SERVIDOR-VULTR.md).
 - Copias **fuera del servidor** automáticas, Sentry encendido y alertas si la app se cae.
-- Pasar los archivos a un almacenamiento aparte (p. ej. Cloudflare R2) cuando el disco quede
-  chico; el código ya separa el almacén (`lib/almacen.ts`).
+- Pasar los archivos a Cloudflare R2 cuando el disco quede chico; el código ya separa el
+  almacén (`lib/almacen.ts`). Cómo lo resuelven otros y topes propuestos:
+  [16-ESPACIO-DE-ARCHIVOS.md](16-ESPACIO-DE-ARCHIVOS.md).
 - **Cambiar todas las claves** antes de abrir: contraseñas de la base, `SESSION_SECRET`, clave
   del bot (las de ahora pasaron por el chat).
 
