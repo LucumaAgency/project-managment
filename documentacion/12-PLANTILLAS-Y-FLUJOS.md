@@ -1,6 +1,6 @@
 # 12 · Plantillas y flujos
 
-Estado: **etapas 1 a 4 construidas el 2026-10-25** (plantillas de lista; tareas que piden algo y ficha del cliente; accesos protegidos; «se activa cuando»; ver «Cómo funciona hoy» al final). Etapa 5 (cargar las plantillas reales), pendiente. Diseño confirmado por el usuario (D-64). Se abrió el 2026-10-24 a pedido del usuario: "algo que me
+Estado: **etapas 1 a 4 construidas el 2026-10-25** (plantillas de lista; tareas que piden algo y ficha del cliente; accesos protegidos; «se activa cuando»; ver «Cómo funciona hoy» al final). Etapa 5: las plantillas reales se cargaron en producción el 2026-10-25. Diseño confirmado por el usuario (D-64). Se abrió el 2026-10-24 a pedido del usuario: "algo que me
 gusta bastante de Basecamp es armar flujos, por ejemplo un onboarding de un cliente, y que haya
 una plantilla de cosas". Falta que el usuario responda las preguntas del final antes de decidir
 el alcance (luego va a 04-DECISIONES y al plan).
@@ -161,7 +161,7 @@ ahorra; el orden y las fechas que se corren se aprecian una vez que ya se usan p
 | 2 ✅ | Tareas que piden algo (datos, archivos, enlaces), se marcan solas al responder; ficha del cliente en el proyecto | 2 |
 | 3 ✅ | Campo protegido para accesos (cifrado, ver con un clic, registro de quién lo vio) | 1 |
 | 4 ✅ | "Se activa cuando…" (ej. verificar el depósito tras la constancia) | 0,5 |
-| 5 | Cargar Onboarding y Desarrollo web como primeras plantillas; probar con un cliente real | 0,5 |
+| 5 ✅ | Cargar Onboarding y Desarrollo web como primeras plantillas; probar con un cliente real | 0,5 |
 
 Cada etapa sale a producción por separado y se puede usar sin esperar a las siguientes.
 
@@ -284,13 +284,13 @@ esperas en vuelta (A espera a B y B a A).
 `completarTarea` llama a `activarLasQueEsperan`; `POST /tareas/:id/activar`; `PATCH /tareas/:id`
 con `esperaA` y `diasDespues`. Evento nuevo: `activated`.
 
-## Etapa 5: las plantillas reales (2026-10-25, borrador para revisar)
+## Etapa 5: las plantillas reales (cargadas en producción el 2026-10-25)
 
 Borradores en `privados/plantillas/` (fuera del repo): `onboarding-de-cliente.json` y
 `desarrollo-web.json`, armados con lo que contó el usuario. Se cargan (o se reemplazan, si ya
 existen) con `~/carlos/bin/proyectos.py cargar-plantilla <archivo>`, que usa
-`POST /api/v1/bot/plantillas`. Probadas en la base local. Falta: que el usuario las revise y dé
-el visto bueno para cargarlas en producción.
+`POST /api/v1/bot/plantillas`. El usuario las aprobó tal cual y se cargaron en producción. Falta probarlas con un cliente
+real.
 
 - **Onboarding de cliente** (7): datos de la empresa (razón social, RUC, contacto), redes y web
   actual (enlaces), constancia del depósito (archivo) → verificar el depósito (espera a la
