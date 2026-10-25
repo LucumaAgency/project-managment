@@ -8,6 +8,8 @@ export async function mencionables(tx, accountId, projectId, opciones) {
         where: {
             accountId,
             status: 'active',
+            // Un bot (D-63) no se menciona ni se asigna: no lee la bandeja.
+            user: { isBot: false },
             ...(opciones.incluirClientes ? {} : { role: { not: 'client' } }),
             OR: [
                 { role: { in: ['owner', 'admin'] } },

@@ -54,6 +54,7 @@ model Account {
   events        Event[]
   notifications Notification[]
   auditLog      AuditLog[]
+  listTemplates ListTemplate[]
 
   @@map("accounts")
 }
@@ -338,6 +339,51 @@ model TodoAssignee {
   @@id([recordingId, userId])
   @@index([accountId, userId])
   @@map("todo_assignees")
+}
+
+// ------------------------------------------------------------------------ plantillas
+
+/// Para quién es una tarea de plantilla (D-64). Sin roles internos: solo cliente o equipo.
+enum TemplateAudience {
+  team // del equipo, interna
+  client // la hace el cliente: se le asigna y la ve
+  any // la hace cualquiera: del equipo, pero el cliente la ve y también puede completarla
+}
+
+/// Plantilla de lista (onboarding, un servicio). Se agrega a un proyecto y crea una lista
+/// con sus tareas, con fechas reales y responsables. No es un proyecto: no aparece en
+/// Proyectos, Tareas, búsqueda ni bandeja. Ver documentacion/12-PLANTILLAS-Y-FLUJOS.md.
+model ListTemplate {
+  id          String             @id @default(cuid())
+  accountId   String
+  account     Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  createdById String
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  items ListTemplateItem[]
+
+  @@index([accountId])
+  @@map("list_templates")
+}
+
+model ListTemplateItem {
+  id         String           @id @default(cuid())
+  accountId  String
+  templateId String
+  template   ListTemplate     @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  title      String
+  /// Texto plano; al aplicar se convierte en las notas de la tarea.
+  notes      String?
+  audience   TemplateAudience @default(team)
+  /// "Día N" desde el inicio (1 = el mismo día). Null = sin fecha.
+  dayOffset  Int?
+  position   Int
+
+  @@index([templateId, position])
+  @@map("list_template_items")
 }
 
 // ------------------------------------------------------------------------- archivos

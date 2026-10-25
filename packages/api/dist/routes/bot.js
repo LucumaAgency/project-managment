@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { conCuenta } from '../lib/contexto.js';
 import { leer } from '../lib/validar.js';
-import { completarTareaBot, crearProyectoBot, crearTareaBot, exigirBot, tareasBot } from '../services/bot.js';
+import { aplicarPlantillaBot, completarTareaBot, crearProyectoBot, crearTareaBot, exigirBot, plantillasBot, tareasBot } from '../services/bot.js';
 /**
  * API para bots (D-63, services/bot.ts). Autenticación: `Authorization: Bearer lpm_…`.
  * Documentación con ejemplos: documentacion/11-API-BOT.md.
@@ -74,5 +74,18 @@ export default async function rutasBot(app) {
     app.post('/api/v1/bot/tareas/:id/reabrir', async (req) => {
         const a = await exigirBot(req);
         return { tarea: await completarTareaBot(a, req.params.id, false) };
+    });
+    app.get('/api/v1/bot/plantillas', async (req) => plantillasBot(await exigirBot(req)));
+    /** Agregar una plantilla a un proyecto (ambos por nombre). */
+    app.post('/api/v1/bot/plantillas/aplicar', async (req) => {
+        const a = await exigirBot(req);
+        const d = leer(z.object({
+            proyecto: z.string().trim().min(1, 'Falta el proyecto.').max(200),
+            plantilla: z.string().trim().min(1, 'Falta la plantilla.').max(200),
+            inicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha va como AAAA-MM-DD.').optional(),
+            responsable: z.string().max(200).optional(),
+            lista: z.string().trim().max(300).optional(),
+        }), req.body);
+        return aplicarPlantillaBot(a, d);
     });
 }

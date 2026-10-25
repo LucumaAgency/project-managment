@@ -3,7 +3,7 @@
  * se lleve sus datos cuando quiera (y antes de cerrar la cuenta).
  *
  *   LEEME.txt
- *   cuenta.json                      cuenta, personas y lista de proyectos
+ *   cuenta.json                      cuenta, personas, lista de proyectos y plantillas
  *   proyectos/<nombre>/datos.json    todo el proyecto: listas, tareas, mensajes, comentarios,
  *                                    carpetas, archivos (con versiones) y actividad
  *   proyectos/<nombre>/tareas.csv    las tareas en una hoja de cálculo
@@ -69,7 +69,19 @@ async function leerCuenta(ctx) {
             select: { id: true, name: true, description: true, status: true, createdAt: true, archivedAt: true, trashedAt: true, members: { select: { userId: true } } },
             orderBy: { createdAt: 'asc' },
         });
-        return { cuenta, personas, proyectos };
+        const plantillas = await tx.listTemplate.findMany({
+            where: { accountId: ctx.accountId },
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                createdAt: true,
+                updatedAt: true,
+                items: { select: { title: true, notes: true, audience: true, dayOffset: true }, orderBy: { position: 'asc' } },
+            },
+            orderBy: { name: 'asc' },
+        });
+        return { cuenta, personas, proyectos, plantillas };
     });
 }
 async function leerProyecto(ctx, projectId) {
@@ -114,7 +126,7 @@ async function leerProyecto(ctx, projectId) {
  * segundo plano y el ZIP se cierra al final. `log` recibe los archivos que faltaban en disco.
  */
 export async function exportarCuenta(ctx, log) {
-    const { cuenta, personas, proyectos } = await leerCuenta(ctx);
+    const { cuenta, personas, proyectos, plantillas } = await leerCuenta(ctx);
     const zip = new yazl.ZipFile();
     const ruta = unicos();
     const nombreDe = new Map(personas.map((p) => [p.user.id, p.user.name]));
@@ -124,6 +136,7 @@ export async function exportarCuenta(ctx, log) {
         cuenta,
         personas: personas.map((p) => ({ ...p.user, rol: p.role, estado: p.status, empresa: p.company, desde: p.createdAt })),
         proyectos: proyectos.map((p) => ({ ...p, members: undefined, personas: p.members.map((m) => m.userId) })),
+        plantillas,
     }, null, 2)), ruta('cuenta.json'));
     const tareas = async () => {
         for (const p of proyectos) {
@@ -215,7 +228,7 @@ ${comentarios.map((c) => `<article><p class="meta">${escapar(nombreDe.get(c.crea
         zip.addBuffer(Buffer.from([
             `Exportación de la cuenta «${cuenta.name}» (${new Date().toISOString().slice(0, 10)}).`,
             '',
-            'cuenta.json: la cuenta, sus personas y sus proyectos.',
+            'cuenta.json: la cuenta, sus personas, sus proyectos y sus plantillas.',
             'proyectos/<nombre>/datos.json: todo el proyecto (listas, tareas, mensajes, comentarios, carpetas,',
             '  archivos con sus versiones y la actividad). Los ids de personas están en cuenta.json.',
             'proyectos/<nombre>/tareas.csv: las tareas, para abrir en Excel o Google Sheets.',

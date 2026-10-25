@@ -1,6 +1,6 @@
-# 12 · Plantillas y flujos (diseño en conversación)
+# 12 · Plantillas y flujos
 
-Estado: **diseño confirmado por el usuario el 2026-10-25 (D-64); sin construir**, falta su visto bueno para empezar. Se abrió el 2026-10-24 a pedido del usuario: "algo que me
+Estado: **etapa 1 construida el 2026-10-25** (plantillas de lista; ver «Cómo funciona hoy» al final). Etapas 2 a 5, pendientes. Diseño confirmado por el usuario (D-64). Se abrió el 2026-10-24 a pedido del usuario: "algo que me
 gusta bastante de Basecamp es armar flujos, por ejemplo un onboarding de un cliente, y que haya
 una plantilla de cosas". Falta que el usuario responda las preguntas del final antes de decidir
 el alcance (luego va a 04-DECISIONES y al plan).
@@ -153,14 +153,46 @@ ahorra; el orden y las fechas que se corren se aprecian una vez que ya se usan p
   ve y también puede subir el archivo.
 - Primera plantilla de servicio: **Desarrollo web**.
 
-## Plan de construcción (a confirmar)
+## Plan de construcción (confirmado el 2026-10-25)
 
 | Etapa | Qué | Días aprox. |
 |---|---|---|
-| 1 | Plantillas de lista: sección Plantillas, tareas "cliente / equipo / cualquiera", fechas relativas opcionales; "Agregar plantilla" en un proyecto; también por el bot | 2 |
+| 1 ✅ | Plantillas de lista: sección Plantillas, tareas "cliente / equipo / cualquiera", fechas relativas opcionales; "Agregar plantilla" en un proyecto; también por el bot | 2 |
 | 2 | Tareas que piden algo (datos, archivos, enlaces), se marcan solas al responder; ficha del cliente en el proyecto | 2 |
 | 3 | Campo protegido para accesos (cifrado, ver con un clic, registro de quién lo vio) | 1 |
 | 4 | "Se activa cuando…" (ej. verificar el depósito tras la constancia) | 0,5 |
 | 5 | Cargar Onboarding y Desarrollo web como primeras plantillas; probar con un cliente real | 0,5 |
 
 Cada etapa sale a producción por separado y se puede usar sin esperar a las siguientes.
+
+## Cómo funciona hoy (etapa 1, 2026-10-25)
+
+**En la web**
+- Menú **Plantillas** (todo el equipo; el cliente no la ve). Dueño y admin crean, editan y
+  borran; el resto del equipo las ve y las usa.
+- Cada tarea de la plantilla tiene título, notas (opcional), **para quién** (Equipo / Cliente /
+  Cualquiera) y **día** (opcional; 1 = la fecha de inicio).
+- En las **Tareas** de un proyecto, **Desde plantilla**: se elige la plantilla, la fecha de
+  inicio, el nombre de la lista, quién del equipo lleva las tareas del equipo (por defecto,
+  quien la agrega) y qué clientes del proyecto reciben las suyas (por defecto, todos). Muestra
+  antes las tareas que se van a crear, con su fecha real.
+- En el menú de una lista, **Guardar como plantilla** (dueño y admin): las fechas pasan a
+  "día N" contando desde el día en que se creó la lista, y las personas no se guardan, solo
+  para quién era cada tarea.
+
+**Qué crea al agregarla**
+- Una lista nueva (visible para el cliente si alguna tarea es suya) con sus tareas en orden.
+- Equipo → interna, asignada al responsable elegido.
+- Cliente → visible, asignada a los clientes elegidos (puede completarla él).
+- Cualquiera → visible, asignada al responsable y a los clientes.
+- Todo como si se hubiera hecho a mano: actividad a nombre de quien la agregó, avisos de
+  asignación (el cliente recibe uno por cada tarea suya) y seguimiento.
+- Si el proyecto no tiene clientes, sus tareas quedan visibles y sin asignar, y se avisa.
+
+**Por el bot**: `GET /api/v1/bot/plantillas` y `POST /api/v1/bot/plantillas/aplicar`
+(11-API-BOT.md). Desde Telegram: "arranca el onboarding de Flecha Taxi el lunes".
+
+**Técnico**: tablas `list_templates` y `list_template_items` con RLS por cuenta (migración
+`20261026090000_plantillas`); `services/plantillas.ts`, `routes/plantillas.ts`,
+`paginas/Plantillas.tsx`, `paginas/Plantilla.tsx`, modal en `paginas/Tareas.tsx`. Las
+plantillas van en la exportación de la cuenta (`cuenta.json`).

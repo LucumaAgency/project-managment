@@ -370,6 +370,17 @@ app. La tabla `jobs` queda lista para cuando haga falta (correos, exportación).
 | Respaldo | `services/respaldo.ts`; latido (1 vez al día); `respaldo:prod [lista \| restaurar AAAA-MM-DD --confirmo]` | D-60 |
 | Carga inicial | `services/carga.ts`; `cargar:prod -- archivo.json [--probar]` | D-61 |
 
+## Plantillas (D-64, desde el 2026-10-25)
+
+| Pieza | Dónde | Notas |
+|---|---|---|
+| Modelo | `ListTemplate`, `ListTemplateItem` (`audience` team/client/any, `dayOffset`) | No son proyectos: no aparecen en Proyectos, Tareas, búsqueda ni bandeja. RLS por cuenta |
+| Servicio | `services/plantillas.ts` | Aplicar usa `crearElemento` y `crearTarea`: mismos permisos, eventos y avisos que a mano |
+| Rutas | `GET/POST /plantillas`, `GET/PUT/DELETE /plantillas/:id`, `POST /proyectos/:id/plantillas`, `POST /listas/:id/plantilla` | Cliente: 404 en todo. Editar: dueño y admin |
+| Web | `paginas/Plantillas.tsx`, `paginas/Plantilla.tsx`, modal en `paginas/Tareas.tsx` | |
+
+Los bots ya no aparecen entre las personas que se pueden mencionar o asignar (`mencionables`).
+
 ## Archivos
 
 `lib/almacen.ts` (disco), `lib/tipos-archivo.ts` (tipo real, nombre limpio),

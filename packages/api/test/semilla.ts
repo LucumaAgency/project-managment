@@ -98,6 +98,8 @@ export async function sembrarCuenta(nombre: string): Promise<Semilla> {
     data: { accountId, userId: member.id, eventId: event.id, recordingId: comment.id, reason: 'mentioned' },
   });
   await db.apiKey.create({ data: { accountId, userId: owner.id, name: 'semilla', prefix: 'lpm_semill', keyHash: `semilla-${accountId}` } });
+  const plantilla = await db.listTemplate.create({ data: { accountId, name: `Onboarding ${nombre}`, createdById: owner.id } });
+  await db.listTemplateItem.create({ data: { accountId, templateId: plantilla.id, title: 'Datos de la empresa', audience: 'client', dayOffset: 1, position: 1 } });
   await db.auditLog.create({ data: { accountId, userId: owner.id, action: 'user.login' } });
 
   return {

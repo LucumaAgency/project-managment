@@ -669,6 +669,27 @@ propuesta; luego lo de cada servicio. Sin roles; el cliente participa; accesos c
 protegido; contrato lo sube cualquiera; primera plantilla de servicio: Desarrollo web. Queda
 como D-64 con un plan de 5 etapas (unos 6 días) en 12-PLANTILLAS-Y-FLUJOS.md.
 
+### 2026-10-25 · Plantillas, etapa 1
+
+Hecho (D-64, detalle en [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md)):
+
+- **Plantillas de lista**: menú Plantillas; tareas con para quién (Equipo / Cliente /
+  Cualquiera), día relativo y notas; crear, editar, ordenar y borrar (dueño y admin).
+- **Desde plantilla** en las Tareas de un proyecto: fecha de inicio, nombre de la lista,
+  responsable del equipo y clientes; vista previa con fechas reales.
+- **Guardar como plantilla** desde una lista que ya existe.
+- **Bot**: listar y agregar plantillas por nombre; el asistente de Telegram ya tiene
+  `proyectos.py plantillas` y `aplicar-plantilla`.
+- Las plantillas entran en la exportación de la cuenta.
+- Arreglo de paso: el bot ya no aparece entre las personas que se pueden asignar o mencionar.
+
+Probado: 266 tests en verde (13 nuevos de plantillas; la auditoría de fugas al cliente suma una
+plantilla con una tarea interna y las rutas nuevas). Recorrido en navegador, escritorio y
+celular, sin errores: crear la plantilla Onboarding, agregarla a un proyecto, guardar una lista
+como plantilla. Asistente probado contra la app local.
+
+Para desplegar (**con migración**): §5i de 10-DESPLIEGUE.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -676,6 +697,8 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
 | # | Tema | Lo que hice | Alternativa |
 |---|---|---|---|
+| C-18 | Quién edita plantillas | Dueño y admin; el resto del equipo las ve y las usa | Que cualquiera del equipo las edite |
+| C-19 | Avisos al agregar una plantilla | El cliente recibe un aviso por cada tarea suya (como si se asignaran a mano) | Un solo aviso "te sumaron N tareas" |
 | C-17 | Rubros (verticales, como el CRM) | Por ahora no: el producto es para agencias y todo el texto está pensado para ellas | Agregar `vertical` por cuenta cuando haya un segundo rubro concreto que lo pida |
 
 ## Pendientes
@@ -699,6 +722,7 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
 ### Antes de la fase 2
 
-- [ ] Plantillas y flujos: diseño confirmado (D-64); falta el visto bueno del usuario para construir las 5 etapas de [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
+- [ ] Desplegar la etapa 1 de plantillas (§5i de 10-DESPLIEGUE, con migración).
+- [ ] Plantillas, etapas 2 a 5 (tareas que piden datos/archivos/enlaces y ficha del cliente; accesos protegidos; "se activa cuando"; cargar Onboarding y Desarrollo web): [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
 
 - [ ] Iniciar el trámite con Meta para WhatsApp (número, verificación, plantillas) mientras se usa el MVP.

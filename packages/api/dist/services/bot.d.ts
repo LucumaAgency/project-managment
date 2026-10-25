@@ -95,3 +95,41 @@ export declare function crearProyectoBot(a: AccesoBot, datos: {
     };
     existia: boolean;
 }>;
+/** Plantillas de lista (D-64) con cuántas tareas tienen. */
+export declare function plantillasBot(a: AccesoBot): Promise<{
+    plantillas: {
+        id: string;
+        nombre: string;
+        descripcion: string | null;
+        tareas: number;
+        delCliente: number;
+    }[];
+}>;
+/**
+ * Agrega una plantilla a un proyecto, ambos por nombre ("onboarding" en "flecha taxi").
+ * Las tareas del equipo van al responsable (si no se dice, quedan sin asignar: el bot no las
+ * lleva); las del cliente, a los clientes del proyecto.
+ */
+export declare function aplicarPlantillaBot(a: AccesoBot, datos: {
+    proyecto: string;
+    plantilla: string;
+    inicio?: string;
+    responsable?: string;
+    lista?: string;
+}): Promise<{
+    proyecto: {
+        id: string;
+        nombre: string;
+    };
+    plantilla: string;
+    lista: string | null;
+    listaId: string;
+    tareas: number;
+    inicio: string;
+    responsable: {
+        nombre: string;
+        correo: string;
+    } | null;
+    sinCliente: boolean;
+    enlace: string;
+}>;

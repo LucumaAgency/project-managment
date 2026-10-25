@@ -597,3 +597,27 @@ mark { background: #fff1b8; color: inherit; border-radius: 3px; padding: 0 1px; 
 @media (min-width: 960px) {
   .buscar-arriba { display: none; }
 }
+
+/* ---------------------------------------------------------------- plantillas (D-64) */
+.rejilla-2 { display: grid; grid-template-columns: 1fr; gap: 0 12px; }
+@media (min-width: 520px) { .rejilla-2 { grid-template-columns: 1fr 1fr; } }
+.aviso-ok { display: flex; align-items: center; gap: 8px; background: var(--verde-tinte); color: #0B6B35; border-radius: var(--radio); padding: 10px 14px; margin: 0 0 12px; font-size: 14px; }
+.aviso-ok a { color: inherit; font-weight: 600; }
+.aviso-ok .btn-texto { margin-left: auto; color: inherit; font-size: 18px; line-height: 1; }
+.plantilla-filas { list-style: none; margin: 0 0 12px; padding: 0; counter-reset: paso; }
+.plantilla-fila { border-top: 1px solid var(--borde-suave); padding: 10px 0; counter-increment: paso; }
+.plantilla-fila:first-child { border-top: 0; }
+.plantilla-fila-arriba { display: grid; grid-template-columns: minmax(0, 1fr) 84px; gap: 8px; }
+.plantilla-fila-arriba > input:first-child { grid-column: 1 / -1; }
+.plantilla-fila-arriba input, .plantilla-fila-arriba select, .plantilla-fila textarea { margin: 0; }
+.plantilla-fila textarea { margin-top: 8px; }
+@media (min-width: 620px) {
+  .plantilla-fila-arriba { grid-template-columns: minmax(0, 1fr) 140px 84px; }
+  .plantilla-fila-arriba > input:first-child { grid-column: auto; }
+}
+.plantilla-fila-acciones { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.plantilla-fila-lectura { cursor: default; }
+.vista-plantilla { list-style: none; margin: 0 0 8px; padding: 0; max-height: 240px; overflow-y: auto; border: 1px solid var(--borde); border-radius: var(--radio-btn); }
+.vista-plantilla li { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-top: 1px solid var(--borde-suave); font-size: 14px; }
+.vista-plantilla li:first-child { border-top: 0; }
+.vista-plantilla li > span:first-child { flex: 1; min-width: 0; }

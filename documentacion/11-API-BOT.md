@@ -43,6 +43,8 @@ el bot pregunte.
 | `POST /api/v1/bot/tareas` | Crear: `{ proyecto, titulo, lista?, vence?: "AAAA-MM-DD", responsables?: [..], notas? }`. Sin `lista`, va a la primera del proyecto; si la lista nombrada no existe, se crea |
 | `POST /api/v1/bot/tareas/:id/completar` | Completar |
 | `POST /api/v1/bot/tareas/:id/reabrir` | Reabrir |
+| `GET /api/v1/bot/plantillas` | Plantillas de lista (D-64), con cuántas tareas tienen y cuántas son del cliente |
+| `POST /api/v1/bot/plantillas/aplicar` | Agregar una plantilla a un proyecto: `{ proyecto, plantilla, inicio?: "AAAA-MM-DD", responsable?, lista? }`. Ambos por nombre. Las tareas del equipo van al `responsable` (sin él quedan sin asignar: el bot no se las asigna); las del cliente, a los clientes del proyecto. Devuelve la lista creada y su `enlace` |
 
 Cada tarea devuelve `id`, `titulo`, `proyecto`, `lista`, `vence`, `vencida`, `completada`,
 `responsables` y `enlace` (abre la tarea en la app). "Hoy" se calcula en la zona horaria de la
@@ -62,6 +64,11 @@ curl -s -H "Authorization: Bearer $CLAVE" "$API/tareas?cuando=vencidas"
 curl -s -H "Authorization: Bearer $CLAVE" -H 'content-type: application/json' \
   -d '{"proyecto":"fenix google","titulo":"Revisar títulos","vence":"2026-10-26","responsables":["carlos"]}' \
   "$API/tareas"
+
+# "Arranca el onboarding de Flecha Taxi el lunes"
+curl -s -H "Authorization: Bearer $CLAVE" -H 'content-type: application/json' \
+  -d '{"proyecto":"flecha taxi","plantilla":"onboarding","inicio":"2026-10-26","responsable":"carlos"}' \
+  "$API/plantillas/aplicar"
 
 # Completar
 curl -s -X POST -H "Authorization: Bearer $CLAVE" "$API/tareas/<id>/completar"

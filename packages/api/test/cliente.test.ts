@@ -87,6 +87,18 @@ beforeAll(async () => {
   ids.exVisible = await nuevo({ type: 'message', title: `Ex visible ${MARCA}`, visibleToClients: true });
   await member.patch(`/elementos/${ids.exVisible}`, { visibleToClients: false });
 
+  // Una plantilla agregada al proyecto: su tarea interna no le llega al cliente (D-64).
+  ids.plantilla = (
+    await owner.post('/plantillas', {
+      name: 'Plantilla VISIBLE',
+      items: [
+        { title: `Paso ${MARCA}`, notes: `nota ${MARCA}`, audience: 'team', dayOffset: 1 },
+        { title: 'Paso VISIBLE', notes: 'nota VISIBLE', audience: 'client', dayOffset: 2 },
+      ],
+    })
+  ).json.plantilla.id;
+  ids.listaDePlantilla = (await owner.post(`/proyectos/${p}/plantillas`, { plantillaId: ids.plantilla, responsableId: A.memberId })).json.lista.id;
+
   // Cosas del equipo que mencionan / asignan, para que existan avisos internos.
   await member.post(`/elementos/${ids.msgInterno}/comentarios`, { body: doc(texto(`otra ${MARCA}`)) });
 });
@@ -105,6 +117,7 @@ describe('ninguna ruta del cliente muestra lo interno', () => {
       `/proyectos/${p}/tareas`,
       `/proyectos/${p}/elementos`,
       `/proyectos/${p}/elementos?padre=${ids.listaVisible}`,
+      `/proyectos/${p}/elementos?padre=${ids.listaDePlantilla}`,
       `/proyectos/${p}/mensajes`,
       `/proyectos/${p}/actividad?limite=100`,
       `/proyectos/${p}/archivos`,
@@ -156,6 +169,8 @@ describe('ninguna ruta del cliente muestra lo interno', () => {
       `/blobs/${ids.blobInterno}/contenido`,
       `/blobs/${ids.blobInterno2}/contenido`,
       `/proyectos/${p}/papelera`,
+      '/plantillas',
+      `/plantillas/${ids.plantilla}`,
     ];
     const mal = [];
     for (const r of directas) {
@@ -176,6 +191,9 @@ describe('ninguna ruta del cliente muestra lo interno', () => {
       ['editar interno', () => client.patch(`/elementos/${ids.msgInterno}`, { title: 'x' })],
       ['papelera interno', () => client.post(`/elementos/${ids.msgInterno}/papelera`)],
       ['marcar leído ajeno', () => client.post('/bandeja/leer', { recordingId: ids.msgInterno })],
+      ['agregar plantilla', () => client.post(`/proyectos/${p}/plantillas`, { plantillaId: ids.plantilla })],
+      ['guardar como plantilla', () => client.post(`/listas/${ids.listaVisible}/plantilla`, {})],
+      ['editar plantilla', () => client.put(`/plantillas/${ids.plantilla}`, { name: 'x', items: [] })],
     ];
     const mal = [];
     for (const [que, f] of intentos) {
@@ -196,7 +214,7 @@ describe('ninguna ruta del cliente muestra lo interno', () => {
 describe('lo que el equipo ve de la vista del cliente', () => {
   it('cuánto ve el cliente y si cada cosa le llega con su cadena', async () => {
     const d = (await member.get(`/proyectos/${p}`)).json;
-    expect(d.vistaCliente).toEqual({ listas: 1, mensajes: 1, carpetas: 1, archivos: 0 });
+    expect(d.vistaCliente).toEqual({ listas: 2, mensajes: 1, carpetas: 1, archivos: 0 });
     expect((await member.get(`/tareas/${ids.tareaEnListaInterna}`)).json.tarea.visibleParaCliente).toBe(false);
     expect((await member.get(`/tareas/${ids.tareaVisible}`)).json.tarea.visibleParaCliente).toBe(true);
     expect((await member.get(`/archivos/${ids.archivoEnCarpetaInterna}`)).json.archivo.visibleParaCliente).toBe(false);

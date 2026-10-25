@@ -10,6 +10,8 @@ import Entrar from './paginas/Entrar';
 import Invitacion from './paginas/Invitacion';
 import MiCuenta from './paginas/MiCuenta';
 import Personas from './paginas/Personas';
+import Plantilla from './paginas/Plantilla';
+import Plantillas from './paginas/Plantillas';
 import Portada from './paginas/Portada';
 import Proyecto from './paginas/Proyecto';
 import Tareas from './paginas/Tareas';
@@ -50,6 +52,8 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/proyectos/:id/papelera" element={<Papelera />} />
             <Route path="/buscar" element={<Buscar />} />
             <Route path="/personas" element={<Personas />} />
+            <Route path="/plantillas" element={<Plantillas />} />
+            <Route path="/plantillas/:id" element={<Plantilla />} />
             <Route path="/bandeja" element={<Bandeja />} />
             <Route path="/mi-cuenta" element={<MiCuenta />} />
             {PruebaEditor && <Route path="/_editor" element={<Suspense fallback={null}><PruebaEditor /></Suspense>} />}

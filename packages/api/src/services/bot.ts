@@ -24,6 +24,7 @@ import { crearElemento } from './elementos.js';
 import { registrarEvento } from './eventos.js';
 import { exigirCupoProyectos } from './proyectos.js';
 import type { Actor } from './permisos.js';
+import { aplicarPlantilla, listarPlantillas } from './plantillas.js';
 import { diaEn, sumarDias } from './recordatorios.js';
 import { completarTarea, crearTarea } from './tareas.js';
 
@@ -229,5 +230,53 @@ export async function crearProyectoBot(a: AccesoBot, datos: { nombre: string; de
     });
     await registrarEvento(tx, { accountId: a.actor.ctx.accountId, projectId: p.id, actorId: a.actor.ctx.userId, action: 'created' });
     return { proyecto: { id: p.id, nombre: p.name }, existia: false };
+  });
+}
+
+/** Plantillas de lista (D-64) con cuántas tareas tienen. */
+export async function plantillasBot(a: AccesoBot) {
+  return conCuenta(a.actor.ctx, async (tx) => ({
+    plantillas: (await listarPlantillas(tx, a.actor)).plantillas.map((p) => ({
+      id: p.id,
+      nombre: p.name,
+      descripcion: p.description,
+      tareas: p.tareas,
+      delCliente: p.delCliente,
+    })),
+  }));
+}
+
+/**
+ * Agrega una plantilla a un proyecto, ambos por nombre ("onboarding" en "flecha taxi").
+ * Las tareas del equipo van al responsable (si no se dice, quedan sin asignar: el bot no las
+ * lleva); las del cliente, a los clientes del proyecto.
+ */
+export async function aplicarPlantillaBot(a: AccesoBot, datos: { proyecto: string; plantilla: string; inicio?: string; responsable?: string; lista?: string }) {
+  return conCuenta(a.actor.ctx, async (tx) => {
+    const proyecto = await proyectoPorNombre(tx, a, datos.proyecto);
+    const todas = await tx.listTemplate.findMany({ where: { accountId: a.actor.ctx.accountId }, select: { id: true, name: true } });
+    const q = normal(datos.plantilla);
+    const exactas = todas.filter((p) => p.id === datos.plantilla || normal(p.name) === q);
+    const parecidas = exactas.length ? exactas : todas.filter((p) => normal(p.name).includes(q));
+    if (!parecidas.length) throw new HttpError(404, `No hay una plantilla que se llame «${datos.plantilla}».`);
+    if (parecidas.length > 1) throw new HttpError(409, `«${datos.plantilla}» coincide con varias plantillas: ${parecidas.map((p) => p.name).join(' · ')}. Sé más específico.`);
+    const responsable = datos.responsable ? (await personasPorNombre(tx, a, [datos.responsable]))[0] : null;
+    const r = await aplicarPlantilla(tx, a.actor, proyecto.id, {
+      plantillaId: parecidas[0].id,
+      inicio: datos.inicio,
+      titulo: datos.lista,
+      responsableId: responsable?.id ?? null,
+    });
+    return {
+      proyecto: { id: proyecto.id, nombre: proyecto.name },
+      plantilla: parecidas[0].name,
+      lista: r.lista.title,
+      listaId: r.lista.id,
+      tareas: r.tareas,
+      inicio: r.inicio,
+      responsable: responsable ? { nombre: responsable.name, correo: responsable.email } : null,
+      sinCliente: r.sinCliente,
+      enlace: urlEnCuenta(env.baseDomain, a.slug, `/proyectos/${proyecto.id}/tareas`),
+    };
   });
 }
