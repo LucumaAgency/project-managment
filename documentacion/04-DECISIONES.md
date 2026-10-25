@@ -489,6 +489,16 @@ Hecho; la última completa la tarea. El cliente aprueba o pide cambios en la col
 cada tarea en `TodoDetail.steps`. Descartado: cards como un tipo de elemento nuevo (duplicaría
 asignar, fechas, avisos, plantillas y visibilidad).
 
+**D-69 · Hora y lugar en las tareas, sin zona horaria** (2026-10-25, pedido por el usuario para los shoots)
+`startTime`/`endTime` como "HH:MM" y `location` como texto en `TodoDetail`. La hora se entiende
+en la zona de la cuenta y no se convierte (una agencia trabaja en una zona; un shoot "a las 9"
+es a las 9 allá). Sin hora no hay hora de fin. El lugar abre Google Maps si no es un enlace.
+
+**D-70 · Decisiones del usuario del 2026-10-25**: tablero desplegado; las claves (base y bot)
+no se revocan todavía; el correo no se hace todavía; las plantillas reales ya se probaron; no
+se hará el trámite con Meta (WhatsApp queda fuera hasta nuevo aviso). Fase 3 planificada en
+14-FASE-3-VENDER.md, sin empezar.
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

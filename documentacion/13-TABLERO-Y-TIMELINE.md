@@ -68,5 +68,11 @@ Para coordinar shoots y entregas. Menú **Timeline** (todos, también el cliente
 **Técnico**: `services/timeline.ts`, `GET /timeline?desde=&hasta=&proyecto=` (hasta 120 días y
 600 tareas); `paginas/Timeline.tsx`. Sin migración.
 
-**Todavía no**: hora y lugar del shoot (hoy van en las notas; la app no guarda horas),
-arrastrar barras para cambiar fechas, filtrar por persona.
+**Hora y lugar** (2026-10-25, D-69): las tareas tienen hora (y hora de fin, opcional) y lugar
+(texto o enlace, con «Abrir en el mapa»). Se ven en la lista, la tarjeta, el detalle y el
+timeline (la agenda ordena cada día por hora). El bot de Telegram también los recibe y
+devuelve (`proyectos.py crear --hora 09:00 --hasta 13:00 --lugar "…"`). La hora es la de la
+cuenta (America/Lima), sin convertir. Todavía no hay recordatorio «una hora antes» (los
+recordatorios de la app son por día).
+
+**Todavía no**: arrastrar barras para cambiar fechas, filtrar por persona.

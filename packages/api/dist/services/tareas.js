@@ -24,7 +24,7 @@ const SELECCION_TAREA = {
     position: true,
     createdAt: true,
     creator: { select: { id: true, name: true } },
-    todo: { select: { dueOn: true, startsOn: true, completedAt: true, completedBy: { select: { id: true, name: true } }, fields: true, waitsForId: true, pendingAssigneeIds: true, dueAfterDays: true, columnId: true, steps: true } },
+    todo: { select: { dueOn: true, startsOn: true, completedAt: true, completedBy: { select: { id: true, name: true } }, fields: true, waitsForId: true, pendingAssigneeIds: true, dueAfterDays: true, columnId: true, steps: true, startTime: true, endTime: true, location: true } },
     assignees: { select: { user: { select: { id: true, name: true } } }, orderBy: { createdAt: 'asc' } },
 };
 /** Fecha sin hora (@db.Date) ↔ "AAAA-MM-DD". */
@@ -54,6 +54,10 @@ function aTarea(f, conCuerpo = false) {
         dueOn: aDia(f.todo?.dueOn),
         /** Desde cuándo (para el timeline: con desde y vence es una barra). */
         startsOn: aDia(f.todo?.startsOn),
+        /** Hora y lugar (D-69): "HH:MM" en la hora de la cuenta. */
+        hora: f.todo?.startTime ?? null,
+        horaFin: f.todo?.endTime ?? null,
+        lugar: f.todo?.location ?? null,
         completedAt: f.todo?.completedAt ?? null,
         completedBy: f.todo?.completedBy ?? null,
         assignees: f.assignees.map((a) => ({ userId: a.user.id, name: a.user.name })),
@@ -224,7 +228,7 @@ export async function crearTarea(tx, actor, listaId, datos) {
     const { proyecto, elemento: lista } = await elementoPara(tx, actor, listaId, 'elemento.ver');
     if (lista.type !== 'todolist')
         throw new HttpError(400, 'Las tareas van dentro de una lista.');
-    if ((datos.assigneeIds?.length || datos.dueOn || datos.startsOn) && esCliente(actor.rol)) {
+    if ((datos.assigneeIds?.length || datos.dueOn || datos.startsOn || datos.hora || datos.lugar) && esCliente(actor.rol)) {
         throw new HttpError(403, 'Los responsables y la fecha los pone el equipo.');
     }
     if (datos.campos != null && esCliente(actor.rol))
@@ -241,7 +245,7 @@ export async function crearTarea(tx, actor, listaId, datos) {
     const [vence, empieza] = [desdeDia(datos.dueOn ?? null), desdeDia(datos.startsOn ?? null)];
     if (vence && empieza && empieza > vence)
         throw new HttpError(400, 'La fecha de inicio va antes de la de entrega.');
-    await tx.todoDetail.create({ data: { recordingId: creada.id, dueOn: vence, startsOn: empieza, fields: columnaCampos(campos) } });
+    await tx.todoDetail.create({ data: { recordingId: creada.id, dueOn: vence, startsOn: empieza, fields: columnaCampos(campos), ...horaYLugar(datos, {}) } });
     if (datos.esperaA) {
         // Nace esperando: los responsables quedan previstos y no se les avisa todavía.
         await tx.todoAssignee.deleteMany({ where: { recordingId: creada.id } });
@@ -273,6 +277,12 @@ export async function editarTarea(tx, actor, id, datos) {
         await tx.todoDetail.updateMany({ where: { recordingId: id, waitsForId: { not: null } }, data: { dueAfterDays: datos.diasDespues } });
     }
     const espera = await tx.todoDetail.findUnique({ where: { recordingId: id }, select: { waitsForId: true } });
+    if (datos.hora !== undefined || datos.horaFin !== undefined || datos.lugar !== undefined) {
+        exigir(actor, 'tarea.asignar', { proyecto, elemento }, 'La hora y el lugar los pone el equipo.');
+        const actual = await tx.todoDetail.findUnique({ where: { recordingId: id }, select: { startTime: true, endTime: true, location: true } });
+        const nuevos = horaYLugar(datos, { hora: actual?.startTime ?? null, horaFin: actual?.endTime ?? null, lugar: actual?.location ?? null });
+        await tx.todoDetail.upsert({ where: { recordingId: id }, create: { recordingId: id, ...nuevos }, update: nuevos });
+    }
     if (datos.startsOn !== undefined) {
         exigir(actor, 'tarea.asignar', { proyecto, elemento }, 'Las fechas las pone el equipo.');
         const empieza = desdeDia(datos.startsOn);
@@ -388,4 +398,23 @@ async function tableroDeTarea(tx, fila) {
     if (!b)
         return null;
     return { enabled: b.enabled, columnas: b.columnas, columna: columnaDe(b.columnas, fila.todo?.columnId, !!fila.todo?.completedAt).id };
+}
+const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
+/**
+ * Valida hora, hora de fin y lugar (D-69). Lo que no viene queda como estaba (`antes`).
+ * Sin hora no hay hora de fin; la de fin va después de la de inicio (el mismo día).
+ */
+function horaYLugar(datos, antes) {
+    const hora = datos.hora !== undefined ? datos.hora || null : (antes.hora ?? null);
+    let horaFin = datos.horaFin !== undefined ? datos.horaFin || null : (antes.horaFin ?? null);
+    const lugar = datos.lugar !== undefined ? datos.lugar?.trim().slice(0, 200) || null : (antes.lugar ?? null);
+    if (hora && !HORA.test(hora))
+        throw new HttpError(400, 'La hora va como HH:MM (24 horas).');
+    if (horaFin && !HORA.test(horaFin))
+        throw new HttpError(400, 'La hora de fin va como HH:MM (24 horas).');
+    if (!hora)
+        horaFin = null;
+    if (hora && horaFin && horaFin <= hora)
+        throw new HttpError(400, 'La hora de fin va después de la de inicio.');
+    return { startTime: hora, endTime: horaFin, location: lugar };
 }

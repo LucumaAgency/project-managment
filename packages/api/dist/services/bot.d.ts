@@ -43,6 +43,9 @@ export declare function tareasBot(a: AccesoBot, filtros: {
         };
         lista: string | null;
         vence: string | null;
+        hora: string | null;
+        horaFin: string | null;
+        lugar: string | null;
         vencida: boolean;
         completada: Date | null;
         responsables: {
@@ -58,6 +61,9 @@ export declare function crearTareaBot(a: AccesoBot, datos: {
     lista?: string;
     titulo: string;
     vence?: string | null;
+    hora?: string;
+    horaFin?: string;
+    lugar?: string;
     responsables: string[];
     notas?: string;
 }): Promise<{
@@ -69,6 +75,9 @@ export declare function crearTareaBot(a: AccesoBot, datos: {
     };
     lista: string | null;
     vence: string | null;
+    hora: string | null;
+    horaFin: string | null;
+    lugar: string | null;
     responsables: {
         nombre: string;
         correo: string;

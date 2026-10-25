@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { api, ErrorApi, type DatosTimeline, type TareaTimeline } from '../api';
+import { api, enlaceLugar, ErrorApi, textoHora, type DatosTimeline, type TareaTimeline } from '../api';
 import Icono from '../componentes/Icono';
 
 /** AAAA-MM-DD en la hora local, y aritmética de días sin zonas horarias. */
@@ -153,7 +153,7 @@ function Linea({ datos, dias, nombre, abrir, unProyecto }: Props) {
               <div key={t.id} style={{ display: 'contents' }}>
                 <button type="button" className="tl-nombre" onClick={() => abrir(t)} title={t.title}>
                   <span>{t.title}</span>
-                  <span className="meta">{t.responsables.map((r) => r.name.split(' ')[0]).join(', ') || t.lista}</span>
+                  <span className="meta">{t.hora ? `${textoHora(t.hora, t.horaFin)} · ` : ''}{t.responsables.map((r) => r.name.split(' ')[0]).join(', ') || t.lista}</span>
                 </button>
                 <div className="tl-carril" style={{ gridColumn: `2 / span ${dias.length}` }}>
                   <button
@@ -161,7 +161,7 @@ function Linea({ datos, dias, nombre, abrir, unProyecto }: Props) {
                     className={`tl-barra ${estado(t)}${punto ? ' punto' : ''}${t.desde < inicio ? ' corta-ini' : ''}${t.hasta > fin ? ' corta-fin' : ''}`}
                     style={{ left: `${(a / dias.length) * 100}%`, width: `${((b - a + 1) / dias.length) * 100}%` }}
                     onClick={() => abrir(t)}
-                    title={`${t.title} · ${punto ? fechaCorta(t.hasta) : `${fechaCorta(t.desde)} – ${fechaCorta(t.hasta)}`}${t.columna ? ` · ${t.columna.nombre}` : ''}`}
+                    title={`${t.title} · ${punto ? fechaCorta(t.hasta) : `${fechaCorta(t.desde)} – ${fechaCorta(t.hasta)}`}${t.hora ? ` · ${textoHora(t.hora, t.horaFin)}` : ''}${t.lugar ? ` · ${t.lugar}` : ''}${t.columna ? ` · ${t.columna.nombre}` : ''}`}
                   >
                     {!punto && <span>{t.title}</span>}
                   </button>
@@ -197,7 +197,7 @@ function Agenda({ datos, dias, nombre, abrir, unProyecto }: Props) {
               <li key={t.id}>
                 <button type="button" onClick={() => abrir(t)}>
                   <span className={`punto-estado ${estado(t)}`} />
-                  <span className="agenda-titulo">{t.title}</span>
+                  <span className="agenda-titulo">{t.hora && <span className="agenda-hora">{textoHora(t.hora, t.horaFin)}</span>}{t.title}</span>
                   <span className="meta">
                     {!unProyecto && `${nombre.get(t.projectId) ?? ''} · `}
                     {t.desde !== t.hasta && (diaDe(t) === t.hasta ? `desde ${fechaCorta(t.desde)} · ` : `hasta ${fechaCorta(t.hasta)} · `)}
@@ -205,6 +205,11 @@ function Agenda({ datos, dias, nombre, abrir, unProyecto }: Props) {
                     {t.responsables.map((r) => r.name.split(' ')[0]).join(', ') || 'sin responsable'}
                   </span>
                 </button>
+                {t.lugar && (
+                  <a className="agenda-lugar" href={enlaceLugar(t.lugar)} target="_blank" rel="noopener noreferrer">
+                    <Icono nombre="lugar" tam={12} />{t.lugar}
+                  </a>
+                )}
               </li>
             ))}
           </ul>

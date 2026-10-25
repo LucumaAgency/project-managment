@@ -130,7 +130,7 @@ cómo técnico está en [03-ARQUITECTURA.md](03-ARQUITECTURA.md).
 | Módulo | Por qué espera | Fase |
 |---|---|---|
 | Chat por proyecto | Lo más caro técnicamente (tiempo real, no leídos, reconexión), compite con WhatsApp y dispersa decisiones. Decidido 2026-10-24 | 2, si el uso lo pide |
-| WhatsApp | Depende de trámites con Meta; ver [06](06-WHATSAPP-FUTURO.md). Decidido 2026-10-24 | 2 |
+| WhatsApp | Depende de trámites con Meta; ver [06](06-WHATSAPP-FUTURO.md). El usuario decidió no hacerlo por ahora (2026-10-25, D-70) | Sin fecha |
 | Aprobaciones de piezas | Diferenciador; conviene diseñarlo con uso real | 2 |
 | Timeline, columnas y pasos en plantillas, esperar a varias tareas a la vez | Las plantillas (etapas 1 a 4: listas, tareas que piden algo, ficha, accesos, "se activa cuando") ya están; ver [12](12-PLANTILLAS-Y-FLUJOS.md) | 2 |
 | Calendario e hitos | No bloquea el uso diario | 2 |
@@ -138,7 +138,7 @@ cómo técnico está en [03-ARQUITECTURA.md](03-ARQUITECTURA.md).
 | Hill charts o barra de progreso | Opcional | 2 |
 | Conexión con el CRM | Lead ganado → proyecto | 2 |
 | Búsqueda avanzada (filtros, Meilisearch) | Postgres alcanza al inicio | 2 o 3 |
-| Cobros, registro con prueba, superadmin | Solo para vender | 3 |
+| Cobros, registro con prueba, superadmin | Solo para vender; plan en [14](14-FASE-3-VENDER.md) | 3 |
 | Dominio propio por cliente | Si lo piden | 3 |
 | App móvil nativa | El responsive alcanza | Más adelante |
 | Facturación, control de horas, Gantt | No es el foco | No previsto |

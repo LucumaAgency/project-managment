@@ -19,6 +19,9 @@ export declare function timeline(tx: Tx, actor: Actor, filtros: {
         desde: string | null;
         hasta: string | null;
         completada: boolean;
+        hora: string | null;
+        horaFin: string | null;
+        lugar: string | null;
         columna: {
             nombre: string;
             tipo: import("./tablero.js").TipoColumna | null;

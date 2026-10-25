@@ -59,7 +59,7 @@ export async function timeline(tx, actor, filtros) {
             parentId: true,
             visibleToClients: true,
             parent: { select: { title: true } },
-            todo: { select: { dueOn: true, startsOn: true, completedAt: true, columnId: true } },
+            todo: { select: { dueOn: true, startsOn: true, completedAt: true, columnId: true, startTime: true, endTime: true, location: true } },
             assignees: { select: { user: { select: { id: true, name: true } } } },
         },
         orderBy: [{ todo: { dueOn: { sort: 'asc', nulls: 'last' } } }, { createdAt: 'asc' }],
@@ -70,7 +70,8 @@ export async function timeline(tx, actor, filtros) {
         desde,
         hasta,
         proyectos,
-        tareas: filas.map((f) => {
+        tareas: filas
+            .map((f) => {
             const b = tableros.get(f.parentId);
             const col = b?.enabled ? columnaDe(b.columnas, f.todo?.columnId, !!f.todo?.completedAt) : null;
             const vence = aDia(f.todo?.dueOn);
@@ -83,11 +84,16 @@ export async function timeline(tx, actor, filtros) {
                 desde: empieza ?? vence,
                 hasta: vence ?? empieza,
                 completada: !!f.todo?.completedAt,
+                hora: f.todo?.startTime ?? null,
+                horaFin: f.todo?.endTime ?? null,
+                lugar: f.todo?.location ?? null,
                 columna: col ? { nombre: col.nombre, tipo: col.tipo ?? null } : null,
                 visibleToClients: f.visibleToClients,
                 responsables: f.assignees.map((a) => ({ userId: a.user.id, name: a.user.name })),
             };
-        }),
+        })
+            // Por día de entrega y, dentro del día, por hora (lo que no tiene hora, al final).
+            .sort((a, b) => (a.hasta ?? '').localeCompare(b.hasta ?? '') || (a.hora ?? '99').localeCompare(b.hora ?? '99')),
         recortado: filas.length === MAX_TAREAS,
     };
 }

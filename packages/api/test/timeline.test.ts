@@ -68,6 +68,23 @@ describe('timeline', () => {
     expect((await owner.get('/timeline?desde=2031-03-01&hasta=2031-12-31')).status).toBe(400);
   });
 
+  it('hora y lugar: se guardan, ordenan el día y se validan; los pone el equipo', async () => {
+    const l = (await owner.post(`/proyectos/${A.projectId}/listas`, { title: 'Shoots de marzo', visibleToClients: true })).json.lista.id;
+    const tarde = (await owner.post(`/listas/${l}/tareas`, { title: 'Shoot tarde', visibleToClients: true, dueOn: '2031-03-20', hora: '15:00', horaFin: '18:00', lugar: 'Cochera Surquillo' })).json.tarea;
+    expect(tarde).toMatchObject({ hora: '15:00', horaFin: '18:00', lugar: 'Cochera Surquillo' });
+    await owner.post(`/listas/${l}/tareas`, { title: 'Shoot mañana', visibleToClients: true, dueOn: '2031-03-20', hora: '09:00' });
+    await owner.post(`/listas/${l}/tareas`, { title: 'Sin hora', visibleToClients: true, dueOn: '2031-03-20' });
+    const del20 = (await client.get(rango())).json.tareas.filter((t: { hasta: string }) => t.hasta === '2031-03-20');
+    expect(del20.map((t: { title: string }) => t.title)).toEqual(['Shoot mañana', 'Shoot tarde', 'Sin hora']);
+    expect(del20[1]).toMatchObject({ hora: '15:00', horaFin: '18:00', lugar: 'Cochera Surquillo' });
+    expect((await owner.patch(`/tareas/${tarde.id}`, { horaFin: '14:00' })).status).toBe(400);
+    expect((await owner.patch(`/tareas/${tarde.id}`, { hora: '25:00' })).status).toBe(400);
+    expect((await client.patch(`/tareas/${tarde.id}`, { lugar: 'Otro' })).status).toBe(403);
+    // Quitar la hora quita la de fin.
+    const sin = (await owner.patch(`/tareas/${tarde.id}`, { hora: null })).json.tarea;
+    expect(sin).toMatchObject({ hora: null, horaFin: null, lugar: 'Cochera Surquillo' });
+  });
+
   it('la fecha de inicio va antes de la de entrega, y la pone el equipo', async () => {
     const l = (await owner.post(`/proyectos/${A.projectId}/listas`, { title: 'X', visibleToClients: true })).json.lista.id;
     expect((await owner.post(`/listas/${l}/tareas`, { title: 'Mal', startsOn: '2031-03-10', dueOn: '2031-03-01' })).status).toBe(400);

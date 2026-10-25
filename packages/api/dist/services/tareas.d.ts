@@ -27,6 +27,9 @@ type FilaTarea = {
         dueAfterDays: number | null;
         columnId: string | null;
         steps: unknown;
+        startTime: string | null;
+        endTime: string | null;
+        location: string | null;
     } | null;
     assignees: {
         user: {
@@ -48,6 +51,10 @@ declare function aTarea(f: FilaTarea, conCuerpo?: boolean): {
     dueOn: string | null;
     /** Desde cuándo (para el timeline: con desde y vence es una barra). */
     startsOn: string | null;
+    /** Hora y lugar (D-69): "HH:MM" en la hora de la cuenta. */
+    hora: string | null;
+    horaFin: string | null;
+    lugar: string | null;
     completedAt: Date | null;
     completedBy: {
         id: string;
@@ -107,6 +114,10 @@ export declare function listarTareas(tx: Tx, actor: Actor, proyecto: ProyectoCar
             dueOn: string | null;
             /** Desde cuándo (para el timeline: con desde y vence es una barra). */
             startsOn: string | null;
+            /** Hora y lugar (D-69): "HH:MM" en la hora de la cuenta. */
+            hora: string | null;
+            horaFin: string | null;
+            lugar: string | null;
             completedAt: Date | null;
             completedBy: {
                 id: string;
@@ -177,6 +188,10 @@ export declare function tareaDetalle(tx: Tx, actor: Actor, id: string): Promise<
         dueOn: string | null;
         /** Desde cuándo (para el timeline: con desde y vence es una barra). */
         startsOn: string | null;
+        /** Hora y lugar (D-69): "HH:MM" en la hora de la cuenta. */
+        hora: string | null;
+        horaFin: string | null;
+        lugar: string | null;
         completedAt: Date | null;
         completedBy: {
             id: string;
@@ -215,6 +230,10 @@ export interface DatosTarea {
     dueOn?: string | null;
     /** Desde cuándo (timeline). Tiene que ser antes o igual que la entrega. */
     startsOn?: string | null;
+    /** Hora y lugar (D-69). */
+    hora?: string | null;
+    horaFin?: string | null;
+    lugar?: string | null;
     assigneeIds?: string[];
     /** Lo que pide la tarea (D-65); null o [] = nada. Solo el equipo. */
     campos?: unknown;
@@ -261,6 +280,10 @@ export declare function crearTarea(tx: Tx, actor: Actor, listaId: string, datos:
     dueOn: string | null;
     /** Desde cuándo (para el timeline: con desde y vence es una barra). */
     startsOn: string | null;
+    /** Hora y lugar (D-69): "HH:MM" en la hora de la cuenta. */
+    hora: string | null;
+    horaFin: string | null;
+    lugar: string | null;
     completedAt: Date | null;
     completedBy: {
         id: string;
@@ -317,6 +340,10 @@ export declare function editarTarea(tx: Tx, actor: Actor, id: string, datos: Dat
     dueOn: string | null;
     /** Desde cuándo (para el timeline: con desde y vence es una barra). */
     startsOn: string | null;
+    /** Hora y lugar (D-69): "HH:MM" en la hora de la cuenta. */
+    hora: string | null;
+    horaFin: string | null;
+    lugar: string | null;
     completedAt: Date | null;
     completedBy: {
         id: string;
@@ -373,6 +400,10 @@ export declare function completarTarea(tx: Tx, actor: Actor, id: string, complet
     dueOn: string | null;
     /** Desde cuándo (para el timeline: con desde y vence es una barra). */
     startsOn: string | null;
+    /** Hora y lugar (D-69): "HH:MM" en la hora de la cuenta. */
+    hora: string | null;
+    horaFin: string | null;
+    lugar: string | null;
     completedAt: Date | null;
     completedBy: {
         id: string;
@@ -439,6 +470,10 @@ export declare const completarPorRespuestas: (tx: Tx, actor: Actor, id: string) 
     dueOn: string | null;
     /** Desde cuándo (para el timeline: con desde y vence es una barra). */
     startsOn: string | null;
+    /** Hora y lugar (D-69): "HH:MM" en la hora de la cuenta. */
+    hora: string | null;
+    horaFin: string | null;
+    lugar: string | null;
     completedAt: Date | null;
     completedBy: {
         id: string;
@@ -496,6 +531,10 @@ export declare function activarAhora(tx: Tx, actor: Actor, id: string): Promise<
     dueOn: string | null;
     /** Desde cuándo (para el timeline: con desde y vence es una barra). */
     startsOn: string | null;
+    /** Hora y lugar (D-69): "HH:MM" en la hora de la cuenta. */
+    hora: string | null;
+    horaFin: string | null;
+    lugar: string | null;
     completedAt: Date | null;
     completedBy: {
         id: string;
