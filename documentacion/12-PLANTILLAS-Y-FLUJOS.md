@@ -1,6 +1,6 @@
 # 12 · Plantillas y flujos (diseño en conversación)
 
-Estado: **propuesta, sin construir** (ajustada con las respuestas del 2026-10-25). Se abrió el 2026-10-24 a pedido del usuario: "algo que me
+Estado: **diseño confirmado por el usuario el 2026-10-25 (D-64); sin construir**, falta su visto bueno para empezar. Se abrió el 2026-10-24 a pedido del usuario: "algo que me
 gusta bastante de Basecamp es armar flujos, por ejemplo un onboarding de un cliente, y que haya
 una plantilla de cosas". Falta que el usuario responda las preguntas del final antes de decidir
 el alcance (luego va a 04-DECISIONES y al plan).
@@ -141,3 +141,26 @@ ahorra; el orden y las fechas que se corren se aprecian una vez que ya se usan p
    onboarding es solo interno por ahora?
 4. **Otros flujos** que se usarían después (lanzamiento de web, campaña de Ads, mes de contenido
    para redes), para que el diseño cubra todos y no solo el onboarding.
+
+## Confirmado (2026-10-25)
+
+- Los dos borradores (Onboarding y Desarrollo web) sirven tal cual.
+- Accesos: **opción B**, campo protegido (solo el equipo, se ve con un clic, fuera de búsqueda,
+  avisos, actividad y exportación, con registro de quién lo vio). Se guarda cifrado con una
+  clave del servidor (`ACCESOS_CLAVE` en el `.env`), así el respaldo y la base no lo tienen en
+  claro.
+- Contrato: lo puede subir **cualquiera de los dos**. La tarea es del equipo, pero el cliente la
+  ve y también puede subir el archivo.
+- Primera plantilla de servicio: **Desarrollo web**.
+
+## Plan de construcción (a confirmar)
+
+| Etapa | Qué | Días aprox. |
+|---|---|---|
+| 1 | Plantillas de lista: sección Plantillas, tareas "cliente / equipo / cualquiera", fechas relativas opcionales; "Agregar plantilla" en un proyecto; también por el bot | 2 |
+| 2 | Tareas que piden algo (datos, archivos, enlaces), se marcan solas al responder; ficha del cliente en el proyecto | 2 |
+| 3 | Campo protegido para accesos (cifrado, ver con un clic, registro de quién lo vio) | 1 |
+| 4 | "Se activa cuando…" (ej. verificar el depósito tras la constancia) | 0,5 |
+| 5 | Cargar Onboarding y Desarrollo web como primeras plantillas; probar con un cliente real | 0,5 |
+
+Cada etapa sale a producción por separado y se puede usar sin esperar a las siguientes.
