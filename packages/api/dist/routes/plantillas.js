@@ -10,6 +10,7 @@ const tarea = z.object({
     audience: z.enum(['team', 'client', 'any']),
     dayOffset: z.number().int().min(1).max(MAX_DIA).nullable().optional(),
     campos: z.array(z.record(z.unknown())).max(MAX_CAMPOS).nullable().optional(),
+    waitsFor: z.number().int().min(1).max(MAX_TAREAS_PLANTILLA).nullable().optional(),
 });
 const plantilla = z.object({
     name: z.string().max(200, 'Máximo 200 caracteres.'),

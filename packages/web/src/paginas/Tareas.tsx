@@ -351,6 +351,11 @@ function FilaTarea({ t, lista, esCliente: cliente, puedeCompletar, sobre, onAbri
         <span className="tarea-meta">
           {t.assignees.length > 0 && <span>{t.assignees.map((a) => a.name.split(' ')[0]).join(', ')}</span>}
           {t.dueOn && <span className={`chip ${claseFecha(t)}`}>{fechaCorta(t.dueOn)}</span>}
+          {t.espera && (
+            <span className="chip chip-gris" title="Se activa cuando se complete la otra tarea">
+              Espera: {t.espera.espera.title}
+            </span>
+          )}
           {t.pide > 0 && (
             <span className={`chip ${t.respondidos === t.pide ? 'chip-verde' : 'chip-gris'}`} title="Respuestas de lo que pide la tarea">
               Pide {t.respondidos ?? 0}/{t.pide}
@@ -520,9 +525,13 @@ function AgregarPlantilla({ projectId, onCerrar, onAgregada }: { projectId: stri
               <ul className="vista-plantilla">
                 {detalle.plantilla.items.map((i, n) => (
                   <li key={n}>
-                    <span>{i.title}</span>
+                    <span>{n + 1}. {i.title}</span>
                     <span className={`chip ${i.audience === 'team' ? 'chip-gris' : 'chip-verde'}`}>{NOMBRE_AUDIENCIA[i.audience]}</span>
-                    {fechaDe(i.dayOffset) && <span className="meta">{fechaCorta(fechaDe(i.dayOffset)!)}</span>}
+                    {i.waitsFor ? (
+                      <span className="meta">al completarse la {i.waitsFor}</span>
+                    ) : (
+                      fechaDe(i.dayOffset) && <span className="meta">{fechaCorta(fechaDe(i.dayOffset)!)}</span>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -552,6 +561,8 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [pidiendo, setPidiendo] = useState(false);
+  const [esperaA, setEsperaA] = useState('');
+  const [diasDespues, setDiasDespues] = useState('');
   const [campos, setCampos] = useState<Campo[]>([]);
   useLeerAvisosDe(id);
 
@@ -561,7 +572,10 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
         setD(r);
         setTitulo(r.tarea.title);
         setDia(r.tarea.dueOn ?? '');
-        setResponsables(r.tarea.assignees.map((a) => a.userId));
+        // Mientras espera, "responsables" son los que se asignarán al activarse.
+        setResponsables(r.tarea.espera ? r.tarea.espera.seAsignaraA.map((a) => a.userId) : r.tarea.assignees.map((a) => a.userId));
+        setEsperaA(r.tarea.espera?.espera.id ?? '');
+        setDiasDespues(r.tarea.espera?.diasDespues ? String(r.tarea.espera.diasDespues) : '');
         setVisible(r.tarea.visibleToClients);
         setCampos((r.tarea.campos ?? []).map(({ respuesta: _, ...c }) => c));
       })
@@ -589,7 +603,13 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
     if (permisos.editar && notasCambiaron) cambios.body = notas;
     if (permisos.cambiarVisibilidad && visible !== t.visibleToClients) cambios.visibleToClients = visible;
     if (permisos.asignar && (dia || null) !== t.dueOn) cambios.dueOn = dia || null;
-    const antes = t.assignees.map((a) => a.userId).sort().join();
+    const antes = (t.espera ? t.espera.seAsignaraA : t.assignees).map((a) => a.userId).sort().join();
+    if (permisos.asignar) {
+      const esperaAntes = t.espera?.espera.id ?? '';
+      if (esperaA !== esperaAntes && !(t.espera?.espera.borrada && !esperaA && !esperaAntes)) cambios.esperaA = esperaA || null;
+      const dias = diasDespues ? Number(diasDespues) : null;
+      if ((esperaA || t.espera) && dias !== (t.espera?.diasDespues ?? null)) cambios.diasDespues = dias;
+    }
     // Si pasó a interna, los clientes responsables salen solos: no mandarlos.
     const validos = responsables.filter((r) => personas.some((p) => p.userId === r));
     if (permisos.asignar && validos.slice().sort().join() !== antes) cambios.assigneeIds = validos;
@@ -703,7 +723,43 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
           )}
         </div>
 
-        <label>Responsables</label>
+        {(permisos.asignar || t.espera) && !t.completedAt && (
+          <>
+            <label htmlFor="t-espera">Se activa cuando se complete</label>
+            {permisos.asignar ? (
+              <select id="t-espera" value={esperaA} onChange={(e) => setEsperaA(e.target.value)}>
+                <option value="">{t.espera?.espera.borrada ? '(la tarea que esperaba se borró)' : 'Ya está activa'}</option>
+                {listas.flatMap((l) =>
+                  l.tareas
+                    .filter((x) => x.id !== t.id && !x.completedAt)
+                    .map((x) => (
+                      <option key={x.id} value={x.id}>{l.title} · {x.title}</option>
+                    ))
+                )}
+              </select>
+            ) : (
+              <p className="meta">«{t.espera!.espera.title}»</p>
+            )}
+            {t.espera && (
+              <p className="ayuda" style={{ marginTop: 4 }}>
+                Mientras espera no tiene responsables ni fecha.
+                {t.espera.seAsignaraA.length > 0 && ` Al activarse se asigna a ${t.espera.seAsignaraA.map((a) => a.name).join(', ')}`}
+                {t.espera.diasDespues ? ` y vence ${t.espera.diasDespues === 1 ? 'ese mismo día' : `${t.espera.diasDespues} días después (contando ese día)`}.` : t.espera.seAsignaraA.length ? '.' : ''}
+                {permisos.asignar && (
+                  <> <button type="button" className="btn-texto" onClick={() => simple(() => api(`/tareas/${t.id}/activar`, { body: {} }))}>Activar ahora</button></>
+                )}
+              </p>
+            )}
+            {permisos.asignar && esperaA && (
+              <>
+                <label htmlFor="t-dias">Vence a los (días desde que se activa)</label>
+                <input id="t-dias" type="number" min={1} max={365} placeholder="Sin fecha" value={diasDespues} onChange={(e) => setDiasDespues(e.target.value)} style={{ maxWidth: 160 }} />
+              </>
+            )}
+          </>
+        )}
+
+        <label>{t.espera || esperaA ? 'Se asignará a' : 'Responsables'}</label>
         {permisos.asignar ? (
           <div className="opciones-personas">
             {personas.map((p) => (

@@ -10,6 +10,7 @@ import { registrarEvento } from './eventos.js';
 import { mencionables } from './menciones.js';
 import { suscribir } from './suscripciones.js';
 import { avisar, seguidoresComo } from './avisos.js';
+import { activarLasQueEsperan, esperasDe, fijarEspera, fijarPrevistos, olvidarEspera } from './espera.js';
 import { camposConRespuestas, columnaCampos, fijarCampos, leerCampos, normalizarCampos, puedeResponder, respuestasDe, vistasDeAccesos } from './campos.js';
 import { exigir, puede } from './permisos.js';
 const SELECCION_TAREA = {
@@ -22,7 +23,7 @@ const SELECCION_TAREA = {
     position: true,
     createdAt: true,
     creator: { select: { id: true, name: true } },
-    todo: { select: { dueOn: true, completedAt: true, completedBy: { select: { id: true, name: true } }, fields: true } },
+    todo: { select: { dueOn: true, completedAt: true, completedBy: { select: { id: true, name: true } }, fields: true, waitsForId: true, pendingAssigneeIds: true, dueAfterDays: true } },
     assignees: { select: { user: { select: { id: true, name: true } } }, orderBy: { createdAt: 'asc' } },
 };
 /** Fecha sin hora (@db.Date) ↔ "AAAA-MM-DD". */
@@ -78,6 +79,7 @@ export async function listarTareas(tx, actor, proyecto) {
         _count: { _all: true },
     });
     const comentariosDe = new Map(conteos.map((c) => [c.parentId, c._count._all]));
+    const esperas = await esperasDe(tx, actor, tareas);
     const conCampos = tareas.filter((t) => leerCampos(t.todo?.fields).length).map((t) => t.id);
     const respondidos = conCampos.length
         ? new Map((await tx.taskAnswer.groupBy({ by: ['recordingId'], where: { recordingId: { in: conCampos } }, _count: { _all: true } })).map((r) => [r.recordingId, r._count._all]))
@@ -108,7 +110,7 @@ export async function listarTareas(tx, actor, proyecto) {
             visibleToClients: l.visibleToClients,
             position: l.position,
             permisos: permisoLista(l),
-            tareas: tareas.filter((t) => t.parentId === l.id).map((t) => ({ ...aTarea(t), comentarios: comentariosDe.get(t.id) ?? 0, respondidos: respondidos.get(t.id) ?? 0 })),
+            tareas: tareas.filter((t) => t.parentId === l.id).map((t) => ({ ...aTarea(t), comentarios: comentariosDe.get(t.id) ?? 0, respondidos: respondidos.get(t.id) ?? 0, espera: esperas.get(t.id) ?? null })),
         })),
         permisos: {
             crearLista: puede(actor, 'elemento.crear', { proyecto, tipo: 'todolist' }),
@@ -135,6 +137,7 @@ export async function tareaDetalle(tx, actor, id) {
             ...aTarea(fila, true),
             visibleParaCliente: elemento.visibleEnCadena,
             campos: camposConRespuestas(campos, respuestas),
+            espera: (await esperasDe(tx, actor, [fila])).get(id) ?? null,
             // Quién vio los accesos protegidos (D-66): solo para el equipo.
             ...(campos.some((c) => c.tipo === 'acceso') && !esCliente(actor.rol) ? { vistasAccesos: await vistasDeAccesos(tx, id) } : {}),
         },
@@ -212,7 +215,15 @@ export async function crearTarea(tx, actor, listaId, datos) {
     });
     const visible = creada.visibleToClients && lista.visibleEnCadena;
     await tx.todoDetail.create({ data: { recordingId: creada.id, dueOn: desdeDia(datos.dueOn ?? null), fields: columnaCampos(campos) } });
-    if (datos.assigneeIds?.length) {
+    if (datos.esperaA) {
+        // Nace esperando: los responsables quedan previstos y no se les avisa todavía.
+        await tx.todoAssignee.deleteMany({ where: { recordingId: creada.id } });
+        await tx.todoDetail.update({ where: { recordingId: creada.id }, data: { pendingAssigneeIds: [] } });
+        await fijarEspera(tx, actor, creada.id, datos.esperaA, datos.diasDespues ?? null);
+        if (datos.assigneeIds?.length)
+            await fijarPrevistos(tx, actor, proyecto.id, creada.id, datos.assigneeIds);
+    }
+    else if (datos.assigneeIds?.length) {
         await fijarResponsables(tx, actor, { projectId: proyecto.id, tareaId: creada.id, ids: datos.assigneeIds, visibleParaClientes: visible });
     }
     return (await tareaDetalle(tx, actor, creada.id)).tarea;
@@ -226,6 +237,15 @@ export async function editarTarea(tx, actor, id, datos) {
         await editarElemento(tx, actor, id, generales);
     if (datos.campos !== undefined)
         await fijarCampos(tx, actor, id, datos.campos);
+    if (datos.esperaA !== undefined)
+        await fijarEspera(tx, actor, id, datos.esperaA, datos.diasDespues);
+    else if (datos.diasDespues !== undefined) {
+        exigir(actor, 'tarea.asignar', { proyecto, elemento }, 'Esto lo define el equipo.');
+        if (datos.diasDespues !== null && (!Number.isInteger(datos.diasDespues) || datos.diasDespues < 1 || datos.diasDespues > 365))
+            throw new HttpError(400, 'Los días van de 1 a 365.');
+        await tx.todoDetail.updateMany({ where: { recordingId: id, waitsForId: { not: null } }, data: { dueAfterDays: datos.diasDespues } });
+    }
+    const espera = await tx.todoDetail.findUnique({ where: { recordingId: id }, select: { waitsForId: true } });
     if (datos.dueOn !== undefined || datos.assigneeIds !== undefined) {
         exigir(actor, 'tarea.asignar', { proyecto, elemento }, 'Los responsables y la fecha los pone el equipo.');
     }
@@ -251,7 +271,11 @@ export async function editarTarea(tx, actor, id, datos) {
             });
         }
     }
-    if (datos.assigneeIds !== undefined) {
+    if (datos.assigneeIds !== undefined && espera?.waitsForId) {
+        // Mientras espera, los responsables son los previstos: se asignan (y se avisa) al activarse.
+        await fijarPrevistos(tx, actor, proyecto.id, id, datos.assigneeIds);
+    }
+    else if (datos.assigneeIds !== undefined) {
         await fijarResponsables(tx, actor, { projectId: proyecto.id, tareaId: id, ids: datos.assigneeIds, visibleParaClientes: ahora.visibleEnCadena });
     }
     else if (datos.visibleToClients === false) {
@@ -279,8 +303,11 @@ export async function completarTarea(tx, actor, id, completar) {
         action: completar ? 'completed' : 'reopened',
         visibleToClients: elemento.visibleEnCadena,
     });
-    // Completar avisa a quienes siguen la tarea (reabrir no: suele ser una corrección).
+    // Completar avisa a quienes siguen la tarea (reabrir no: suele ser una corrección), y activa
+    // las tareas que la esperaban (D-67).
     if (completar) {
+        await olvidarEspera(tx, id);
+        await activarLasQueEsperan(tx, actor, id);
         await avisar(tx, {
             accountId: actor.ctx.accountId,
             eventId,
@@ -294,3 +321,8 @@ export async function completarTarea(tx, actor, id, completar) {
 }
 /** Para campos.ts: completar cuando ya está todo lo que pide. */
 export const completarPorRespuestas = (tx, actor, id) => completarTarea(tx, actor, id, true);
+/** Activar ahora una tarea que espera (el equipo, por ejemplo si la anterior se borró). */
+export async function activarAhora(tx, actor, id) {
+    await fijarEspera(tx, actor, id, null);
+    return (await tareaDetalle(tx, actor, id)).tarea;
+}

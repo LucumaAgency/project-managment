@@ -69,6 +69,7 @@ export function frase(e: Evento): string {
     case 'completed': return `completó ${algo}`;
     case 'reopened': return `reabrió ${algo}`;
     case 'answered': return `respondió ${algo}`;
+    case 'activated': return `${e.detalles.porOtra ? 'completó el paso anterior y se activó' : 'activó'} ${algo}${e.detalles.personas.length ? ` para ${quienes}` : ''}`;
     case 'assigned': return `asignó ${algo} a ${quienes}`;
     case 'unassigned': return `quitó a ${quienes} de ${algo}`;
     case 'due_changed': return e.detalles.to ? `puso fecha ${fechaCorta(e.detalles.to)} a ${algo}` : `quitó la fecha de ${algo}`;

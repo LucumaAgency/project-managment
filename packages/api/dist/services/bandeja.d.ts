@@ -37,6 +37,7 @@ export declare function listarBandeja(tx: Tx, actor: Actor, opciones?: {
             } | null;
             detalles: {
                 personas: string[];
+                porOtra?: boolean | undefined;
                 title?: {} | undefined;
                 name?: {} | undefined;
                 from?: {} | null | undefined;
@@ -46,7 +47,7 @@ export declare function listarBandeja(tx: Tx, actor: Actor, opciones?: {
         recordatorio: {
             tarea: string | null;
             dueOn: string | null;
-            tipo: "vencida" | "manana";
+            tipo: "manana" | "vencida";
             completada: boolean;
         } | null;
     }[];

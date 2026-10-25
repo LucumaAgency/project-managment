@@ -37,7 +37,7 @@ const SELECCION = {
     description: true,
     updatedAt: true,
     items: {
-        select: { id: true, title: true, notes: true, audience: true, dayOffset: true, position: true, fields: true },
+        select: { id: true, title: true, notes: true, audience: true, dayOffset: true, position: true, fields: true, waitsFor: true },
         orderBy: { position: 'asc' },
     },
 };
@@ -78,9 +78,18 @@ function limpiar(datos) {
     const name = datos.name.trim();
     if (!name)
         throw new HttpError(400, 'Falta el nombre de la plantilla.');
+    // Las filas sin título se descartan: las esperas se renumeran a las posiciones nuevas.
+    const nuevaPos = new Map();
+    datos.items.forEach((i, n) => i.title.trim() && nuevaPos.set(n + 1, nuevaPos.size + 1));
     const items = datos.items
         .filter((i) => i.title.trim())
-        .map((i) => ({ ...i, title: i.title.trim(), notes: i.notes?.trim() || null, campos: normalizarCampos(i.campos) }));
+        .map((i, n) => {
+        const espera = i.waitsFor ? (nuevaPos.get(i.waitsFor) ?? null) : null;
+        if (i.waitsFor && (!Number.isInteger(i.waitsFor) || !espera || espera >= n + 1)) {
+            throw new HttpError(400, `«${i.title.trim()}» solo puede esperar a una tarea anterior de la plantilla.`);
+        }
+        return { ...i, title: i.title.trim(), notes: i.notes?.trim() || null, campos: normalizarCampos(i.campos), waitsFor: espera };
+    });
     if (items.length > MAX_TAREAS_PLANTILLA)
         throw new HttpError(400, `Una plantilla tiene como máximo ${MAX_TAREAS_PLANTILLA} tareas.`);
     for (const i of items) {
@@ -114,6 +123,7 @@ export async function guardarPlantilla(tx, actor, id, datos) {
                 audience: i.audience,
                 dayOffset: i.dayOffset ?? null,
                 fields: columnaCampos(i.campos),
+                waitsFor: i.waitsFor ?? null,
                 position: n + 1,
             })),
         });
@@ -143,7 +153,8 @@ export async function plantillaDesdeLista(tx, actor, listaId, nombre) {
             title: true,
             bodyText: true,
             visibleToClients: true,
-            todo: { select: { dueOn: true, fields: true } },
+            id: true,
+            todo: { select: { dueOn: true, fields: true, waitsForId: true, pendingAssigneeIds: true, dueAfterDays: true } },
             assignees: { select: { userId: true } },
         },
         orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
@@ -151,11 +162,14 @@ export async function plantillaDesdeLista(tx, actor, listaId, nombre) {
     const clientes = new Set((await tx.membership.findMany({ where: { accountId: actor.ctx.accountId, role: 'client' }, select: { userId: true } })).map((m) => m.userId));
     const zona = (await tx.account.findUniqueOrThrow({ where: { id: actor.ctx.accountId }, select: { timeZone: true } })).timeZone;
     const inicio = diaEn(zona, lista.createdAt);
-    const items = tareas.map((t) => {
-        const deCliente = t.assignees.filter((a) => clientes.has(a.userId)).length;
+    const posicion = new Map(tareas.map((t, n) => [t.id, n + 1]));
+    const items = tareas.map((t, n) => {
+        // Una tarea que espera guarda a quién se asignará; eso dice para quién es.
+        const quienes = t.todo?.waitsForId ? (Array.isArray(t.todo.pendingAssigneeIds) ? t.todo.pendingAssigneeIds.map((userId) => ({ userId })) : []) : t.assignees;
+        const deCliente = quienes.filter((a) => clientes.has(a.userId)).length;
         const audience = !(t.visibleToClients && elemento.visibleEnCadena)
             ? 'team'
-            : deCliente > 0 && deCliente === t.assignees.length
+            : deCliente > 0 && deCliente === quienes.length
                 ? 'client'
                 : 'any';
         const vence = t.todo?.dueOn?.toISOString().slice(0, 10);
@@ -163,8 +177,10 @@ export async function plantillaDesdeLista(tx, actor, listaId, nombre) {
             title: t.title ?? '',
             notes: t.bodyText,
             audience,
-            dayOffset: vence ? Math.min(MAX_DIA, Math.max(1, diferenciaDias(inicio, vence) + 1)) : null,
+            dayOffset: t.todo?.waitsForId ? (t.todo.dueAfterDays ?? null) : vence ? Math.min(MAX_DIA, Math.max(1, diferenciaDias(inicio, vence) + 1)) : null,
             campos: leerCampos(t.todo?.fields),
+            // Solo si espera a una tarea anterior de la misma lista (si no, se pierde la espera).
+            waitsFor: t.todo?.waitsForId && (posicion.get(t.todo.waitsForId) ?? Infinity) < n + 1 ? posicion.get(t.todo.waitsForId) : null,
         };
     });
     return guardarPlantilla(tx, actor, null, { name: nombre?.trim() || lista.title || 'Plantilla', description: lista.bodyText, items });
@@ -200,15 +216,20 @@ export async function aplicarPlantilla(tx, actor, projectId, datos) {
         visibleToClients: conCliente,
     });
     const equipoIds = responsableId ? [responsableId] : [];
+    const creadas = new Map(); // posición → tarea creada
     for (const i of plantilla.items) {
-        await crearTarea(tx, actor, lista.id, {
+        const esperaA = i.waitsFor ? creadas.get(i.waitsFor) : undefined;
+        const t = await crearTarea(tx, actor, lista.id, {
             title: i.title,
             ...(i.notes ? { body: documentoDesdeTexto(i.notes) } : {}),
             visibleToClients: i.audience !== 'team',
-            dueOn: i.dayOffset ? sumarDias(inicio, i.dayOffset - 1) : null,
+            // Si espera a otra, "día N" cuenta desde que se activa (D-67).
+            dueOn: i.dayOffset && !esperaA ? sumarDias(inicio, i.dayOffset - 1) : null,
             assigneeIds: i.audience === 'team' ? equipoIds : i.audience === 'client' ? clienteIds : [...equipoIds, ...clienteIds],
             campos: leerCampos(i.fields),
+            ...(esperaA ? { esperaA, diasDespues: i.dayOffset ?? null } : {}),
         });
+        creadas.set(i.position, t.id);
     }
     return {
         lista: { id: lista.id, title: lista.title },

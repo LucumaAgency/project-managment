@@ -27,6 +27,7 @@ export declare function actividadDelProyecto(tx: Tx, actor: Actor, proyecto: Pro
         } | null;
         detalles: {
             personas: string[];
+            porOtra?: boolean | undefined;
             title?: {} | undefined;
             name?: {} | undefined;
             from?: {} | null | undefined;
@@ -90,6 +91,7 @@ export declare function presentarEventos(tx: Tx, filas: FilaEvento[]): Promise<{
     } | null;
     detalles: {
         personas: string[];
+        porOtra?: boolean | undefined;
         title?: {} | undefined;
         name?: {} | undefined;
         from?: {} | null | undefined;

@@ -11,6 +11,8 @@ export interface TareaPlantilla {
     dayOffset?: number | null;
     /** Lo que pide la tarea (D-65): datos, archivos o enlaces. */
     campos?: unknown;
+    /** Espera a la tarea de esta posición (1 = la primera; tiene que ser anterior). D-67. */
+    waitsFor?: number | null;
 }
 export interface DatosPlantilla {
     name: string;
@@ -39,6 +41,7 @@ export declare function plantillaDetalle(tx: Tx, actor: Actor, id: string): Prom
             notes: string | null;
             audience: import("@prisma/client").$Enums.TemplateAudience;
             dayOffset: number | null;
+            waitsFor: number | null;
         }[];
         id: string;
         name: string;
@@ -61,6 +64,7 @@ export declare function guardarPlantilla(tx: Tx, actor: Actor, id: string | null
             notes: string | null;
             audience: import("@prisma/client").$Enums.TemplateAudience;
             dayOffset: number | null;
+            waitsFor: number | null;
         }[];
         id: string;
         name: string;
@@ -88,6 +92,7 @@ export declare function plantillaDesdeLista(tx: Tx, actor: Actor, listaId: strin
             notes: string | null;
             audience: import("@prisma/client").$Enums.TemplateAudience;
             dayOffset: number | null;
+            waitsFor: number | null;
         }[];
         id: string;
         name: string;

@@ -5,7 +5,7 @@ import type { Tx } from '../lib/contexto.js';
  * el cambio se deshace, el evento también; nunca queda un "creó X" de algo que no existe.
  * Las notificaciones salen de aquí en un job (día 11).
  */
-export type AccionEvento = 'created' | 'updated' | 'trashed' | 'restored' | 'archived' | 'unarchived' | 'visibility_changed' | 'member_added' | 'member_removed' | 'moved' | 'completed' | 'reopened' | 'answered' | 'assigned' | 'unassigned' | 'due_changed' | 'version_uploaded';
+export type AccionEvento = 'created' | 'updated' | 'trashed' | 'restored' | 'archived' | 'unarchived' | 'visibility_changed' | 'member_added' | 'member_removed' | 'moved' | 'completed' | 'reopened' | 'answered' | 'activated' | 'assigned' | 'unassigned' | 'due_changed' | 'version_uploaded';
 export declare function registrarEvento(tx: Tx, datos: {
     accountId: string;
     projectId: string;

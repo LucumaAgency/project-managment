@@ -3,7 +3,7 @@ import { conCuenta } from '../lib/contexto.js';
 import { leer } from '../lib/validar.js';
 import { crearElemento } from '../services/elementos.js';
 import { proyectoPara } from '../services/proyectos.js';
-import { completarPorRespuestas, completarTarea, crearTarea, editarTarea, listarTareas, tareaDetalle } from '../services/tareas.js';
+import { activarAhora, completarPorRespuestas, completarTarea, crearTarea, editarTarea, listarTareas, tareaDetalle } from '../services/tareas.js';
 import { MAX_CAMPOS, fichaProyecto, responder, verAcceso } from '../services/campos.js';
 import { exigirCuenta } from '../plugins/contexto.js';
 const titulo = z.string().max(300, 'Máximo 300 caracteres.');
@@ -18,6 +18,8 @@ const nuevaTarea = z.object({
     dueOn: dia.optional(),
     assigneeIds: ids.optional(),
     campos: z.array(z.record(z.unknown())).max(MAX_CAMPOS).nullable().optional(),
+    esperaA: z.string().min(1).max(40).nullable().optional(),
+    diasDespues: z.number().int().min(1).max(365).nullable().optional(),
 });
 const respuestas = z.object({ respuestas: z.record(z.string().max(10), z.unknown()) });
 const edicion = nuevaTarea.partial();
@@ -62,6 +64,11 @@ export default async function rutasTareas(app) {
             const r = await responder(tx, actor, req.params.id, datos.respuestas, completarPorRespuestas);
             return { ...r, ...(await tareaDetalle(tx, actor, req.params.id)) };
         });
+    });
+    /** Activar ahora una tarea que espera a otra (D-67). */
+    app.post('/api/v1/tareas/:id/activar', async (req) => {
+        const actor = exigirCuenta(req);
+        return conCuenta(actor.ctx, async (tx) => ({ tarea: await activarAhora(tx, actor, req.params.id) }));
     });
     /** Ver un acceso protegido (D-66): solo el equipo; queda registrado quién lo vio. */
     app.post('/api/v1/tareas/:id/campos/:campo/ver', async (req, reply) => {

@@ -21,6 +21,9 @@ type FilaTarea = {
             name: string;
         } | null;
         fields: unknown;
+        waitsForId: string | null;
+        pendingAssigneeIds: unknown;
+        dueAfterDays: number | null;
     } | null;
     assignees: {
         user: {
@@ -78,6 +81,7 @@ export declare function listarTareas(tx: Tx, actor: Actor, proyecto: ProyectoCar
         tareas: {
             comentarios: number;
             respondidos: number;
+            espera: import("./espera.js").InfoEspera | null;
             visibleToClients: boolean;
             position: number;
             createdAt: Date;
@@ -128,6 +132,7 @@ export declare function tareaDetalle(tx: Tx, actor: Actor, id: string): Promise<
             obligatorio: boolean;
             ayuda?: string;
         }[];
+        espera: import("./espera.js").InfoEspera | null;
         visibleToClients: boolean;
         position: number;
         createdAt: Date;
@@ -173,6 +178,10 @@ export interface DatosTarea {
     assigneeIds?: string[];
     /** Lo que pide la tarea (D-65); null o [] = nada. Solo el equipo. */
     campos?: unknown;
+    /** Se activa cuando se complete esta otra tarea (D-67); null = ya no espera (se activa). */
+    esperaA?: string | null;
+    /** Mientras espera: vence N días después de activarse (1 = el mismo día). */
+    diasDespues?: number | null;
 }
 export declare function crearTarea(tx: Tx, actor: Actor, listaId: string, datos: DatosTarea): Promise<{
     vistasAccesos?: {
@@ -189,6 +198,7 @@ export declare function crearTarea(tx: Tx, actor: Actor, listaId: string, datos:
         obligatorio: boolean;
         ayuda?: string;
     }[];
+    espera: import("./espera.js").InfoEspera | null;
     visibleToClients: boolean;
     position: number;
     createdAt: Date;
@@ -230,6 +240,7 @@ export declare function editarTarea(tx: Tx, actor: Actor, id: string, datos: Dat
         obligatorio: boolean;
         ayuda?: string;
     }[];
+    espera: import("./espera.js").InfoEspera | null;
     visibleToClients: boolean;
     position: number;
     createdAt: Date;
@@ -271,6 +282,7 @@ export declare function completarTarea(tx: Tx, actor: Actor, id: string, complet
         obligatorio: boolean;
         ayuda?: string;
     }[];
+    espera: import("./espera.js").InfoEspera | null;
     visibleToClients: boolean;
     position: number;
     createdAt: Date;
@@ -313,6 +325,50 @@ export declare const completarPorRespuestas: (tx: Tx, actor: Actor, id: string) 
         obligatorio: boolean;
         ayuda?: string;
     }[];
+    espera: import("./espera.js").InfoEspera | null;
+    visibleToClients: boolean;
+    position: number;
+    createdAt: Date;
+    creator: {
+        id: string;
+        name: string;
+    };
+    dueOn: string | null;
+    completedAt: Date | null;
+    completedBy: {
+        id: string;
+        name: string;
+    } | null;
+    assignees: {
+        userId: string;
+        name: string;
+    }[];
+    /** Cuántas cosas pide (D-65); 0 = tarea normal. */
+    pide: number;
+    body?: unknown;
+    id: string;
+    listaId: string | null;
+    title: string | null;
+    bodyHtml: string | null;
+    tieneNotas: boolean;
+}>;
+/** Activar ahora una tarea que espera (el equipo, por ejemplo si la anterior se borró). */
+export declare function activarAhora(tx: Tx, actor: Actor, id: string): Promise<{
+    vistasAccesos?: {
+        campoId: string | null;
+        nombre: string;
+        el: Date;
+    }[] | undefined;
+    visibleParaCliente: boolean;
+    campos: {
+        respuesta: import("./campos.js").RespuestaVista | null;
+        id: string;
+        etiqueta: string;
+        tipo: import("./campos.js").TipoCampo;
+        obligatorio: boolean;
+        ayuda?: string;
+    }[];
+    espera: import("./espera.js").InfoEspera | null;
     visibleToClients: boolean;
     position: number;
     createdAt: Date;

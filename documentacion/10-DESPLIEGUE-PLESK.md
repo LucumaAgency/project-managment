@@ -240,7 +240,7 @@ Rutas y ejemplos: [11-API-BOT.md](11-API-BOT.md).
 
 ## 5i. Plantillas y ficha del cliente (desde el 2026-10-25)
 
-Trae dos migraciones (`plantillas` y `campos_y_respuestas`; `prisma:deploy` corre las dos): Git → Desplegar → `prisma:generate` → `prisma:deploy` →
+Trae tres migraciones (`plantillas`, `campos_y_respuestas` y `se_activa_cuando`; `prisma:deploy` corre las que falten): Git → Desplegar → `prisma:generate` → `prisma:deploy` →
 `base:verificar:prod` → Reiniciar. No hay nada más que configurar: aparece **Plantillas** en el
 menú, y la ficha del cliente en los proyectos con tareas que piden algo. Detalle en [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
 

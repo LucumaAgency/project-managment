@@ -8,7 +8,7 @@ actualiza aquí y se anota en la bitácora de [09-AVANCE.md](09-AVANCE.md).
 - **Fase:** MVP de 15 días terminado y en uso (beta). API para el bot de Telegram en producción.
 - **Repo:** https://github.com/LucumaAgency/project-managment (público, rama `main`).
 - **En línea:** https://proyectos.pruebalucuma.site (beta en Plesk, guía en [10-DESPLIEGUE-PLESK.md](10-DESPLIEGUE-PLESK.md)).
-- **Siguiente paso:** desplegar las etapas 1 a 3 de plantillas y seguir con la etapa 4, «se activa cuando» ([12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md)).
+- **Siguiente paso:** desplegar la etapa 4 de plantillas y cargar las plantillas reales (etapa 5, [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md)).
 - **Esperando tu confirmación:** ver «Para confirmar» en [09-AVANCE.md](09-AVANCE.md).
 
 ## Documentos

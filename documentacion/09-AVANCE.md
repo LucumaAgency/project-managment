@@ -728,6 +728,30 @@ el celular, el equipo lo ve y aparece «Lo vieron».
 
 Para desplegar: §5i de 10-DESPLIEGUE (sin migración nueva) **más el paso de `ACCESOS_CLAVE`**.
 
+### 2026-10-25 · Plantillas: etapas 1 a 3 en producción
+
+El usuario desplegó (con las migraciones) y configuró `ACCESOS_CLAVE`: `base:verificar:prod`
+dice «OK ACCESOS_CLAVE configurada».
+
+### 2026-10-25 · Plantillas, etapa 4: «se activa cuando»
+
+Hecho (D-67, detalle en [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md)):
+
+- Una tarea puede **esperar a otra**; mientras espera no tiene responsables ni fecha.
+- Al completarse la anterior **se activa sola**: se asigna a los previstos, avisa y vence N
+  días después. En cadena, paso a paso.
+- En las plantillas, cada tarea puede esperar a una anterior («Día» cuenta desde que se activa).
+  «Guardar como plantilla» conserva las esperas dentro de la lista.
+- «Activar ahora» para el equipo (por ejemplo si la anterior se borró). Sin vueltas.
+- Al cliente no se le muestra el nombre de una tarea interna a la que espera algo suyo.
+
+Probado: 298 tests en verde (9 nuevos). Recorrido en navegador sin errores: la plantilla con
+orden, la vista previa, la lista con «Espera: …», el cliente sube la constancia y «Verificar el
+depósito» se activa para el equipo con su fecha; la actividad lo cuenta.
+
+Para desplegar (**con migración**): Git → Desplegar → `prisma:generate` → `prisma:deploy` →
+`base:verificar:prod` → Reiniciar.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -760,7 +784,7 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
 ### Antes de la fase 2
 
-- [ ] Desplegar las etapas 1 a 3 de plantillas (§5i de 10-DESPLIEGUE: migraciones y `ACCESOS_CLAVE`).
-- [ ] Plantillas, etapas 4 y 5 ("se activa cuando"; cargar Onboarding y Desarrollo web): [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
+- [ ] Desplegar la etapa 4 de plantillas (con migración `se_activa_cuando`).
+- [ ] Plantillas, etapa 5: cargar Onboarding de cliente y Desarrollo web en producción y probarlas con un cliente real: [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
 
 - [ ] Iniciar el trámite con Meta para WhatsApp (número, verificación, plantillas) mientras se usa el MVP.
