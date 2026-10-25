@@ -327,8 +327,15 @@ model TodoDetail {
   /// Lo que la tarea le pide a quien la hace (D-65): `[{ id, etiqueta, tipo, obligatorio, ayuda? }]`,
   /// tipo = texto | parrafo | archivo | enlaces. Null = tarea normal. Las respuestas, en TaskAnswer.
   fields        Json?
+  /// "Se activa cuando" (D-67): la tarea espera a que se complete esta otra. Mientras espera no
+  /// tiene responsables ni fecha; al activarse se asigna a `pendingAssigneeIds` y vence
+  /// `dueAfterDays` días después (1 = el mismo día). Null = no espera a nada.
+  waitsForId         String?
+  pendingAssigneeIds Json?
+  dueAfterDays       Int?
 
   @@index([dueOn])
+  @@index([waitsForId])
   @@map("todo_details")
 }
 
@@ -387,6 +394,9 @@ model ListTemplateItem {
   position   Int
   /// Lo que pide la tarea (mismo formato que TodoDetail.fields). Se copia al agregarla.
   fields     Json?
+  /// Espera a la tarea de esta posición (una anterior de la misma plantilla). Con espera,
+  /// `dayOffset` cuenta desde que se activa (D-67).
+  waitsFor   Int?
 
   @@index([templateId, position])
   @@map("list_template_items")

@@ -660,3 +660,7 @@ mark { background: #fff1b8; color: inherit; border-radius: 3px; padding: 0 1px; 
 .acceso-campos { display: grid; gap: 6px; }
 .acceso-campos input, .acceso-campos textarea { margin: 0; }
 @media (min-width: 620px) { .acceso-campos { grid-template-columns: 1fr 1fr; } .acceso-campos textarea { grid-column: 1 / -1; } }
+.plantilla-espera { display: grid; grid-template-columns: 1fr; gap: 4px; margin-top: 8px; }
+.plantilla-espera label { margin: 0; font-size: 13px; }
+.plantilla-espera select { margin: 0; }
+@media (min-width: 620px) { .plantilla-espera { grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 10px; } .plantilla-espera .ayuda { grid-column: 2; } }

@@ -392,6 +392,10 @@ por el lector binario), `GET /proyectos/:id/ficha`. Web: `componentes/Campos.tsx
 `ACCESOS_CLAVE`); `valorPublico()` en `services/campos.ts` filtra toda salida;
 `POST /tareas/:id/campos/:campo/ver` solo para el equipo, con registro `acceso.ver`.
 
+**Se activa cuando (D-67):** `TodoDetail.waitsForId/pendingAssigneeIds/dueAfterDays`,
+`ListTemplateItem.waitsFor`; `services/espera.ts` (activar, esperas, vueltas);
+`completarTarea` activa las que esperan; `POST /tareas/:id/activar`. Evento `activated`.
+
 ## Archivos
 
 `lib/almacen.ts` (disco), `lib/tipos-archivo.ts` (tipo real, nombre limpio),

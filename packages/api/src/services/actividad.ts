@@ -108,6 +108,8 @@ export async function presentarEventos(tx: Tx, filas: FilaEvento[]) {
           ...(d.from !== undefined ? { from: d.from } : {}),
           ...(d.name ? { name: d.name } : {}),
           ...(d.title ? { title: d.title } : {}),
+          // Se activó al completarse la anterior (D-67); solo el dato, no qué tarea era.
+          ...(d.por ? { porOtra: true } : {}),
           personas: [...(d.userIds ?? []), ...(d.userId ? [d.userId] : [])].map((id) => nombre.get(id) ?? 'alguien'),
         },
       };

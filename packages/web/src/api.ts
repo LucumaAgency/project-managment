@@ -185,6 +185,13 @@ export interface Tarea {
   campos?: CampoConRespuesta[];
   /** Quién vio los accesos protegidos (solo el equipo). */
   vistasAccesos?: VistaAcceso[];
+  /** "Se activa cuando" (D-67): null = activa. */
+  espera?: InfoEspera | null;
+}
+export interface InfoEspera {
+  espera: { id: string | null; title: string; borrada: boolean };
+  seAsignaraA: { userId: string; name: string }[];
+  diasDespues: number | null;
 }
 export interface ListaTareas {
   id: string;
@@ -246,7 +253,7 @@ export interface Evento {
     extracto: string | null;
     padre: { id: string; type: string; title: string | null } | null;
   } | null;
-  detalles: { to?: unknown; from?: unknown; name?: unknown; title?: unknown; personas: string[] };
+  detalles: { to?: unknown; from?: unknown; name?: unknown; title?: unknown; porOtra?: boolean; personas: string[] };
 }
 
 export interface VersionArchivo {
@@ -374,6 +381,8 @@ export interface TareaPlantilla {
   audience: Audiencia;
   dayOffset: number | null;
   campos?: Campo[];
+  /** Espera a la tarea de esta posición (1 = la primera). */
+  waitsFor?: number | null;
 }
 export interface Plantillas {
   plantillas: PlantillaResumen[];

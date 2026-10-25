@@ -1,6 +1,6 @@
 # 12 · Plantillas y flujos
 
-Estado: **etapas 1, 2 y 3 construidas el 2026-10-25** (plantillas de lista; tareas que piden algo y ficha del cliente; accesos protegidos; ver «Cómo funciona hoy» al final). Etapas 4 y 5, pendientes. Diseño confirmado por el usuario (D-64). Se abrió el 2026-10-24 a pedido del usuario: "algo que me
+Estado: **etapas 1 a 4 construidas el 2026-10-25** (plantillas de lista; tareas que piden algo y ficha del cliente; accesos protegidos; «se activa cuando»; ver «Cómo funciona hoy» al final). Etapa 5 (cargar las plantillas reales), pendiente. Diseño confirmado por el usuario (D-64). Se abrió el 2026-10-24 a pedido del usuario: "algo que me
 gusta bastante de Basecamp es armar flujos, por ejemplo un onboarding de un cliente, y que haya
 una plantilla de cosas". Falta que el usuario responda las preguntas del final antes de decidir
 el alcance (luego va a 04-DECISIONES y al plan).
@@ -160,7 +160,7 @@ ahorra; el orden y las fechas que se corren se aprecian una vez que ya se usan p
 | 1 ✅ | Plantillas de lista: sección Plantillas, tareas "cliente / equipo / cualquiera", fechas relativas opcionales; "Agregar plantilla" en un proyecto; también por el bot | 2 |
 | 2 ✅ | Tareas que piden algo (datos, archivos, enlaces), se marcan solas al responder; ficha del cliente en el proyecto | 2 |
 | 3 ✅ | Campo protegido para accesos (cifrado, ver con un clic, registro de quién lo vio) | 1 |
-| 4 | "Se activa cuando…" (ej. verificar el depósito tras la constancia) | 0,5 |
+| 4 ✅ | "Se activa cuando…" (ej. verificar el depósito tras la constancia) | 0,5 |
 | 5 | Cargar Onboarding y Desarrollo web como primeras plantillas; probar con un cliente real | 0,5 |
 
 Cada etapa sale a producción por separado y se puede usar sin esperar a las siguientes.
@@ -256,3 +256,30 @@ si está y, si falta, sugiere una.
 valor es `{ proveedor, cifrado }`; `valorPublico()` lo reduce a `{ proveedor, protegido }` en
 toda salida; `POST /tareas/:id/campos/:campo/ver` (equipo, `audit_log` con `acceso.ver`). Sin
 migración: es un tipo de campo más.
+
+## Cómo funciona hoy (etapa 4, 2026-10-25, D-67)
+
+**Esperar a otra tarea**
+- En una tarea (el equipo): «Se activa cuando se complete» → otra tarea del proyecto, y
+  opcionalmente «Vence a los N días desde que se activa».
+- En una plantilla: «Se activa cuando se complete» → una tarea anterior de la plantilla. Ahí
+  «Día» pasa a contar desde que se activa.
+
+**Mientras espera**: no tiene responsables ni fecha, así nadie recibe avisos ni recordatorios
+de algo que todavía no puede hacer. En la lista dice «Espera: …»; en la tarea, a quién se
+asignará (los responsables que se marquen mientras espera son esos). Al cliente nunca se le
+muestra el nombre de una tarea interna: ve «Espera: una tarea del equipo».
+
+**Al completarse la anterior** (la complete quien la complete, también el cliente): se
+activa sola, se asigna a los previstos, les llega el aviso y vence N días después contando ese
+día. En la actividad: «… completó el paso anterior y se activó …». Funciona en cadena: cada
+paso activa el siguiente. Si un paso se atrasa, las fechas de los siguientes se corren solas.
+
+**Casos borde**: si la tarea que se esperaba se borra, la tarea lo dice y el equipo la activa
+con «Activar ahora». Completar a mano una tarea que espera la saca de la espera. No se permiten
+esperas en vuelta (A espera a B y B a A).
+
+**Técnico**: `TodoDetail.waitsForId`, `pendingAssigneeIds`, `dueAfterDays` y
+`ListTemplateItem.waitsFor` (migración `20261026150000_se_activa_cuando`); `services/espera.ts`;
+`completarTarea` llama a `activarLasQueEsperan`; `POST /tareas/:id/activar`; `PATCH /tareas/:id`
+con `esperaA` y `diasDespues`. Evento nuevo: `activated`.

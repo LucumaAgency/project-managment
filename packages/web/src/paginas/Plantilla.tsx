@@ -45,18 +45,26 @@ export default function Plantilla() {
     setGuardado(false);
     setItems((xs) => xs.map((x, i) => (i === n ? { ...x, ...c } : x)));
   };
+  /** Las esperas apuntan a posiciones (1 = la primera): al mover o quitar, se corrigen. */
+  const corregirEsperas = (xs: TareaPlantilla[], mapa: (pos: number) => number | null) =>
+    xs.map((x, i) => {
+      const w = x.waitsFor ? mapa(x.waitsFor) : null;
+      return { ...x, waitsFor: w && w < i + 1 ? w : null };
+    });
   const mover = (n: number, d: -1 | 1) => {
     setGuardado(false);
     setItems((xs) => {
       const ys = [...xs];
       [ys[n], ys[n + d]] = [ys[n + d], ys[n]];
-      return ys;
+      const a = n + 1;
+      const b = n + d + 1;
+      return corregirEsperas(ys, (p) => (p === a ? b : p === b ? a : p));
     });
     setConNotas((s) => new Set([...s].map((i) => (i === n ? n + d : i === n + d ? n : i))));
   };
   const quitar = (n: number) => {
     setGuardado(false);
-    setItems((xs) => xs.filter((_, i) => i !== n));
+    setItems((xs) => corregirEsperas(xs.filter((_, i) => i !== n), (p) => (p === n + 1 ? null : p > n + 1 ? p - 1 : p)));
     setConNotas((s) => new Set([...s].filter((i) => i !== n).map((i) => (i > n ? i - 1 : i))));
   };
 
@@ -67,8 +75,8 @@ export default function Plantilla() {
     const cuerpo = {
       name: nombre,
       description: descripcion || null,
+      // Se mandan todas (también las vacías): el servidor las descarta y renumera las esperas.
       items: items
-        .filter((i) => i.title.trim())
         .map(({ id: _, ...i }) => ({ ...i, notes: i.notes?.trim() || null, campos: (i.campos ?? []).filter((c) => c.etiqueta.trim()) })),
     };
     try {
@@ -113,7 +121,8 @@ export default function Plantilla() {
                 <span className="tarea-titulo">{i.title}</span>
                 <span className="tarea-meta">
                   <span className={`chip ${i.audience === 'team' ? 'chip-gris' : 'chip-verde'}`}>{NOMBRE_AUDIENCIA[i.audience]}</span>
-                  {i.dayOffset && <span>Día {i.dayOffset}</span>}
+                  {i.waitsFor && <span>Espera a la {i.waitsFor}</span>}
+                  {i.dayOffset && <span>{i.waitsFor ? `Vence a los ${i.dayOffset} días` : `Día ${i.dayOffset}`}</span>}
                   {i.notes && <Icono nombre="notas" tam={13} />}
                   {!!i.campos?.length && <span>Pide: {i.campos.map((c) => c.etiqueta).join(', ')}</span>}
                 </span>
@@ -157,11 +166,24 @@ export default function Plantilla() {
                   type="number"
                   min={1}
                   max={365}
-                  placeholder="Día"
+                  placeholder={i.waitsFor ? 'Días' : 'Día'}
+                  title={i.waitsFor ? 'Días desde que se activa (1 = ese mismo día)' : 'Día desde el inicio (1 = el día de inicio)'}
                   value={i.dayOffset ?? ''}
                   onChange={(e) => cambiar(n, { dayOffset: e.target.value ? Number(e.target.value) : null })}
                 />
               </div>
+              {n > 0 && (
+                <div className="plantilla-espera">
+                  <label htmlFor={`pl-espera-${n}`}>Se activa cuando se complete</label>
+                  <select id={`pl-espera-${n}`} value={i.waitsFor ?? ''} onChange={(e) => cambiar(n, { waitsFor: e.target.value ? Number(e.target.value) : null })}>
+                    <option value="">No espera: arranca con la lista</option>
+                    {items.slice(0, n).map((x, k) => (
+                      <option key={k} value={k + 1}>{k + 1}. {x.title || '(sin título)'}</option>
+                    ))}
+                  </select>
+                  {i.waitsFor && <span className="ayuda" style={{ margin: 0 }}>Hasta entonces no tiene responsable ni fecha. «Día» cuenta desde que se activa.</span>}
+                </div>
+              )}
               {!!i.campos?.length && (
                 <div className="plantilla-pide">
                   <span className="ayuda" style={{ margin: '8px 0 4px', display: 'block' }}>Al responder, pide:</span>

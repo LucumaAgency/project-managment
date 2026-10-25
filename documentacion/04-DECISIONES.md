@@ -471,6 +471,15 @@ Descartado: derivar la clave de `SESSION_SECRET` (cambiarla para cerrar sesiones
 ilegibles los accesos) y cifrar en el navegador con una clave por persona (sin recuperación
 si alguien se va).
 
+**D-67 · "Se activa cuando": la tarea que espera no tiene responsables ni fecha** (2026-10-25, etapa 4 de D-64)
+Una tarea espera a otra (`waitsForId`). Mientras espera, sus responsables quedan "previstos" y
+no tiene fecha: así no hay avisos, recordatorios ni tareas vencidas de algo que no se puede
+hacer todavía. Al completarse la anterior se asigna (con aviso) y vence `dueAfterDays` días
+después: las fechas se corren solas si algo se atrasa, sin recalcular nada. La activación es
+parte de completar, no depende de los permisos de quien completa (puede ser el cliente). Solo
+una tarea anterior por tarea (no "espera a todas estas"): cubre los flujos de onboarding y
+servicios sin un editor de diagramas.
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)
