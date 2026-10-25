@@ -86,7 +86,7 @@ describe('proyectos', () => {
     const deOwner = (await owner.get(`/proyectos/${id}`)).json;
     expect(deOwner.personas.map((p: { userId: string }) => p.userId).sort()).toEqual([A.ownerId, A.memberId, A.clientId].sort());
     expect(deOwner.personas.every((p: { email: string | null }) => p.email)).toBe(true);
-    expect(deOwner.secciones).toEqual({ tareas: 0, mensajes: 0, archivos: 0 });
+    expect(deOwner.secciones).toEqual({ tareas: 0, mensajes: 0, archivos: 0, ficha: 0 });
     expect(deOwner.permisos).toMatchObject({ editar: true, archivar: true, papelera: true, personas: true, verPapelera: true });
 
     const deCliente = (await client.get(`/proyectos/${id}`)).json;
@@ -189,7 +189,7 @@ describe('elementos genéricos', () => {
 
     const hijos = (await member.get(`/proyectos/${id}/elementos?padre=${lista.id}`)).json.elementos;
     expect(hijos.map((h: { title: string }) => h.title)).toEqual(['Logo', 'Paleta']);
-    expect((await member.get(`/proyectos/${id}`)).json.secciones).toEqual({ tareas: 1, mensajes: 1, archivos: 0 });
+    expect((await member.get(`/proyectos/${id}`)).json.secciones).toEqual({ tareas: 1, mensajes: 1, archivos: 0, ficha: 0 });
     expect(await prismaAdmin.event.count({ where: { projectId: id, action: 'created', recordingId: { not: null } } })).toBe(4);
   });
 

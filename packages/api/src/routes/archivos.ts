@@ -9,6 +9,8 @@ import { seMuestraEnLinea } from '../lib/tipos-archivo.js';
 import { leer } from '../lib/validar.js';
 import { blobParaLeer, detalleArchivo, listarArchivos, nuevaVersion, subirArchivo } from '../services/archivos.js';
 import { exigirCuenta } from '../plugins/contexto.js';
+import { subirArchivoCampo } from '../services/campos.js';
+import { completarPorRespuestas, tareaDetalle } from '../services/tareas.js';
 
 /**
  * Archivos. Subir: el cuerpo de la petición ES el archivo (Content-Type application/
@@ -89,5 +91,14 @@ export default async function rutasArchivos(app: FastifyInstance) {
       // El contenido de un blob no cambia nunca (una versión nueva es otro blob).
       .header('Cache-Control', 'private, max-age=86400');
     return reply.send(almacen().leer(blob.storageKey));
+  });
+
+  /** Subir un archivo a un campo de tipo archivo (el cuerpo ES el archivo, como en Archivos). */
+  app.post<{ Params: { id: string; campo: string } }>('/api/v1/tareas/:id/campos/:campo/archivos', async (req) => {
+    const actor = exigirCuenta(req);
+    exigirTamano(req);
+    const q = leer(version.pick({ nombre: true }), req.query);
+    const r = await subirArchivoCampo(actor, req.params.id, req.params.campo, q.nombre, req.body as Readable, completarPorRespuestas);
+    return { ...r, ...(await conCuenta(actor.ctx, (tx) => tareaDetalle(tx, actor, req.params.id))) };
   });
 }

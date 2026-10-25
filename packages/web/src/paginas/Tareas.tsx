@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { esCliente } from '@lucuma-pm/shared';
 import type { JSONContent } from '@tiptap/react';
-import { api, ErrorApi, NOMBRE_AUDIENCIA, type ListaTareas, type PlantillaAplicada, type PlantillaDetalle, type Plantillas, type Tarea, type TareaDetalle, type TareasProyecto } from '../api';
+import { api, ErrorApi, NOMBRE_AUDIENCIA, type Campo, type ListaTareas, type PlantillaAplicada, type PlantillaDetalle, type Plantillas, type Tarea, type TareaDetalle, type TareasProyecto } from '../api';
+import { EditorCampos, Formulario } from '../componentes/Campos';
 import Comentarios from '../componentes/Comentarios';
 import Editor, { Contenido } from '../componentes/Editor';
 import { useMencionables } from '../componentes/mencionables';
@@ -350,6 +351,11 @@ function FilaTarea({ t, lista, esCliente: cliente, puedeCompletar, sobre, onAbri
         <span className="tarea-meta">
           {t.assignees.length > 0 && <span>{t.assignees.map((a) => a.name.split(' ')[0]).join(', ')}</span>}
           {t.dueOn && <span className={`chip ${claseFecha(t)}`}>{fechaCorta(t.dueOn)}</span>}
+          {t.pide > 0 && (
+            <span className={`chip ${t.respondidos === t.pide ? 'chip-verde' : 'chip-gris'}`} title="Respuestas de lo que pide la tarea">
+              Pide {t.respondidos ?? 0}/{t.pide}
+            </span>
+          )}
           {t.tieneNotas && <Icono nombre="notas" tam={13} />}
           {!!t.comentarios && <span className="con-icono" title={`${t.comentarios} comentarios`}><Icono nombre="mensajes" tam={13} />{t.comentarios}</span>}
           {!cliente && t.visibleToClients && <span title="Visible para el cliente"><Icono nombre="ojo" tam={13} /></span>}
@@ -545,6 +551,8 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
   const [visible, setVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [pidiendo, setPidiendo] = useState(false);
+  const [campos, setCampos] = useState<Campo[]>([]);
   useLeerAvisosDe(id);
 
   useEffect(() => {
@@ -555,6 +563,7 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
         setDia(r.tarea.dueOn ?? '');
         setResponsables(r.tarea.assignees.map((a) => a.userId));
         setVisible(r.tarea.visibleToClients);
+        setCampos((r.tarea.campos ?? []).map(({ respuesta: _, ...c }) => c));
       })
       .catch((e) => setError(mensajeDe(e)));
   }, [id]);
@@ -584,6 +593,18 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
     // Si pasó a interna, los clientes responsables salen solos: no mandarlos.
     const validos = responsables.filter((r) => personas.some((p) => p.userId === r));
     if (permisos.asignar && validos.slice().sort().join() !== antes) cambios.assigneeIds = validos;
+    if (permisos.pedir && pidiendo) {
+      const nuevos = campos.filter((c) => c.etiqueta.trim());
+      const previos = (t.campos ?? []).map(({ respuesta: _, ...c }) => c);
+      if (JSON.stringify(nuevos) !== JSON.stringify(previos)) {
+        const quitados = previos.filter((c) => nuevos.find((n) => n.id === c.id)?.tipo !== c.tipo && t.campos!.find((x) => x.id === c.id)?.respuesta);
+        if (quitados.length && !window.confirm(`Se borran las respuestas de: ${quitados.map((c) => c.etiqueta).join(', ')}. ¿Seguir?`)) {
+          setGuardando(false);
+          return;
+        }
+        cambios.campos = nuevos;
+      }
+    }
     try {
       if (Object.keys(cambios).length) await api(`/tareas/${id}`, { method: 'PATCH', body: cambios });
       onCambio();
@@ -611,6 +632,17 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
 
   return (
     <Modal titulo={t.completedAt ? 'Tarea completada' : 'Tarea'} onCerrar={onCerrar}>
+      {!!t.campos?.length && !pidiendo && (
+        <Formulario
+          tareaId={t.id}
+          campos={t.campos}
+          puedeResponder={permisos.responder}
+          onGuardado={(r) => {
+            setD(r);
+            onCambio();
+          }}
+        />
+      )}
       <form onSubmit={guardar} className="detalle-tarea">
         <label htmlFor="t-titulo">Tarea</label>
         <input id="t-titulo" required maxLength={300} value={titulo} readOnly={!permisos.editar} onChange={(e) => setTitulo(e.target.value)} />
@@ -631,6 +663,22 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
           <div className="card" style={{ marginBottom: 0 }}><Contenido html={t.bodyHtml} /></div>
         ) : (
           <p className="meta">Sin notas.</p>
+        )}
+
+        {permisos.pedir && (
+          pidiendo ? (
+            <>
+              <label>Lo que pide la tarea</label>
+              <p className="ayuda" style={{ marginTop: 0 }}>Quien la tiene asignada responde en la tarea; con todo lo obligatorio, se completa sola.</p>
+              <EditorCampos campos={campos} onChange={setCampos} prefijo="t-campo" />
+            </>
+          ) : (
+            <p style={{ margin: '10px 0 0' }}>
+              <button type="button" className="btn-texto" onClick={() => { setPidiendo(true); if (!campos.length) setCampos([{ etiqueta: '', tipo: 'texto', obligatorio: true }]); }}>
+                {t.campos?.length ? 'Cambiar lo que se pide' : '+ Pedir datos, archivos o enlaces'}
+              </button>
+            </p>
+          )
         )}
 
         <div className="rejilla-2">
@@ -712,7 +760,7 @@ function DetalleTarea({ id, projectId, listas, onCerrar, onCambio }: { id: strin
             </button>
           )}
           <span style={{ flex: 1 }} />
-          {(permisos.editar || permisos.asignar || permisos.cambiarVisibilidad) && (
+          {(permisos.editar || permisos.asignar || permisos.cambiarVisibilidad || permisos.pedir) && (
             <button className="btn" disabled={guardando}>{guardando ? 'Guardando…' : 'Guardar'}</button>
           )}
         </div>

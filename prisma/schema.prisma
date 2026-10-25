@@ -306,6 +306,7 @@ model Recording {
   subscriptions Subscription[]
   events        Event[]
   notifications Notification[]
+  answers       TaskAnswer[]
 
   @@index([projectId, type, status])
   @@index([parentId, position])
@@ -323,6 +324,9 @@ model TodoDetail {
   completedAt   DateTime?
   completedById String?
   completedBy   User?     @relation(fields: [completedById], references: [id])
+  /// Lo que la tarea le pide a quien la hace (D-65): `[{ id, etiqueta, tipo, obligatorio, ayuda? }]`,
+  /// tipo = texto | parrafo | archivo | enlaces. Null = tarea normal. Las respuestas, en TaskAnswer.
+  fields        Json?
 
   @@index([dueOn])
   @@map("todo_details")
@@ -381,9 +385,29 @@ model ListTemplateItem {
   /// "Día N" desde el inicio (1 = el mismo día). Null = sin fecha.
   dayOffset  Int?
   position   Int
+  /// Lo que pide la tarea (mismo formato que TodoDetail.fields). Se copia al agregarla.
+  fields     Json?
 
   @@index([templateId, position])
   @@map("list_template_items")
+}
+
+/// Respuesta a un campo de una tarea que pide algo (D-65). Una por tarea y campo; se reemplaza
+/// al volver a responder. `value`: texto (string), enlaces ([{ url, nota }]) o archivos
+/// ([{ blobId }], cada blob colgado de la tarea en RecordingAttachment).
+model TaskAnswer {
+  id           String    @id @default(cuid())
+  accountId    String
+  recordingId  String
+  recording    Recording @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+  fieldId      String
+  value        Json
+  answeredById String
+  answeredAt   DateTime  @default(now())
+
+  @@unique([recordingId, fieldId])
+  @@index([accountId])
+  @@map("task_answers")
 }
 
 // ------------------------------------------------------------------------- archivos

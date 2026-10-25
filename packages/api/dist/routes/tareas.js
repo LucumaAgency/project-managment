@@ -3,7 +3,8 @@ import { conCuenta } from '../lib/contexto.js';
 import { leer } from '../lib/validar.js';
 import { crearElemento } from '../services/elementos.js';
 import { proyectoPara } from '../services/proyectos.js';
-import { completarTarea, crearTarea, editarTarea, listarTareas, tareaDetalle } from '../services/tareas.js';
+import { completarPorRespuestas, completarTarea, crearTarea, editarTarea, listarTareas, tareaDetalle } from '../services/tareas.js';
+import { MAX_CAMPOS, fichaProyecto, responder } from '../services/campos.js';
 import { exigirCuenta } from '../plugins/contexto.js';
 const titulo = z.string().max(300, 'Máximo 300 caracteres.');
 const documento = z.record(z.unknown()).nullable();
@@ -16,7 +17,9 @@ const nuevaTarea = z.object({
     visibleToClients: z.boolean().optional(),
     dueOn: dia.optional(),
     assigneeIds: ids.optional(),
+    campos: z.array(z.record(z.unknown())).max(MAX_CAMPOS).nullable().optional(),
 });
+const respuestas = z.object({ respuestas: z.record(z.string().max(10), z.unknown()) });
 const edicion = nuevaTarea.partial();
 export default async function rutasTareas(app) {
     /** Todas las listas del proyecto con sus tareas (abiertas y completadas). */
@@ -50,5 +53,19 @@ export default async function rutasTareas(app) {
     app.post('/api/v1/tareas/:id/reabrir', async (req) => {
         const actor = exigirCuenta(req);
         return conCuenta(actor.ctx, async (tx) => ({ tarea: await completarTarea(tx, actor, req.params.id, false) }));
+    });
+    /** Responder lo que pide una tarea (D-65). Solo los campos que vienen; vacío = borrar. */
+    app.put('/api/v1/tareas/:id/respuestas', async (req) => {
+        const actor = exigirCuenta(req);
+        const datos = leer(respuestas, req.body);
+        return conCuenta(actor.ctx, async (tx) => {
+            const r = await responder(tx, actor, req.params.id, datos.respuestas, completarPorRespuestas);
+            return { ...r, ...(await tareaDetalle(tx, actor, req.params.id)) };
+        });
+    });
+    /** Ficha del cliente: lo respondido en el proyecto. */
+    app.get('/api/v1/proyectos/:id/ficha', async (req) => {
+        const actor = exigirCuenta(req);
+        return conCuenta(actor.ctx, (tx) => fichaProyecto(tx, actor, req.params.id));
     });
 }

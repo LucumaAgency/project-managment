@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { esCliente, veTodosLosProyectos } from '@lucuma-pm/shared';
 import { z } from 'zod';
 import { conCuenta } from '../lib/contexto.js';
@@ -132,6 +133,17 @@ export default async function rutasProyectos(app) {
                 }),
             ]);
             const cuantos = Object.fromEntries(conteos.map((c) => [c.type, c._count._all]));
+            // Tareas que piden algo (D-65): si hay, el proyecto muestra la ficha del cliente.
+            const ficha = await tx.recording.count({
+                where: {
+                    projectId: p.id,
+                    type: 'todo',
+                    status: 'active',
+                    todo: { fields: { not: Prisma.DbNull } },
+                    parent: { status: 'active', ...(cliente ? { visibleToClients: true } : {}) },
+                    ...(cliente ? { visibleToClients: true } : {}),
+                },
+            });
             return {
                 proyecto: {
                     id: p.id,
@@ -148,6 +160,7 @@ export default async function rutasProyectos(app) {
                     tareas: cuantos.todolist ?? 0,
                     mensajes: cuantos.message ?? 0,
                     archivos: (cuantos.folder ?? 0) + (cuantos.upload ?? 0),
+                    ficha,
                 },
                 permisos: permisosEn(actor, p),
                 // Para el equipo: qué ve el cliente en la raíz del proyecto (lo de adentro depende,

@@ -20,6 +20,7 @@ import yazl from 'yazl';
 import { almacen } from '../lib/almacen.js';
 import { conCuenta } from '../lib/contexto.js';
 import { nombreLimpio } from '../lib/tipos-archivo.js';
+import { leerCampos } from './campos.js';
 /** Nombre seguro para una carpeta o archivo dentro del ZIP. */
 export function nombreZip(crudo, porDefecto = 'sin-nombre') {
     const n = nombreLimpio(crudo).replace(/[<>:"/\\|?*]/g, '-').replace(/^\.+/, '').trim();
@@ -103,7 +104,9 @@ async function leerProyecto(ctx, projectId) {
                     createdAt: true,
                     updatedAt: true,
                     trashedAt: true,
-                    todo: { select: { dueOn: true, startsOn: true, completedAt: true, completedById: true } },
+                    todo: { select: { dueOn: true, startsOn: true, completedAt: true, completedById: true, fields: true } },
+                    answers: { select: { fieldId: true, value: true, answeredById: true, answeredAt: true } },
+                    attachments: { select: { blob: { select: { id: true, filename: true, storageKey: true, createdAt: true } } } },
                     assignees: { select: { userId: true } },
                     versions: {
                         select: { version: true, note: true, createdAt: true, uploadedById: true, blob: { select: { id: true, filename: true, contentType: true, byteSize: true, checksum: true, storageKey: true } } },
@@ -171,12 +174,52 @@ export async function exportarCuenta(ctx, log) {
                     }
                 }
             }
+            // Ficha del cliente (D-65): archivos de las respuestas en ficha/<tarea>/.
+            for (const t of elementos.filter((x) => x.type === 'todo' && x.attachments.length)) {
+                const dir = `${carpeta}/ficha/${nombreZip(t.title ?? 'tarea')}`;
+                for (const a of t.attachments) {
+                    const destino = ruta(`${dir}/${nombreZip(a.blob.filename, 'archivo')}`);
+                    if (await almacen().existe(a.blob.storageKey)) {
+                        zip.addReadStream(almacen().leer(a.blob.storageKey), destino, { compress: false, mtime: a.blob.createdAt });
+                        enZip.set(a.blob.id, destino);
+                    }
+                    else {
+                        faltan.push(destino);
+                        log?.(`Exportar: falta en disco ${a.blob.storageKey}`);
+                    }
+                }
+            }
+            const conFicha = elementos.filter((x) => x.type === 'todo' && x.status === 'active' && leerCampos(x.todo?.fields).length);
+            if (conFicha.length) {
+                const valorHtml = (v) => typeof v === 'string'
+                    ? escapar(v).replace(/\n/g, '<br>')
+                    : Array.isArray(v)
+                        ? v
+                            .map((x) => x.url ? `${escapar(x.url)}${x.nota ? ` · ${escapar(x.nota)}` : ''}` : x.blobId ? escapar(enZip.get(x.blobId)?.split('/').slice(-1)[0] ?? 'archivo') : '')
+                            .join('<br>')
+                        : '';
+                const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Ficha · ${escapar(p.name)}</title>
+<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:32px auto;padding:0 16px;line-height:1.55;color:#1d2433}dt{font-weight:600;margin-top:8px}dd{margin:0}.meta{color:#667085;font-size:14px}</style></head><body>
+<h1>Ficha · ${escapar(p.name)}</h1>
+${conFicha
+                    .map((t) => {
+                    const r = new Map(t.answers.map((a) => [a.fieldId, a]));
+                    return `<h2>${escapar(t.title ?? '')}</h2><dl>${leerCampos(t.todo?.fields)
+                        .map((c) => `<dt>${escapar(c.etiqueta)}</dt><dd>${r.has(c.id) ? valorHtml(r.get(c.id).value) : '<span class="meta">sin responder</span>'}</dd>`)
+                        .join('')}</dl>`;
+                })
+                    .join('\n')}
+</body></html>`;
+                zip.addBuffer(Buffer.from(html), ruta(`${carpeta}/ficha.html`));
+            }
             const datos = {
                 proyecto: { ...p, members: undefined, personas: p.members.map((m) => m.userId) },
                 elementos: elementos.map((e) => ({
                     ...e,
                     todo: e.todo ?? undefined,
                     assignees: e.assignees.map((a) => a.userId),
+                    attachments: undefined,
+                    answers: e.answers.length ? e.answers : undefined,
                     versions: e.versions.map((v) => ({
                         version: v.version,
                         nota: v.note,
@@ -229,6 +272,7 @@ ${comentarios.map((c) => `<article><p class="meta">${escapar(nombreDe.get(c.crea
             `Exportación de la cuenta «${cuenta.name}» (${new Date().toISOString().slice(0, 10)}).`,
             '',
             'cuenta.json: la cuenta, sus personas, sus proyectos y sus plantillas.',
+            'ficha.html (en cada proyecto que la tenga): lo que respondió el cliente; sus archivos, en ficha/.',
             'proyectos/<nombre>/datos.json: todo el proyecto (listas, tareas, mensajes, comentarios, carpetas,',
             '  archivos con sus versiones y la actividad). Los ids de personas están en cuenta.json.',
             'proyectos/<nombre>/tareas.csv: las tareas, para abrir en Excel o Google Sheets.',

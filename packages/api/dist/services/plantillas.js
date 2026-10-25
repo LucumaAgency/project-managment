@@ -13,6 +13,7 @@
 import { esCliente, veTodosLosProyectos } from '@lucuma-pm/shared';
 import { documentoDesdeTexto } from '../lib/documento.js';
 import { HttpError } from '../lib/errores.js';
+import { columnaCampos, leerCampos, normalizarCampos } from './campos.js';
 import { crearElemento, elementoPara } from './elementos.js';
 import { mencionables } from './menciones.js';
 import { exigir } from './permisos.js';
@@ -36,7 +37,7 @@ const SELECCION = {
     description: true,
     updatedAt: true,
     items: {
-        select: { id: true, title: true, notes: true, audience: true, dayOffset: true, position: true },
+        select: { id: true, title: true, notes: true, audience: true, dayOffset: true, position: true, fields: true },
         orderBy: { position: 'asc' },
     },
 };
@@ -69,7 +70,7 @@ export async function plantillaDetalle(tx, actor, id) {
     exigirEquipo(actor);
     const p = await cargar(tx, actor, id);
     return {
-        plantilla: { ...resumen(p), items: p.items.map(({ position: _, ...i }) => i) },
+        plantilla: { ...resumen(p), items: p.items.map(({ position: _, fields, ...i }) => ({ ...i, campos: leerCampos(fields) })) },
         permisos: { gestionar: veTodosLosProyectos(actor.rol) },
     };
 }
@@ -78,8 +79,8 @@ function limpiar(datos) {
     if (!name)
         throw new HttpError(400, 'Falta el nombre de la plantilla.');
     const items = datos.items
-        .map((i) => ({ ...i, title: i.title.trim(), notes: i.notes?.trim() || null }))
-        .filter((i) => i.title);
+        .filter((i) => i.title.trim())
+        .map((i) => ({ ...i, title: i.title.trim(), notes: i.notes?.trim() || null, campos: normalizarCampos(i.campos) }));
     if (items.length > MAX_TAREAS_PLANTILLA)
         throw new HttpError(400, `Una plantilla tiene como máximo ${MAX_TAREAS_PLANTILLA} tareas.`);
     for (const i of items) {
@@ -112,6 +113,7 @@ export async function guardarPlantilla(tx, actor, id, datos) {
                 notes: i.notes,
                 audience: i.audience,
                 dayOffset: i.dayOffset ?? null,
+                fields: columnaCampos(i.campos),
                 position: n + 1,
             })),
         });
@@ -141,7 +143,7 @@ export async function plantillaDesdeLista(tx, actor, listaId, nombre) {
             title: true,
             bodyText: true,
             visibleToClients: true,
-            todo: { select: { dueOn: true } },
+            todo: { select: { dueOn: true, fields: true } },
             assignees: { select: { userId: true } },
         },
         orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
@@ -162,6 +164,7 @@ export async function plantillaDesdeLista(tx, actor, listaId, nombre) {
             notes: t.bodyText,
             audience,
             dayOffset: vence ? Math.min(MAX_DIA, Math.max(1, diferenciaDias(inicio, vence) + 1)) : null,
+            campos: leerCampos(t.todo?.fields),
         };
     });
     return guardarPlantilla(tx, actor, null, { name: nombre?.trim() || lista.title || 'Plantilla', description: lista.bodyText, items });
@@ -204,6 +207,7 @@ export async function aplicarPlantilla(tx, actor, projectId, datos) {
             visibleToClients: i.audience !== 'team',
             dueOn: i.dayOffset ? sumarDias(inicio, i.dayOffset - 1) : null,
             assigneeIds: i.audience === 'team' ? equipoIds : i.audience === 'client' ? clienteIds : [...equipoIds, ...clienteIds],
+            campos: leerCampos(i.fields),
         });
     }
     return {

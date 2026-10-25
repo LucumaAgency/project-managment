@@ -99,6 +99,20 @@ beforeAll(async () => {
   ).json.plantilla.id;
   ids.listaDePlantilla = (await owner.post(`/proyectos/${p}/plantillas`, { plantillaId: ids.plantilla, responsableId: A.memberId })).json.lista.id;
 
+  // Tareas que piden algo (D-65): una interna con su respuesta y su archivo, y una visible.
+  ids.pideInterna = (await member.post(`/listas/${ids.listaVisible}/tareas`, { title: 'Accesos', campos: [{ etiqueta: `Clave ${MARCA}`, tipo: 'texto' }, { etiqueta: 'Captura', tipo: 'archivo' }] })).json.tarea.id;
+  await member.put(`/tareas/${ids.pideInterna}/respuestas`, { respuestas: { c1: `valor ${MARCA}` } });
+  const tokenM = (await crearSesion(A.memberId)).token;
+  const sub = await app.inject({
+    method: 'POST',
+    url: `/api/v1/tareas/${ids.pideInterna}/campos/c2/archivos?nombre=${encodeURIComponent(`captura-${MARCA}.png`)}`,
+    headers: { cookie: `${COOKIE_SESION}=${tokenM}`, 'x-cuenta': A.slug, 'content-type': 'application/octet-stream' },
+    payload: PNG,
+  });
+  ids.blobRespuestaInterna = sub.json().blobId;
+  if (!ids.blobRespuestaInterna) throw new Error(`no se subió la captura: ${sub.body}`);
+  ids.pideVisible = (await member.post(`/listas/${ids.listaVisible}/tareas`, { title: 'Datos VISIBLE', visibleToClients: true, campos: [{ etiqueta: 'RUC', tipo: 'texto' }] })).json.tarea.id;
+
   // Cosas del equipo que mencionan / asignan, para que existan avisos internos.
   await member.post(`/elementos/${ids.msgInterno}/comentarios`, { body: doc(texto(`otra ${MARCA}`)) });
 });
@@ -123,6 +137,8 @@ describe('ninguna ruta del cliente muestra lo interno', () => {
       `/proyectos/${p}/archivos`,
       `/proyectos/${p}/archivos?carpeta=${ids.carpetaVisible}`,
       `/proyectos/${p}/mencionables`,
+      `/proyectos/${p}/ficha`,
+      `/tareas/${ids.pideVisible}`,
       `/elementos/${ids.listaVisible}`,
       `/elementos/${ids.tareaVisible}`,
       `/elementos/${ids.tareaVisible}/comentarios`,
@@ -171,6 +187,8 @@ describe('ninguna ruta del cliente muestra lo interno', () => {
       `/proyectos/${p}/papelera`,
       '/plantillas',
       `/plantillas/${ids.plantilla}`,
+      `/tareas/${ids.pideInterna}`,
+      `/blobs/${ids.blobRespuestaInterna}/contenido`,
     ];
     const mal = [];
     for (const r of directas) {
@@ -191,6 +209,7 @@ describe('ninguna ruta del cliente muestra lo interno', () => {
       ['editar interno', () => client.patch(`/elementos/${ids.msgInterno}`, { title: 'x' })],
       ['papelera interno', () => client.post(`/elementos/${ids.msgInterno}/papelera`)],
       ['marcar leído ajeno', () => client.post('/bandeja/leer', { recordingId: ids.msgInterno })],
+      ['responder interna', () => client.put(`/tareas/${ids.pideInterna}/respuestas`, { respuestas: { c1: 'x' } })],
       ['agregar plantilla', () => client.post(`/proyectos/${p}/plantillas`, { plantillaId: ids.plantilla })],
       ['guardar como plantilla', () => client.post(`/listas/${ids.listaVisible}/plantilla`, {})],
       ['editar plantilla', () => client.put(`/plantillas/${ids.plantilla}`, { name: 'x', items: [] })],

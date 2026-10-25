@@ -621,3 +621,31 @@ mark { background: #fff1b8; color: inherit; border-radius: 3px; padding: 0 1px; 
 .vista-plantilla li { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-top: 1px solid var(--borde-suave); font-size: 14px; }
 .vista-plantilla li:first-child { border-top: 0; }
 .vista-plantilla li > span:first-child { flex: 1; min-width: 0; }
+
+/* ------------------------------------------------- tareas que piden algo (D-65) */
+.editor-campos { display: grid; gap: 8px; margin: 4px 0 8px; }
+.editor-campo { display: grid; grid-template-columns: minmax(0, 1fr) 130px; gap: 6px 8px; align-items: center; padding: 8px; border: 1px solid var(--borde-suave); border-radius: var(--radio-btn); background: var(--fondo); }
+.editor-campo input, .editor-campo select { margin: 0; }
+.editor-campo > input:first-child { grid-column: 1 / -1; }
+.editor-campo .casilla { margin: 0; }
+.editor-campo-botones { display: flex; gap: 4px; justify-content: flex-end; }
+@media (min-width: 620px) {
+  .editor-campo { grid-template-columns: minmax(0, 1fr) 130px auto auto; }
+  .editor-campo > input:first-child { grid-column: auto; }
+}
+.editor-campos > .btn-texto { justify-self: start; }
+.formulario-tarea { border: 1px solid var(--borde); border-radius: var(--radio); padding: 12px 14px; margin-bottom: 14px; background: var(--azul-tinte); }
+.campo-respuesta { margin-top: 10px; }
+.campo-respuesta > label { margin-top: 0; }
+.enlaces-respuesta { display: grid; gap: 6px; }
+.enlace-fila { display: grid; grid-template-columns: 1fr; gap: 4px; }
+.enlace-fila input { margin: 0; }
+@media (min-width: 620px) { .enlace-fila { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 6px; } }
+.archivos-respuesta .valor-lista { margin-bottom: 6px; }
+.valor-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.valor-lista li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; overflow-wrap: anywhere; }
+.valor-texto { white-space: pre-wrap; overflow-wrap: anywhere; }
+.ficha-campos { margin: 0; display: grid; gap: 10px; }
+.ficha-campos dt { font-weight: 600; font-size: 13px; color: var(--suave); }
+.ficha-campos dd { margin: 2px 0 0; }
+.plantilla-pide { margin-top: 4px; }

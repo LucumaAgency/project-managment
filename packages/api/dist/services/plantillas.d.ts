@@ -1,5 +1,6 @@
 import type { TemplateAudience } from '@prisma/client';
 import type { Tx } from '../lib/contexto.js';
+import { type Campo } from './campos.js';
 import { type Actor } from './permisos.js';
 export declare const MAX_TAREAS_PLANTILLA = 100;
 export declare const MAX_DIA = 365;
@@ -8,6 +9,8 @@ export interface TareaPlantilla {
     notes?: string | null;
     audience: TemplateAudience;
     dayOffset?: number | null;
+    /** Lo que pide la tarea (D-65): datos, archivos o enlaces. */
+    campos?: unknown;
 }
 export interface DatosPlantilla {
     name: string;
@@ -30,6 +33,7 @@ export declare function listarPlantillas(tx: Tx, actor: Actor): Promise<{
 export declare function plantillaDetalle(tx: Tx, actor: Actor, id: string): Promise<{
     plantilla: {
         items: {
+            campos: Campo[];
             id: string;
             title: string;
             notes: string | null;
@@ -51,6 +55,7 @@ export declare function plantillaDetalle(tx: Tx, actor: Actor, id: string): Prom
 export declare function guardarPlantilla(tx: Tx, actor: Actor, id: string | null, datos: DatosPlantilla): Promise<{
     plantilla: {
         items: {
+            campos: Campo[];
             id: string;
             title: string;
             notes: string | null;
@@ -77,6 +82,7 @@ export declare function borrarPlantilla(tx: Tx, actor: Actor, id: string): Promi
 export declare function plantillaDesdeLista(tx: Tx, actor: Actor, listaId: string, nombre?: string): Promise<{
     plantilla: {
         items: {
+            campos: Campo[];
             id: string;
             title: string;
             notes: string | null;

@@ -451,6 +451,16 @@ tareas pueden pedir datos, archivos o enlaces y se completan al responder; lo re
 la ficha del cliente. Accesos en un campo protegido y cifrado (opción B). Primeras plantillas:
 Onboarding de cliente y Desarrollo web. Detalle: 12-PLANTILLAS-Y-FLUJOS.md.
 
+**D-65 · Tareas que piden algo y ficha del cliente** (2026-10-25, etapa 2 de D-64)
+Una tarea puede pedir campos de texto, párrafo, archivos o enlaces. Los campos van en la tarea
+(`TodoDetail.fields`, con ids estables para no perder respuestas al editarlos) y cada respuesta
+es una fila de `task_answers` con RLS. Responde quien puede completar la tarea; con todo lo
+obligatorio se completa sola. Los archivos son blobs colgados de la tarea
+(`recording_attachments`): heredan sus permisos, no ensucian Archivos y la purga ya los
+limpia. La ficha del cliente es una vista de lo respondido en el proyecto, no una tabla aparte.
+Descartado: un formulario como tipo de elemento nuevo (más superficie de permisos y de
+pantallas para lo mismo).
+
 ## Operación
 
 **D-20 · Repo público** (2026-10-24, decidido por el usuario)

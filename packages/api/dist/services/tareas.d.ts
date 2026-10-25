@@ -20,6 +20,7 @@ type FilaTarea = {
             id: string;
             name: string;
         } | null;
+        fields: unknown;
     } | null;
     assignees: {
         user: {
@@ -48,6 +49,8 @@ declare function aTarea(f: FilaTarea, conCuerpo?: boolean): {
         userId: string;
         name: string;
     }[];
+    /** Cuántas cosas pide (D-65); 0 = tarea normal. */
+    pide: number;
     body?: unknown;
     id: string;
     listaId: string | null;
@@ -74,6 +77,7 @@ export declare function listarTareas(tx: Tx, actor: Actor, proyecto: ProyectoCar
         };
         tareas: {
             comentarios: number;
+            respondidos: number;
             visibleToClients: boolean;
             position: number;
             createdAt: Date;
@@ -91,6 +95,8 @@ export declare function listarTareas(tx: Tx, actor: Actor, proyecto: ProyectoCar
                 userId: string;
                 name: string;
             }[];
+            /** Cuántas cosas pide (D-65); 0 = tarea normal. */
+            pide: number;
             body?: unknown;
             id: string;
             listaId: string | null;
@@ -109,6 +115,14 @@ export declare function listarTareas(tx: Tx, actor: Actor, proyecto: ProyectoCar
 export declare function tareaDetalle(tx: Tx, actor: Actor, id: string): Promise<{
     tarea: {
         visibleParaCliente: boolean;
+        campos: {
+            respuesta: import("./campos.js").RespuestaVista | null;
+            id: string;
+            etiqueta: string;
+            tipo: import("./campos.js").TipoCampo;
+            obligatorio: boolean;
+            ayuda?: string;
+        }[];
         visibleToClients: boolean;
         position: number;
         createdAt: Date;
@@ -126,6 +140,8 @@ export declare function tareaDetalle(tx: Tx, actor: Actor, id: string): Promise<
             userId: string;
             name: string;
         }[];
+        /** Cuántas cosas pide (D-65); 0 = tarea normal. */
+        pide: number;
         body?: unknown;
         id: string;
         listaId: string | null;
@@ -140,6 +156,8 @@ export declare function tareaDetalle(tx: Tx, actor: Actor, id: string): Promise<
         papelera: boolean;
         cambiarVisibilidad: boolean;
         mover: boolean;
+        responder: boolean;
+        pedir: boolean;
     };
 }>;
 export interface DatosTarea {
@@ -148,9 +166,19 @@ export interface DatosTarea {
     visibleToClients?: boolean;
     dueOn?: string | null;
     assigneeIds?: string[];
+    /** Lo que pide la tarea (D-65); null o [] = nada. Solo el equipo. */
+    campos?: unknown;
 }
 export declare function crearTarea(tx: Tx, actor: Actor, listaId: string, datos: DatosTarea): Promise<{
     visibleParaCliente: boolean;
+    campos: {
+        respuesta: import("./campos.js").RespuestaVista | null;
+        id: string;
+        etiqueta: string;
+        tipo: import("./campos.js").TipoCampo;
+        obligatorio: boolean;
+        ayuda?: string;
+    }[];
     visibleToClients: boolean;
     position: number;
     createdAt: Date;
@@ -168,6 +196,8 @@ export declare function crearTarea(tx: Tx, actor: Actor, listaId: string, datos:
         userId: string;
         name: string;
     }[];
+    /** Cuántas cosas pide (D-65); 0 = tarea normal. */
+    pide: number;
     body?: unknown;
     id: string;
     listaId: string | null;
@@ -177,6 +207,14 @@ export declare function crearTarea(tx: Tx, actor: Actor, listaId: string, datos:
 }>;
 export declare function editarTarea(tx: Tx, actor: Actor, id: string, datos: DatosTarea): Promise<{
     visibleParaCliente: boolean;
+    campos: {
+        respuesta: import("./campos.js").RespuestaVista | null;
+        id: string;
+        etiqueta: string;
+        tipo: import("./campos.js").TipoCampo;
+        obligatorio: boolean;
+        ayuda?: string;
+    }[];
     visibleToClients: boolean;
     position: number;
     createdAt: Date;
@@ -194,6 +232,8 @@ export declare function editarTarea(tx: Tx, actor: Actor, id: string, datos: Dat
         userId: string;
         name: string;
     }[];
+    /** Cuántas cosas pide (D-65); 0 = tarea normal. */
+    pide: number;
     body?: unknown;
     id: string;
     listaId: string | null;
@@ -203,6 +243,14 @@ export declare function editarTarea(tx: Tx, actor: Actor, id: string, datos: Dat
 }>;
 export declare function completarTarea(tx: Tx, actor: Actor, id: string, completar: boolean): Promise<{
     visibleParaCliente: boolean;
+    campos: {
+        respuesta: import("./campos.js").RespuestaVista | null;
+        id: string;
+        etiqueta: string;
+        tipo: import("./campos.js").TipoCampo;
+        obligatorio: boolean;
+        ayuda?: string;
+    }[];
     visibleToClients: boolean;
     position: number;
     createdAt: Date;
@@ -220,6 +268,45 @@ export declare function completarTarea(tx: Tx, actor: Actor, id: string, complet
         userId: string;
         name: string;
     }[];
+    /** Cuántas cosas pide (D-65); 0 = tarea normal. */
+    pide: number;
+    body?: unknown;
+    id: string;
+    listaId: string | null;
+    title: string | null;
+    bodyHtml: string | null;
+    tieneNotas: boolean;
+}>;
+/** Para campos.ts: completar cuando ya está todo lo que pide. */
+export declare const completarPorRespuestas: (tx: Tx, actor: Actor, id: string) => Promise<{
+    visibleParaCliente: boolean;
+    campos: {
+        respuesta: import("./campos.js").RespuestaVista | null;
+        id: string;
+        etiqueta: string;
+        tipo: import("./campos.js").TipoCampo;
+        obligatorio: boolean;
+        ayuda?: string;
+    }[];
+    visibleToClients: boolean;
+    position: number;
+    createdAt: Date;
+    creator: {
+        id: string;
+        name: string;
+    };
+    dueOn: string | null;
+    completedAt: Date | null;
+    completedBy: {
+        id: string;
+        name: string;
+    } | null;
+    assignees: {
+        userId: string;
+        name: string;
+    }[];
+    /** Cuántas cosas pide (D-65); 0 = tarea normal. */
+    pide: number;
     body?: unknown;
     id: string;
     listaId: string | null;

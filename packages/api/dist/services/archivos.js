@@ -16,7 +16,7 @@ async function usoDeCuenta(tx, accountId) {
     const r = await tx.blob.aggregate({ where: { accountId, status: 'ready' }, _sum: { byteSize: true } });
     return Number(r._sum.byteSize ?? 0n);
 }
-async function exigirCupo(tx, accountId, nuevos) {
+export async function exigirCupo(tx, accountId, nuevos) {
     const plan = await planDeCuenta(tx, accountId);
     if (plan.maxAlmacenamientoBytes === null)
         return;
@@ -25,7 +25,7 @@ async function exigirCupo(tx, accountId, nuevos) {
         throw new HttpError(403, r.motivo);
 }
 /** Escribe en el almacén y, si lo que sigue falla, lo borra. */
-async function conBytes(actor, entrada, nombre, registrar) {
+export async function conBytes(actor, entrada, nombre, registrar) {
     const limpio = nombreLimpio(nombre);
     const g = await almacen().guardar(actor.ctx.accountId, entrada, env.archivosMaxBytes);
     try {
@@ -36,7 +36,7 @@ async function conBytes(actor, entrada, nombre, registrar) {
         throw e;
     }
 }
-async function crearBlob(tx, actor, g) {
+export async function crearBlob(tx, actor, g) {
     await exigirCupo(tx, actor.ctx.accountId, g.bytes);
     return tx.blob.create({
         data: {
@@ -246,16 +246,27 @@ export async function detalleArchivo(tx, actor, id) {
     };
 }
 /**
- * Un archivo físico para entregar: solo si es una versión de un archivo que la persona puede
- * ver (con toda su cadena: si la carpeta es interna, un cliente no lo baja ni con el enlace).
+ * Un archivo físico para entregar: solo si es una versión de un archivo (o el adjunto de una
+ * respuesta) que la persona puede ver (con toda su cadena: si la carpeta es interna, un cliente no lo baja ni con el enlace).
  */
 export async function blobParaLeer(tx, actor, blobId) {
     const v = await tx.uploadVersion.findFirst({
         where: { blobId },
         select: { recordingId: true, blob: { select: { storageKey: true, filename: true, contentType: true, byteSize: true, status: true } } },
     });
-    if (!v || v.blob.status !== 'ready')
+    if (v) {
+        if (v.blob.status !== 'ready')
+            throw new HttpError(404, 'No encontrado.');
+        await elementoPara(tx, actor, v.recordingId, 'elemento.ver');
+        return v.blob;
+    }
+    // Archivo de una respuesta (D-65): se ve si se ve la tarea de la que cuelga.
+    const a = await tx.recordingAttachment.findFirst({
+        where: { blobId },
+        select: { recordingId: true, blob: { select: { storageKey: true, filename: true, contentType: true, byteSize: true, status: true } } },
+    });
+    if (!a || a.blob.status !== 'ready')
         throw new HttpError(404, 'No encontrado.');
-    await elementoPara(tx, actor, v.recordingId, 'elemento.ver');
-    return v.blob;
+    await elementoPara(tx, actor, a.recordingId, 'elemento.ver');
+    return a.blob;
 }

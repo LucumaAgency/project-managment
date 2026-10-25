@@ -20,6 +20,7 @@ const TITULOS: [string, string][] = [
   ['/proyectos/:id/archivos/:archivoId', 'Archivo'],
   ['/proyectos/:id/archivos', 'Archivos'],
   ['/proyectos/:id/papelera', 'Papelera'],
+  ['/proyectos/:id/ficha', 'Ficha del cliente'],
   ['/proyectos/:id', 'Proyecto'],
   ['/personas', 'Personas'],
   ['/plantillas/:id', 'Plantilla'],

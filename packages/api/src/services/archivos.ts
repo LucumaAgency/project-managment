@@ -30,7 +30,7 @@ async function usoDeCuenta(tx: Tx, accountId: string) {
   return Number(r._sum.byteSize ?? 0n);
 }
 
-async function exigirCupo(tx: Tx, accountId: string, nuevos: number) {
+export async function exigirCupo(tx: Tx, accountId: string, nuevos: number) {
   const plan = await planDeCuenta(tx, accountId);
   if (plan.maxAlmacenamientoBytes === null) return;
   const r = planPermite(plan, { recurso: 'almacenamiento', actuales: await usoDeCuenta(tx, accountId), nuevos });
@@ -38,7 +38,7 @@ async function exigirCupo(tx: Tx, accountId: string, nuevos: number) {
 }
 
 /** Escribe en el almacén y, si lo que sigue falla, lo borra. */
-async function conBytes<T>(actor: Actor, entrada: Readable, nombre: string, registrar: (g: { clave: string; bytes: number; sha256: string; tipo: string; nombre: string }) => Promise<T>) {
+export async function conBytes<T>(actor: Actor, entrada: Readable, nombre: string, registrar: (g: { clave: string; bytes: number; sha256: string; tipo: string; nombre: string }) => Promise<T>) {
   const limpio = nombreLimpio(nombre);
   const g = await almacen().guardar(actor.ctx.accountId, entrada, env.archivosMaxBytes);
   try {
@@ -49,7 +49,7 @@ async function conBytes<T>(actor: Actor, entrada: Readable, nombre: string, regi
   }
 }
 
-async function crearBlob(tx: Tx, actor: Actor, g: { clave: string; bytes: number; sha256: string; tipo: string; nombre: string }) {
+export async function crearBlob(tx: Tx, actor: Actor, g: { clave: string; bytes: number; sha256: string; tipo: string; nombre: string }) {
   await exigirCupo(tx, actor.ctx.accountId, g.bytes);
   return tx.blob.create({
     data: {
@@ -274,15 +274,25 @@ export async function detalleArchivo(tx: Tx, actor: Actor, id: string) {
 }
 
 /**
- * Un archivo físico para entregar: solo si es una versión de un archivo que la persona puede
- * ver (con toda su cadena: si la carpeta es interna, un cliente no lo baja ni con el enlace).
+ * Un archivo físico para entregar: solo si es una versión de un archivo (o el adjunto de una
+ * respuesta) que la persona puede ver (con toda su cadena: si la carpeta es interna, un cliente no lo baja ni con el enlace).
  */
 export async function blobParaLeer(tx: Tx, actor: Actor, blobId: string) {
   const v = await tx.uploadVersion.findFirst({
     where: { blobId },
     select: { recordingId: true, blob: { select: { storageKey: true, filename: true, contentType: true, byteSize: true, status: true } } },
   });
-  if (!v || v.blob.status !== 'ready') throw new HttpError(404, 'No encontrado.');
-  await elementoPara(tx, actor, v.recordingId, 'elemento.ver');
-  return v.blob;
+  if (v) {
+    if (v.blob.status !== 'ready') throw new HttpError(404, 'No encontrado.');
+    await elementoPara(tx, actor, v.recordingId, 'elemento.ver');
+    return v.blob;
+  }
+  // Archivo de una respuesta (D-65): se ve si se ve la tarea de la que cuelga.
+  const a = await tx.recordingAttachment.findFirst({
+    where: { blobId },
+    select: { recordingId: true, blob: { select: { storageKey: true, filename: true, contentType: true, byteSize: true, status: true } } },
+  });
+  if (!a || a.blob.status !== 'ready') throw new HttpError(404, 'No encontrado.');
+  await elementoPara(tx, actor, a.recordingId, 'elemento.ver');
+  return a.blob;
 }

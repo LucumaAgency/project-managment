@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { conCuenta } from '../lib/contexto.js';
 import { leer } from '../lib/validar.js';
+import { MAX_CAMPOS } from '../services/campos.js';
 import { MAX_DIA, MAX_TAREAS_PLANTILLA, aplicarPlantilla, borrarPlantilla, guardarPlantilla, listarPlantillas, plantillaDesdeLista, plantillaDetalle } from '../services/plantillas.js';
 import { exigirCuenta } from '../plugins/contexto.js';
 const tarea = z.object({
@@ -8,6 +9,7 @@ const tarea = z.object({
     notes: z.string().max(5000).nullable().optional(),
     audience: z.enum(['team', 'client', 'any']),
     dayOffset: z.number().int().min(1).max(MAX_DIA).nullable().optional(),
+    campos: z.array(z.record(z.unknown())).max(MAX_CAMPOS).nullable().optional(),
 });
 const plantilla = z.object({
     name: z.string().max(200, 'Máximo 200 caracteres.'),

@@ -12,6 +12,24 @@
 import type { Readable } from 'node:stream';
 import { type Tx } from '../lib/contexto.js';
 import { type Actor } from './permisos.js';
+export declare function exigirCupo(tx: Tx, accountId: string, nuevos: number): Promise<void>;
+/** Escribe en el almacén y, si lo que sigue falla, lo borra. */
+export declare function conBytes<T>(actor: Actor, entrada: Readable, nombre: string, registrar: (g: {
+    clave: string;
+    bytes: number;
+    sha256: string;
+    tipo: string;
+    nombre: string;
+}) => Promise<T>): Promise<T>;
+export declare function crearBlob(tx: Tx, actor: Actor, g: {
+    clave: string;
+    bytes: number;
+    sha256: string;
+    tipo: string;
+    nombre: string;
+}): Promise<{
+    id: string;
+}>;
 /** Sube un archivo nuevo a la raíz del proyecto o a una carpeta. */
 export declare function subirArchivo(actor: Actor, projectId: string, datos: {
     carpetaId: string | null;
@@ -184,8 +202,8 @@ export declare function detalleArchivo(tx: Tx, actor: Actor, id: string): Promis
     };
 }>;
 /**
- * Un archivo físico para entregar: solo si es una versión de un archivo que la persona puede
- * ver (con toda su cadena: si la carpeta es interna, un cliente no lo baja ni con el enlace).
+ * Un archivo físico para entregar: solo si es una versión de un archivo (o el adjunto de una
+ * respuesta) que la persona puede ver (con toda su cadena: si la carpeta es interna, un cliente no lo baja ni con el enlace).
  */
 export declare function blobParaLeer(tx: Tx, actor: Actor, blobId: string): Promise<{
     status: import("@prisma/client").$Enums.BlobStatus;

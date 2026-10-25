@@ -10,6 +10,7 @@ import { registrarEvento } from './eventos.js';
 import { mencionables } from './menciones.js';
 import { suscribir } from './suscripciones.js';
 import { avisar, seguidoresComo } from './avisos.js';
+import { camposConRespuestas, columnaCampos, fijarCampos, leerCampos, normalizarCampos, puedeResponder, respuestasDe } from './campos.js';
 import { exigir, puede } from './permisos.js';
 const SELECCION_TAREA = {
     id: true,
@@ -21,7 +22,7 @@ const SELECCION_TAREA = {
     position: true,
     createdAt: true,
     creator: { select: { id: true, name: true } },
-    todo: { select: { dueOn: true, completedAt: true, completedBy: { select: { id: true, name: true } } } },
+    todo: { select: { dueOn: true, completedAt: true, completedBy: { select: { id: true, name: true } }, fields: true } },
     assignees: { select: { user: { select: { id: true, name: true } } }, orderBy: { createdAt: 'asc' } },
 };
 /** Fecha sin hora (@db.Date) ↔ "AAAA-MM-DD". */
@@ -52,6 +53,8 @@ function aTarea(f, conCuerpo = false) {
         completedAt: f.todo?.completedAt ?? null,
         completedBy: f.todo?.completedBy ?? null,
         assignees: f.assignees.map((a) => ({ userId: a.user.id, name: a.user.name })),
+        /** Cuántas cosas pide (D-65); 0 = tarea normal. */
+        pide: leerCampos(f.todo?.fields).length,
     };
 }
 /** Listas del proyecto con sus tareas, en orden. Un cliente ve solo lo visible. */
@@ -75,6 +78,10 @@ export async function listarTareas(tx, actor, proyecto) {
         _count: { _all: true },
     });
     const comentariosDe = new Map(conteos.map((c) => [c.parentId, c._count._all]));
+    const conCampos = tareas.filter((t) => leerCampos(t.todo?.fields).length).map((t) => t.id);
+    const respondidos = conCampos.length
+        ? new Map((await tx.taskAnswer.groupBy({ by: ['recordingId'], where: { recordingId: { in: conCampos } }, _count: { _all: true } })).map((r) => [r.recordingId, r._count._all]))
+        : new Map();
     const permisoLista = (l) => {
         const elemento = {
             id: l.id,
@@ -101,7 +108,7 @@ export async function listarTareas(tx, actor, proyecto) {
             visibleToClients: l.visibleToClients,
             position: l.position,
             permisos: permisoLista(l),
-            tareas: tareas.filter((t) => t.parentId === l.id).map((t) => ({ ...aTarea(t), comentarios: comentariosDe.get(t.id) ?? 0 })),
+            tareas: tareas.filter((t) => t.parentId === l.id).map((t) => ({ ...aTarea(t), comentarios: comentariosDe.get(t.id) ?? 0, respondidos: respondidos.get(t.id) ?? 0 })),
         })),
         permisos: {
             crearLista: puede(actor, 'elemento.crear', { proyecto, tipo: 'todolist' }),
@@ -121,8 +128,10 @@ export async function tareaDetalle(tx, actor, id) {
         throw new HttpError(404, 'No encontrado.');
     const fila = (await tx.recording.findUniqueOrThrow({ where: { id }, select: SELECCION_TAREA }));
     const asignado = fila.assignees.some((a) => a.user.id === actor.ctx.userId);
+    const campos = leerCampos(fila.todo?.fields);
+    const respuestas = campos.length ? (await respuestasDe(tx, [id])).get(id) : undefined;
     return {
-        tarea: { ...aTarea(fila, true), visibleParaCliente: elemento.visibleEnCadena },
+        tarea: { ...aTarea(fila, true), visibleParaCliente: elemento.visibleEnCadena, campos: camposConRespuestas(campos, respuestas) },
         permisos: {
             editar: puede(actor, 'elemento.editar', { proyecto, elemento }),
             completar: puede(actor, 'tarea.completar', { proyecto, elemento, esAsignado: asignado }),
@@ -130,6 +139,9 @@ export async function tareaDetalle(tx, actor, id) {
             papelera: puede(actor, 'elemento.papelera', { proyecto, elemento }),
             cambiarVisibilidad: puede(actor, 'elemento.cambiarVisibilidad', { proyecto, elemento }),
             mover: puede(actor, 'elemento.mover', { proyecto, elemento }),
+            responder: campos.length > 0 && (await puedeResponder(tx, actor, proyecto, elemento)),
+            // Qué pide la tarea lo define el equipo.
+            pedir: !esCliente(actor.rol) && puede(actor, 'elemento.editar', { proyecto, elemento }),
         },
     };
 }
@@ -182,6 +194,9 @@ export async function crearTarea(tx, actor, listaId, datos) {
     if ((datos.assigneeIds?.length || datos.dueOn) && esCliente(actor.rol)) {
         throw new HttpError(403, 'Los responsables y la fecha los pone el equipo.');
     }
+    if (datos.campos != null && esCliente(actor.rol))
+        throw new HttpError(403, 'Lo que pide una tarea lo define el equipo.');
+    const campos = normalizarCampos(datos.campos);
     const creada = await crearElemento(tx, actor, proyecto.id, {
         type: 'todo',
         parentId: listaId,
@@ -190,7 +205,7 @@ export async function crearTarea(tx, actor, listaId, datos) {
         visibleToClients: datos.visibleToClients,
     });
     const visible = creada.visibleToClients && lista.visibleEnCadena;
-    await tx.todoDetail.create({ data: { recordingId: creada.id, dueOn: desdeDia(datos.dueOn ?? null) } });
+    await tx.todoDetail.create({ data: { recordingId: creada.id, dueOn: desdeDia(datos.dueOn ?? null), fields: columnaCampos(campos) } });
     if (datos.assigneeIds?.length) {
         await fijarResponsables(tx, actor, { projectId: proyecto.id, tareaId: creada.id, ids: datos.assigneeIds, visibleParaClientes: visible });
     }
@@ -203,6 +218,8 @@ export async function editarTarea(tx, actor, id, datos) {
     const generales = { title: datos.title, body: datos.body, visibleToClients: datos.visibleToClients };
     if (Object.values(generales).some((v) => v !== undefined))
         await editarElemento(tx, actor, id, generales);
+    if (datos.campos !== undefined)
+        await fijarCampos(tx, actor, id, datos.campos);
     if (datos.dueOn !== undefined || datos.assigneeIds !== undefined) {
         exigir(actor, 'tarea.asignar', { proyecto, elemento }, 'Los responsables y la fecha los pone el equipo.');
     }
@@ -269,3 +286,5 @@ export async function completarTarea(tx, actor, id, completar) {
     }
     return (await tareaDetalle(tx, actor, id)).tarea;
 }
+/** Para campos.ts: completar cuando ya está todo lo que pide. */
+export const completarPorRespuestas = (tx, actor, id) => completarTarea(tx, actor, id, true);

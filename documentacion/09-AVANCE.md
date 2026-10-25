@@ -690,6 +690,25 @@ como plantilla. Asistente probado contra la app local.
 
 Para desplegar (**con migración**): §5i de 10-DESPLIEGUE.
 
+### 2026-10-25 · Plantillas, etapa 2: tareas que piden algo y ficha del cliente
+
+Hecho (D-65, detalle en [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md)):
+
+- Una tarea (o una tarea de plantilla) puede **pedir** texto, párrafo, archivos o enlaces,
+  obligatorios u opcionales. El equipo lo define; el cliente responde en la tarea.
+- Con todo lo obligatorio, la tarea **se completa sola**. Cada respuesta queda en la actividad
+  y avisa a quienes siguen la tarea. En la lista se ve «Pide 2/3».
+- **Ficha del cliente** en el proyecto: todo lo respondido, con avance. Va en la exportación.
+- Los archivos de las respuestas cuelgan de la tarea y se ven con sus permisos.
+
+Probado: 279 tests en verde (13 nuevos; la auditoría de fugas suma una tarea interna que pide
+algo, con su respuesta y su archivo). Recorrido en navegador, equipo en escritorio y cliente en
+celular, sin errores: agregar campos a la plantilla, aplicarla a un proyecto con cliente,
+responder como cliente (se completa sola), subir la constancia, ver la ficha y la actividad.
+
+Para desplegar (**con migración**): §5i de 10-DESPLIEGUE (si la etapa 1 no se desplegó todavía,
+el mismo paso aplica las dos).
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -722,7 +741,7 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
 ### Antes de la fase 2
 
-- [ ] Desplegar la etapa 1 de plantillas (§5i de 10-DESPLIEGUE, con migración).
-- [ ] Plantillas, etapas 2 a 5 (tareas que piden datos/archivos/enlaces y ficha del cliente; accesos protegidos; "se activa cuando"; cargar Onboarding y Desarrollo web): [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
+- [ ] Desplegar las etapas 1 y 2 de plantillas (§5i de 10-DESPLIEGUE, con migraciones).
+- [ ] Plantillas, etapas 3 a 5 (accesos protegidos; "se activa cuando"; cargar Onboarding y Desarrollo web): [12-PLANTILLAS-Y-FLUJOS.md](12-PLANTILLAS-Y-FLUJOS.md).
 
 - [ ] Iniciar el trámite con Meta para WhatsApp (número, verificación, plantillas) mientras se usa el MVP.
