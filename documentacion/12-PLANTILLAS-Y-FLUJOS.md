@@ -300,3 +300,33 @@ real.
   (enlaces), accesos al dominio, al hosting y a la web actual (protegidos; hosting y web
   opcionales), contenidos (textos y fotos, opcionales) → revisar materiales (espera a los
   contenidos).
+
+## Reportes mensuales (2026-10-26, D-73)
+
+Una plantilla por servicio: **Reporte Google Ads**, **Reporte SEO** y **Reporte Redes**
+(`privados/plantillas/reporte-*.json`, se cargan con `proyectos.py cargar-plantilla`).
+
+**Qué tiene una plantilla además de sus tareas**
+- **Nombre de la lista** con marcadores: `Reporte Google Ads · {mes-1}` → «Reporte Google Ads ·
+  Octubre 2026» si se agrega el 1 de noviembre.
+- **Carpeta en Archivos**: `Reportes/{aaaa-mm-1} · Google Ads`, con «/» para subcarpetas. Si ya
+  existe, se usa. Se marca si la ve el cliente.
+- **Campo de archivo «También en la carpeta»**: lo que se sube ahí queda además en esa carpeta.
+
+**Repetir cada mes**: al agregarla, «Repetir cada mes» y el día (1 a 28). Desde ese día, cada mes
+se agrega sola a nombre de quien la programó, con las fechas contadas desde ese día, y al
+responsable le llega el aviso. En Tareas aparece «Se agregan solas cada mes» con «Dejar de
+repetir». Por el bot: `aplicar-plantilla … --responsable carlos --repetir-dia 1`.
+
+**Las tareas del reporte** (las tres plantillas siguen el mismo orden): pedirle a Claude la lista
+de datos del mes → bajar los datos → preguntarle al cliente (calidad de leads, ventas o cómo vio
+el mes) → revisar el informe que arma Claude (espera a los datos) → compartir el informe
+(enlace a Drive, en una tarea que ve el cliente) → avisar al cliente y revisarlo con él. Qué pedir a cada cliente y cómo armar el
+informe vive fuera del repo, en `lucuma/reportes-mensuales/`.
+
+**Ajuste del usuario (2026-10-26):** los archivos del reporte se quedan en la máquina de trabajo
+(carpeta `reportes/` de cada cliente; el proceso común en `lucuma/reportes-mensuales/`), no en Archivos. Las plantillas reales **no usan carpeta**: el
+informe se comparte como **enlace** (Drive) en la tarea «Compartir el informe (enlace)», que el
+cliente ve. Si Carlos arma el reporte por su cuenta, solo pega el enlace. La carpeta y el campo
+«también en la carpeta» quedan en el producto para otras agencias.
+

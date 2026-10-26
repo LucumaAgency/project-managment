@@ -26,7 +26,18 @@ const EJEMPLO: Record<TipoCampo, string> = { texto: 'Ej.: RUC', parrafo: 'Ej.: C
  * Qué pide una tarea (o una tarea de plantilla): una lista de campos con nombre, tipo y si es
  * obligatorio. Los campos que ya existían viajan con su id, así no se pierden sus respuestas.
  */
-export function EditorCampos({ campos, onChange, prefijo = 'campo' }: { campos: Campo[]; onChange: (c: Campo[]) => void; prefijo?: string }) {
+export function EditorCampos({
+  campos,
+  onChange,
+  prefijo = 'campo',
+  conCarpeta = false,
+}: {
+  campos: Campo[];
+  onChange: (c: Campo[]) => void;
+  prefijo?: string;
+  /** La plantilla crea una carpeta: los campos de archivos pueden guardar también ahí (D-73). */
+  conCarpeta?: boolean;
+}) {
   const cambiar = (n: number, c: Partial<Campo>) => onChange(campos.map((x, i) => (i === n ? { ...x, ...c } : x)));
   const mover = (n: number, d: -1 | 1) => {
     const ys = [...campos];
@@ -46,6 +57,11 @@ export function EditorCampos({ campos, onChange, prefijo = 'campo' }: { campos: 
           <label className="casilla">
             <input type="checkbox" checked={c.obligatorio} onChange={(e) => cambiar(n, { obligatorio: e.target.checked })} /> Obligatorio
           </label>
+          {conCarpeta && c.tipo === 'archivo' && (
+            <label className="casilla" title="Lo que se suba aquí también queda en la carpeta que crea la plantilla">
+              <input type="checkbox" checked={!!c.aCarpeta} onChange={(e) => cambiar(n, { aCarpeta: e.target.checked })} /> También en la carpeta
+            </label>
+          )}
           <span className="editor-campo-botones">
             <button type="button" className="btn btn-sec btn-chico" aria-label="Subir campo" disabled={n === 0} onClick={() => mover(n, -1)}><Icono nombre="subirFlecha" tam={14} /></button>
             <button type="button" className="btn btn-sec btn-chico" aria-label="Bajar campo" disabled={n === campos.length - 1} onClick={() => mover(n, 1)}><Icono nombre="bajarFlecha" tam={14} /></button>
@@ -345,6 +361,7 @@ export function Formulario({
                   </li>
                 ))}
               </ul>
+              {c.carpetaId && <p className="ayuda" style={{ margin: '4px 0' }}>Lo que subas aquí también queda en Archivos, en la carpeta de esta lista.</p>}
               <input ref={(el) => { archivoRef.current[c.id] = el; }} id={`r-${c.id}`} type="file" multiple hidden onChange={(e) => subir(c, e.target.files)} />
               <button type="button" className="btn btn-sec" disabled={!!subiendo} onClick={() => archivoRef.current[c.id]?.click()}>
                 <Icono nombre="subirArchivo" tam={16} />

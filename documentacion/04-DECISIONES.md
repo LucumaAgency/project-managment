@@ -520,3 +520,16 @@ Stripe no acepta comercios con sede en Perú. Se decide en la fase 3.
 La portada ordena las tarjetas por el evento más reciente de cada proyecto, del más activo al menos
 activo. Un cliente solo cuenta la actividad que puede ver en el feed, para que el orden no revele
 trabajo interno. `updatedAt` deja de usarse para ordenar.
+
+**D-73 · Reportes mensuales: plantillas con carpeta, archivo a la carpeta y repetición cada mes** (2026-10-26, pedido del usuario)
+Cada servicio (Google Ads, SEO, Redes) tiene su plantilla de reporte (opción A: una por servicio).
+Una plantilla puede: nombrar la lista con el mes (`{mes}`, `{mes-1}`, `{aaaa-mm}`, `{aaaa-mm-1}`),
+crear una carpeta en Archivos (`Reportes/{aaaa-mm-1} · Google Ads`, visible para el cliente si se
+marca) y tener campos de archivo «también en la carpeta», así el PDF del reporte termina donde el
+cliente lo ve. Al agregarla se puede pedir «repetir cada mes el día N» (1 a 28): el latido la
+vuelve a agregar ese día a nombre de quien la programó y le deja un aviso directo al responsable
+(la app no avisa a quien hace la acción). El informe se entrega solo en PDF; los datos y el
+análisis los arman el usuario y Claude con el kit de `lucuma/reportes-mensuales/` (fuera del repo).
+Descartado por ahora: módulos dentro de una sola plantilla (B) y que el proyecto sepa sus
+servicios y cree los reportes solo (C); C se puede construir encima de esto.
+

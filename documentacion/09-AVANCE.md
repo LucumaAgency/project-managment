@@ -849,6 +849,30 @@ y ordena por ahí; la tarjeta dice «Última actividad el …». Para el equipo 
 (`actividadDelProyecto` con límite 1), así el orden no delata actividad interna. Sin migración.
 Test nuevo en `proyectos.test.ts`; suite completa 319 en verde. Falta desplegar.
 
+### 2026-10-26 · Reportes mensuales: carpeta, PDF a la carpeta y repetición cada mes (D-73)
+
+Pedido del usuario: el reporte mensual de cada cliente sale de una plantilla que se agrega sola el
+día 1, crea su carpeta en Archivos y deja el PDF ahí, a la vista del cliente.
+- **Plantillas:** `listTitle`, `folderPath` y `folderVisibleToClients` (migración
+  `20261027090000_reportes_recurrentes`); marcadores de mes en `lib/marcadores.ts`. La carpeta se
+  busca por ruta y se crean los niveles que falten; si ya existe se reutiliza.
+- **Campos de archivo «también en la carpeta»** (`aCarpeta`; al agregar la plantilla la tarea
+  recibe `carpetaId`): al subir, además del adjunto de la tarea se crea el archivo en la carpeta
+  con el mismo blob (no ocupa doble). Quitarlo de la respuesta no lo borra de la carpeta.
+- **Repetición:** tabla `template_recurrences` con RLS; `services/repeticiones.ts`. El latido
+  (y el disparo «al usar la app») agrega las que tocan, toma la fila con `updateMany` para no
+  duplicar, y si se atrasó varios meses la agrega una vez y sigue desde hoy. Si falla, anota el
+  error y pasa al mes siguiente. Aviso directo al responsable (`dedupeKey repite:…`).
+- **Web:** campos nuevos en el editor de plantillas, «Repetir cada mes» al agregar, tarjeta «Se
+  agregan solas cada mes» en Tareas con «Dejar de repetir». **Bot:** `lista`, `carpeta`,
+  `carpetaVisible`, `pide[].aCarpeta` al cargar y `repetirDia` al aplicar (exige responsable);
+  `proyectos.py aplicar-plantilla --repetir-dia`.
+- Plantillas reales en `privados/plantillas/reporte-{google-ads,seo,redes}.json`, para cargar
+  tras el despliegue. Test nuevo `repeticiones.test.ts` (14); suite completa 333 en verde.
+  Revisado en el navegador (capturas en local). Falta desplegar (con `prisma:deploy`).
+- Ajuste del usuario el mismo día: las plantillas reales no crean carpeta; el informe va como
+  enlace (Drive) en una tarea visible para el cliente. Los archivos quedan en la carpeta `reportes/` de cada cliente.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;

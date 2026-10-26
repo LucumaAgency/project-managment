@@ -260,7 +260,7 @@ export async function plantillasBot(a: AccesoBot) {
  * Las tareas del equipo van al responsable (si no se dice, quedan sin asignar: el bot no las
  * lleva); las del cliente, a los clientes del proyecto.
  */
-export async function aplicarPlantillaBot(a: AccesoBot, datos: { proyecto: string; plantilla: string; inicio?: string; responsable?: string; lista?: string }) {
+export async function aplicarPlantillaBot(a: AccesoBot, datos: { proyecto: string; plantilla: string; inicio?: string; responsable?: string; lista?: string; repetirDia?: number }) {
   return conCuenta(a.actor.ctx, async (tx) => {
     const proyecto = await proyectoPorNombre(tx, a, datos.proyecto);
     const todas = await tx.listTemplate.findMany({ where: { accountId: a.actor.ctx.accountId }, select: { id: true, name: true } });
@@ -270,11 +270,14 @@ export async function aplicarPlantillaBot(a: AccesoBot, datos: { proyecto: strin
     if (!parecidas.length) throw new HttpError(404, `No hay una plantilla que se llame «${datos.plantilla}».`);
     if (parecidas.length > 1) throw new HttpError(409, `«${datos.plantilla}» coincide con varias plantillas: ${parecidas.map((p) => p.name).join(' · ')}. Sé más específico.`);
     const responsable = datos.responsable ? (await personasPorNombre(tx, a, [datos.responsable]))[0] : null;
+    // El bot no recibe avisos: una repetición sin responsable no le llegaría a nadie.
+    if (datos.repetirDia && !responsable) throw new HttpError(400, 'Para repetirla cada mes, di quién la lleva (responsable).');
     const r = await aplicarPlantilla(tx, a.actor, proyecto.id, {
       plantillaId: parecidas[0].id,
       inicio: datos.inicio,
       titulo: datos.lista,
       responsableId: responsable?.id ?? null,
+      repetirDia: datos.repetirDia ?? null,
     });
     return {
       proyecto: { id: proyecto.id, nombre: proyecto.name },
@@ -285,6 +288,8 @@ export async function aplicarPlantillaBot(a: AccesoBot, datos: { proyecto: strin
       inicio: r.inicio,
       responsable: responsable ? { nombre: responsable.name, correo: responsable.email } : null,
       sinCliente: r.sinCliente,
+      carpeta: r.carpeta ? true : false,
+      repeticion: r.repeticion,
       enlace: urlEnCuenta(env.baseDomain, a.slug, `/proyectos/${proyecto.id}/tareas`),
     };
   });
@@ -303,8 +308,13 @@ export interface PlantillaBot {
     notas?: string;
     /** Número de una tarea anterior (1 = la primera) a la que espera. */
     espera?: number | null;
-    pide?: { nombre: string; tipo: string; obligatorio?: boolean; ayuda?: string }[];
+    pide?: { nombre: string; tipo: string; obligatorio?: boolean; ayuda?: string; aCarpeta?: boolean }[];
   }[];
+  /** Nombre de la lista al agregarla, con marcadores de mes (D-73). */
+  lista?: string;
+  /** Carpeta que crea en Archivos ("Reportes/{aaaa-mm-1} · Google Ads"). */
+  carpeta?: string;
+  carpetaVisible?: boolean;
 }
 
 /**
@@ -324,10 +334,17 @@ export async function guardarPlantillaBot(a: AccesoBot, datos: PlantillaBot) {
       campos: (t.pide ?? []).map((c) => {
         const tipo = TIPO[c.tipo.toLowerCase()];
         if (!tipo) throw new HttpError(400, `«${c.nombre}»: el tipo es texto, párrafo, archivo, enlaces o acceso.`);
-        return { etiqueta: c.nombre, tipo, obligatorio: c.obligatorio !== false, ...(c.ayuda ? { ayuda: c.ayuda } : {}) };
+        return { etiqueta: c.nombre, tipo, obligatorio: c.obligatorio !== false, ...(c.ayuda ? { ayuda: c.ayuda } : {}), ...(c.aCarpeta ? { aCarpeta: true } : {}) };
       }),
     }));
-    const r = await guardarPlantilla(tx, a.actor, igual?.id ?? null, { name: datos.nombre, description: datos.descripcion ?? null, items });
+    const r = await guardarPlantilla(tx, a.actor, igual?.id ?? null, {
+      name: datos.nombre,
+      description: datos.descripcion ?? null,
+      listTitle: datos.lista ?? null,
+      folderPath: datos.carpeta ?? null,
+      folderVisibleToClients: datos.carpetaVisible !== false,
+      items,
+    });
     return { plantilla: { id: r.plantilla.id, nombre: r.plantilla.name, tareas: r.plantilla.tareas, delCliente: r.plantilla.delCliente }, existia: !!igual };
   });
 }

@@ -80,9 +80,13 @@ async function leerCuenta(ctx: Contexto) {
         id: true,
         name: true,
         description: true,
+        listTitle: true,
+        folderPath: true,
+        folderVisibleToClients: true,
         createdAt: true,
         updatedAt: true,
         items: { select: { title: true, notes: true, audience: true, dayOffset: true }, orderBy: { position: 'asc' } },
+        recurrences: { where: { active: true }, select: { projectId: true, dayOfMonth: true, nextRunOn: true } },
       },
       orderBy: { name: 'asc' },
     });
