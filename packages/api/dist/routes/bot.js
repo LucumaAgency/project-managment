@@ -82,10 +82,13 @@ export default async function rutasBot(app) {
     /** Crear una plantilla, o reemplazarla entera si ya hay una con ese nombre. */
     app.post('/api/v1/bot/plantillas', async (req) => {
         const a = await exigirBot(req);
-        const campo = z.object({ nombre: z.string().trim().min(1).max(120), tipo: z.string().max(20), obligatorio: z.boolean().optional(), ayuda: z.string().max(300).optional() });
+        const campo = z.object({ nombre: z.string().trim().min(1).max(120), tipo: z.string().max(20), obligatorio: z.boolean().optional(), ayuda: z.string().max(300).optional(), aCarpeta: z.boolean().optional() });
         const d = leer(z.object({
             nombre: z.string().trim().min(1, 'Falta el nombre.').max(200),
             descripcion: z.string().max(2000).optional(),
+            lista: z.string().trim().max(300).optional(),
+            carpeta: z.string().trim().max(600).optional(),
+            carpetaVisible: z.boolean().optional(),
             tareas: z
                 .array(z.object({
                 titulo: z.string().trim().min(1, 'Cada tarea necesita un título.').max(300),
@@ -108,6 +111,7 @@ export default async function rutasBot(app) {
             inicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha va como AAAA-MM-DD.').optional(),
             responsable: z.string().max(200).optional(),
             lista: z.string().trim().max(300).optional(),
+            repetirDia: z.number().int().min(1).max(28).optional(),
         }), req.body);
         return aplicarPlantillaBot(a, d);
     });

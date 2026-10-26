@@ -21,6 +21,8 @@ import { mencionables } from './menciones.js';
 import { exigir, type Actor } from './permisos.js';
 import { proyectoPara } from './proyectos.js';
 import { diaEn, sumarDias } from './recordatorios.js';
+import { programarRepeticion } from './repeticiones.js';
+import { expandirMarcadores } from '../lib/marcadores.js';
 import { crearTarea } from './tareas.js';
 
 export const MAX_TAREAS_PLANTILLA = 100;
@@ -39,6 +41,11 @@ export interface TareaPlantilla {
 export interface DatosPlantilla {
   name: string;
   description?: string | null;
+  /** Nombre de la lista al agregarla, con marcadores de mes (D-73). */
+  listTitle?: string | null;
+  /** Carpeta que se crea en Archivos al agregarla ("Reportes/{aaaa-mm-1} · Google Ads"). */
+  folderPath?: string | null;
+  folderVisibleToClients?: boolean;
   items: TareaPlantilla[];
 }
 
@@ -54,6 +61,9 @@ const SELECCION = {
   id: true,
   name: true,
   description: true,
+  listTitle: true,
+  folderPath: true,
+  folderVisibleToClients: true,
   updatedAt: true,
   items: {
     select: { id: true, title: true, notes: true, audience: true, dayOffset: true, position: true, fields: true, waitsFor: true },
@@ -92,7 +102,13 @@ export async function plantillaDetalle(tx: Tx, actor: Actor, id: string) {
   exigirEquipo(actor);
   const p = await cargar(tx, actor, id);
   return {
-    plantilla: { ...resumen(p), items: p.items.map(({ position: _, fields, ...i }) => ({ ...i, campos: leerCampos(fields) })) },
+    plantilla: {
+      ...resumen(p),
+      listTitle: p.listTitle,
+      folderPath: p.folderPath,
+      folderVisibleToClients: p.folderVisibleToClients,
+      items: p.items.map(({ position: _, fields, ...i }) => ({ ...i, campos: leerCampos(fields) })),
+    },
     permisos: { gestionar: veTodosLosProyectos(actor.rol) },
   };
 }
@@ -118,21 +134,48 @@ function limpiar(datos: DatosPlantilla) {
       throw new HttpError(400, `El día va de 1 a ${MAX_DIA} (1 = el día de inicio).`);
     }
   }
-  return { name, description: datos.description?.trim() || null, items };
+  const listTitle = datos.listTitle?.trim() || null;
+  const folderPath = datos.folderPath ? partesCarpeta(datos.folderPath).join(' / ') || null : null;
+  return { name, description: datos.description?.trim() || null, listTitle, folderPath, folderVisibleToClients: datos.folderVisibleToClients !== false, items };
+}
+
+/** "Reportes / 2026-10 · Ads" → ["Reportes", "2026-10 · Ads"] (como mucho 4 niveles). */
+function partesCarpeta(ruta: string) {
+  const partes = ruta.split('/').map((x) => x.trim()).filter(Boolean);
+  if (partes.length > 4) throw new HttpError(400, 'La carpeta tiene como máximo 4 niveles.');
+  if (partes.some((x) => x.length > 150)) throw new HttpError(400, 'Cada nivel de la carpeta tiene como máximo 150 caracteres.');
+  return partes;
+}
+
+/**
+ * Busca la carpeta por su ruta desde la raíz de Archivos y crea los niveles que falten. Una
+ * carpeta que ya existe se usa como está (no se cambia su visibilidad).
+ */
+async function carpetaPorRuta(tx: Tx, actor: Actor, projectId: string, ruta: string, visible: boolean) {
+  let padre: string | null = null;
+  for (const nombre of partesCarpeta(ruta)) {
+    const ya: { id: string } | null = await tx.recording.findFirst({
+      where: { projectId, type: 'folder', status: 'active', parentId: padre, title: nombre },
+      select: { id: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    padre = ya ? ya.id : (await crearElemento(tx, actor, projectId, { type: 'folder', parentId: padre, title: nombre, visibleToClients: visible })).id;
+  }
+  return padre;
 }
 
 /** Crea (id null) o reemplaza una plantilla entera: nombre, descripción y tareas en orden. */
 export async function guardarPlantilla(tx: Tx, actor: Actor, id: string | null, datos: DatosPlantilla) {
   exigirGestion(actor);
-  const { name, description, items } = limpiar(datos);
+  const { name, description, listTitle, folderPath, folderVisibleToClients, items } = limpiar(datos);
   const accountId = actor.ctx.accountId;
   let plantillaId = id;
   if (plantillaId) {
     await cargar(tx, actor, plantillaId);
-    await tx.listTemplate.update({ where: { id: plantillaId }, data: { name, description } });
+    await tx.listTemplate.update({ where: { id: plantillaId }, data: { name, description, listTitle, folderPath, folderVisibleToClients } });
     await tx.listTemplateItem.deleteMany({ where: { templateId: plantillaId } });
   } else {
-    plantillaId = (await tx.listTemplate.create({ data: { accountId, name, description, createdById: actor.ctx.userId }, select: { id: true } })).id;
+    plantillaId = (await tx.listTemplate.create({ data: { accountId, name, description, listTitle, folderPath, folderVisibleToClients, createdById: actor.ctx.userId }, select: { id: true } })).id;
   }
   if (items.length) {
     await tx.listTemplateItem.createMany({
@@ -225,6 +268,8 @@ export interface DatosAplicar {
   responsableId?: string | null;
   /** Clientes del proyecto que reciben sus tareas. Por defecto, todos los del proyecto. */
   clienteIds?: string[];
+  /** Que se vuelva a agregar sola cada mes ese día (1 a 28). D-73. */
+  repetirDia?: number | null;
 }
 
 /** Agrega una plantilla a un proyecto: una lista nueva con sus tareas, fechas y responsables. */
@@ -255,9 +300,12 @@ export async function aplicarPlantilla(tx: Tx, actor: Actor, projectId: string, 
   }
 
   const conCliente = plantilla.items.some((i) => i.audience !== 'team');
+  const carpetaId = plantilla.folderPath
+    ? await carpetaPorRuta(tx, actor, projectId, expandirMarcadores(plantilla.folderPath, inicio), plantilla.folderVisibleToClients)
+    : null;
   const lista = await crearElemento(tx, actor, projectId, {
     type: 'todolist',
-    title: datos.titulo?.trim() || plantilla.name,
+    title: expandirMarcadores(datos.titulo?.trim() || plantilla.listTitle || plantilla.name, inicio),
     bodyText: plantilla.description ?? undefined,
     visibleToClients: conCliente,
   });
@@ -273,15 +321,26 @@ export async function aplicarPlantilla(tx: Tx, actor: Actor, projectId: string, 
       // Si espera a otra, "día N" cuenta desde que se activa (D-67).
       dueOn: i.dayOffset && !esperaA ? sumarDias(inicio, i.dayOffset - 1) : null,
       assigneeIds: i.audience === 'team' ? equipoIds : i.audience === 'client' ? clienteIds : [...equipoIds, ...clienteIds],
-      campos: leerCampos(i.fields) as Campo[],
+      campos: leerCampos(i.fields).map(({ carpetaId: _, ...c }) => c) as Campo[],
       ...(esperaA ? { esperaA, diasDespues: i.dayOffset ?? null } : {}),
     });
     creadas.set(i.position, t.id);
+    // Los campos "también a la carpeta" apuntan a la carpeta recién creada.
+    const campos = leerCampos(i.fields);
+    if (carpetaId && campos.some((c) => c.aCarpeta)) {
+      await tx.todoDetail.update({
+        where: { recordingId: t.id },
+        data: { fields: columnaCampos(campos.map(({ carpetaId: _, ...c }) => (c.aCarpeta ? { ...c, carpetaId } : c))) },
+      });
+    }
   }
+  const repeticion = datos.repetirDia ? await programarRepeticion(tx, actor, projectId, { plantillaId: plantilla.id, dia: datos.repetirDia, responsableId, desde: inicio }) : null;
   return {
     lista: { id: lista.id, title: lista.title },
     tareas: plantilla.items.length,
     inicio,
     sinCliente: conCliente && clienteIds.length === 0,
+    carpeta: carpetaId ? { id: carpetaId } : null,
+    repeticion,
   };
 }

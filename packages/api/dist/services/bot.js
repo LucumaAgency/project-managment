@@ -247,11 +247,15 @@ export async function aplicarPlantillaBot(a, datos) {
         if (parecidas.length > 1)
             throw new HttpError(409, `«${datos.plantilla}» coincide con varias plantillas: ${parecidas.map((p) => p.name).join(' · ')}. Sé más específico.`);
         const responsable = datos.responsable ? (await personasPorNombre(tx, a, [datos.responsable]))[0] : null;
+        // El bot no recibe avisos: una repetición sin responsable no le llegaría a nadie.
+        if (datos.repetirDia && !responsable)
+            throw new HttpError(400, 'Para repetirla cada mes, di quién la lleva (responsable).');
         const r = await aplicarPlantilla(tx, a.actor, proyecto.id, {
             plantillaId: parecidas[0].id,
             inicio: datos.inicio,
             titulo: datos.lista,
             responsableId: responsable?.id ?? null,
+            repetirDia: datos.repetirDia ?? null,
         });
         return {
             proyecto: { id: proyecto.id, nombre: proyecto.name },
@@ -262,6 +266,8 @@ export async function aplicarPlantillaBot(a, datos) {
             inicio: r.inicio,
             responsable: responsable ? { nombre: responsable.name, correo: responsable.email } : null,
             sinCliente: r.sinCliente,
+            carpeta: r.carpeta ? true : false,
+            repeticion: r.repeticion,
             enlace: urlEnCuenta(env.baseDomain, a.slug, `/proyectos/${proyecto.id}/tareas`),
         };
     });
@@ -286,10 +292,17 @@ export async function guardarPlantillaBot(a, datos) {
                 const tipo = TIPO[c.tipo.toLowerCase()];
                 if (!tipo)
                     throw new HttpError(400, `«${c.nombre}»: el tipo es texto, párrafo, archivo, enlaces o acceso.`);
-                return { etiqueta: c.nombre, tipo, obligatorio: c.obligatorio !== false, ...(c.ayuda ? { ayuda: c.ayuda } : {}) };
+                return { etiqueta: c.nombre, tipo, obligatorio: c.obligatorio !== false, ...(c.ayuda ? { ayuda: c.ayuda } : {}), ...(c.aCarpeta ? { aCarpeta: true } : {}) };
             }),
         }));
-        const r = await guardarPlantilla(tx, a.actor, igual?.id ?? null, { name: datos.nombre, description: datos.descripcion ?? null, items });
+        const r = await guardarPlantilla(tx, a.actor, igual?.id ?? null, {
+            name: datos.nombre,
+            description: datos.descripcion ?? null,
+            listTitle: datos.lista ?? null,
+            folderPath: datos.carpeta ?? null,
+            folderVisibleToClients: datos.carpetaVisible !== false,
+            items,
+        });
         return { plantilla: { id: r.plantilla.id, nombre: r.plantilla.name, tareas: r.plantilla.tareas, delCliente: r.plantilla.delCliente }, existia: !!igual };
     });
 }

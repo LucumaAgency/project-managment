@@ -125,6 +125,7 @@ export declare function aplicarPlantillaBot(a: AccesoBot, datos: {
     inicio?: string;
     responsable?: string;
     lista?: string;
+    repetirDia?: number;
 }): Promise<{
     proyecto: {
         id: string;
@@ -140,6 +141,12 @@ export declare function aplicarPlantillaBot(a: AccesoBot, datos: {
         correo: string;
     } | null;
     sinCliente: boolean;
+    carpeta: boolean;
+    repeticion: {
+        id: string;
+        dia: number;
+        proxima: string;
+    } | null;
     enlace: string;
 }>;
 declare const PARA: {
@@ -162,8 +169,14 @@ export interface PlantillaBot {
             tipo: string;
             obligatorio?: boolean;
             ayuda?: string;
+            aCarpeta?: boolean;
         }[];
     }[];
+    /** Nombre de la lista al agregarla, con marcadores de mes (D-73). */
+    lista?: string;
+    /** Carpeta que crea en Archivos ("Reportes/{aaaa-mm-1} · Google Ads"). */
+    carpeta?: string;
+    carpetaVisible?: boolean;
 }
 /**
  * Crea una plantilla o, si ya hay una con ese nombre (sin tildes ni mayúsculas), la reemplaza

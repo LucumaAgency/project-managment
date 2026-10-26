@@ -21,6 +21,9 @@ export default function Plantilla() {
   const [gestionar, setGestionar] = useState(nueva);
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
+  const [tituloLista, setTituloLista] = useState('');
+  const [carpeta, setCarpeta] = useState('');
+  const [carpetaVisible, setCarpetaVisible] = useState(true);
   const [items, setItems] = useState<TareaPlantilla[]>(nueva ? [vacia()] : []);
   const [conNotas, setConNotas] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +36,9 @@ export default function Plantilla() {
       .then((r) => {
         setNombre(r.plantilla.name);
         setDescripcion(r.plantilla.description ?? '');
+        setTituloLista(r.plantilla.listTitle ?? '');
+        setCarpeta(r.plantilla.folderPath ?? '');
+        setCarpetaVisible(r.plantilla.folderVisibleToClients);
         setItems(r.plantilla.items);
         setConNotas(new Set(r.plantilla.items.flatMap((i, n) => (i.notes ? [n] : []))));
         setGestionar(r.permisos.gestionar);
@@ -75,6 +81,9 @@ export default function Plantilla() {
     const cuerpo = {
       name: nombre,
       description: descripcion || null,
+      listTitle: tituloLista.trim() || null,
+      folderPath: carpeta.trim() || null,
+      folderVisibleToClients: carpetaVisible,
       // Se mandan todas (también las vacías): el servidor las descarta y renumera las esperas.
       items: items
         .map(({ id: _, ...i }) => ({ ...i, notes: i.notes?.trim() || null, campos: (i.campos ?? []).filter((c) => c.etiqueta.trim()) })),
@@ -114,6 +123,12 @@ export default function Plantilla() {
         {volver}
         <h2 style={{ fontSize: 20 }}>{nombre}</h2>
         {descripcion && <p className="meta">{descripcion}</p>}
+        {(tituloLista || carpeta) && (
+          <p className="meta">
+            {tituloLista && <>Lista: «{tituloLista}». </>}
+            {carpeta && <>Crea la carpeta «{carpeta}» en Archivos{carpetaVisible ? ', visible para el cliente' : ', interna'}.</>}
+          </p>
+        )}
         <section className="card">
           <ul className="tareas">
             {items.map((i, n) => (
@@ -143,6 +158,18 @@ export default function Plantilla() {
         <input id="pl-nombre" required autoFocus={nueva} maxLength={200} placeholder="Ej.: Onboarding de cliente" value={nombre} onChange={(e) => { setNombre(e.target.value); setGuardado(false); }} />
         <label htmlFor="pl-desc">Descripción (opcional, va en la lista)</label>
         <textarea id="pl-desc" rows={2} maxLength={2000} placeholder="Para qué sirve, cuándo se usa" value={descripcion} onChange={(e) => { setDescripcion(e.target.value); setGuardado(false); }} />
+        <label htmlFor="pl-lista">Nombre de la lista al agregarla (opcional)</label>
+        <input id="pl-lista" maxLength={300} placeholder="Ej.: Reporte Google Ads · {mes-1}" value={tituloLista} onChange={(e) => { setTituloLista(e.target.value); setGuardado(false); }} />
+        <label htmlFor="pl-carpeta">Crear una carpeta en Archivos (opcional)</label>
+        <input id="pl-carpeta" maxLength={600} placeholder="Ej.: Reportes / {aaaa-mm-1} · Google Ads" value={carpeta} onChange={(e) => { setCarpeta(e.target.value); setGuardado(false); }} />
+        {carpeta.trim() && (
+          <label className="casilla">
+            <input type="checkbox" checked={carpetaVisible} onChange={(e) => { setCarpetaVisible(e.target.checked); setGuardado(false); }} /> El cliente ve la carpeta
+          </label>
+        )}
+        <p className="ayuda">
+          Se pueden usar <code>{'{mes}'}</code> (Noviembre 2026), <code>{'{mes-1}'}</code> (el mes anterior), <code>{'{aaaa-mm}'}</code> y <code>{'{aaaa-mm-1}'}</code>, según la fecha de inicio. Con «/» se arman subcarpetas; si ya existen, se usan.
+        </p>
       </section>
 
       <section className="card">
@@ -187,7 +214,7 @@ export default function Plantilla() {
               {!!i.campos?.length && (
                 <div className="plantilla-pide">
                   <span className="ayuda" style={{ margin: '8px 0 4px', display: 'block' }}>Al responder, pide:</span>
-                  <EditorCampos campos={i.campos} onChange={(c) => cambiar(n, { campos: c })} prefijo={`pl-${n}-campo`} />
+                  <EditorCampos campos={i.campos} onChange={(c) => cambiar(n, { campos: c })} prefijo={`pl-${n}-campo`} conCarpeta={!!carpeta.trim()} />
                 </div>
               )}
               {conNotas.has(n) && (

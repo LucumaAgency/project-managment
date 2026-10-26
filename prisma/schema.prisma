@@ -55,6 +55,7 @@ model Account {
   notifications Notification[]
   auditLog      AuditLog[]
   listTemplates ListTemplate[]
+  recurrences   TemplateRecurrence[]
 
   @@map("accounts")
 }
@@ -217,9 +218,10 @@ model Project {
   archivedAt  DateTime?
   trashedAt   DateTime?
 
-  members    ProjectMember[]
-  recordings Recording[]
-  events     Event[]
+  members     ProjectMember[]
+  recordings  Recording[]
+  events      Event[]
+  recurrences TemplateRecurrence[]
 
   @@index([accountId, status])
   @@map("projects")
@@ -380,11 +382,20 @@ model ListTemplate {
   account     Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
   name        String
   description String?
+  /// Nombre de la lista al agregarla (D-73). Acepta {mes}, {mes-1}, {aaaa-mm}, {aaaa-mm-1}.
+  /// Null = el nombre de la plantilla.
+  listTitle   String?
+  /// Carpeta que se crea en Archivos al agregarla (D-73), con "/" para subcarpetas y los mismos
+  /// marcadores: "Reportes/{aaaa-mm-1} · Google Ads". Si ya existe, se usa la existente.
+  folderPath  String?
+  /// La carpeta (y las de arriba, si se crean) se ve para el cliente.
+  folderVisibleToClients Boolean @default(true)
   createdById String
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 
-  items ListTemplateItem[]
+  items       ListTemplateItem[]
+  recurrences TemplateRecurrence[]
 
   @@index([accountId])
   @@map("list_templates")
@@ -410,6 +421,33 @@ model ListTemplateItem {
 
   @@index([templateId, position])
   @@map("list_template_items")
+}
+
+/// Plantilla que se agrega sola a un proyecto cada mes (D-73): el reporte mensual, por ejemplo.
+/// El latido (routes/cron.ts) la agrega el día `dayOfMonth` a nombre de quien la programó.
+model TemplateRecurrence {
+  id            String       @id @default(cuid())
+  accountId     String
+  account       Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  projectId     String
+  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  templateId    String
+  template      ListTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  /// Día del mes (1 a 28, así existe en todos los meses).
+  dayOfMonth    Int
+  /// Quién del equipo lleva las tareas del equipo. Null = quien la programó.
+  responsableId String?
+  createdById   String
+  /// Próxima vez que se agrega (día en la zona de la cuenta).
+  nextRunOn     DateTime     @db.Date
+  lastRunOn     DateTime?    @db.Date
+  lastError     String?
+  active        Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+
+  @@index([accountId, active, nextRunOn])
+  @@index([projectId])
+  @@map("template_recurrences")
 }
 
 /// Tablero de una lista (D-68): la misma lista de tareas vista por columnas, tipo Trello. Las

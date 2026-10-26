@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { esCliente } from '@lucuma-pm/shared';
 import type { JSONContent } from '@tiptap/react';
-import { api, enlaceLugar, ErrorApi, NOMBRE_AUDIENCIA, textoHora, type Campo, type ListaTareas, type PlantillaAplicada, type PlantillaDetalle, type Plantillas, type Tarea, type TareaDetalle, type TareasProyecto } from '../api';
+import { api, enlaceLugar, ErrorApi, NOMBRE_AUDIENCIA, textoHora, type Campo, type ListaTareas, type PlantillaAplicada, type PlantillaDetalle, type Plantillas, type Repeticion, type Tarea, type TareaDetalle, type TareasProyecto } from '../api';
 import { EditorCampos, Formulario } from '../componentes/Campos';
 import Comentarios from '../componentes/Comentarios';
 import { ColumnaDeTarea, EditorColumnas, Pasos, Tablero } from '../componentes/Tablero';
@@ -49,6 +49,7 @@ export default function Tareas() {
   const [creandoLista, setCreandoLista] = useState(false);
   const [desdePlantilla, setDesdePlantilla] = useState(false);
   const [aviso, setAviso] = useState<{ texto: string; enlace?: string } | null>(null);
+  const [repeticiones, setRepeticiones] = useState<Repeticion[]>([]);
   const arrastrada = useRef<{ id: string; listaId: string } | null>(null);
   const [sobre, setSobre] = useState<string | null>(null);
 
@@ -56,7 +57,12 @@ export default function Tareas() {
     api<TareasProyecto>(`/proyectos/${projectId}/tareas`)
       .then(setDatos)
       .catch((e) => setError(mensajeDe(e)));
-  }, [projectId]);
+    if (!esCliente(yo.rol)) {
+      api<{ repeticiones: Repeticion[] }>(`/proyectos/${projectId}/repeticiones`)
+        .then((r) => setRepeticiones(r.repeticiones))
+        .catch(() => {});
+    }
+  }, [projectId, yo.rol]);
   useEffect(() => {
     cargar();
     api<{ proyecto: { name: string } }>(`/proyectos/${projectId}`).then((r) => setNombreProyecto(r.proyecto.name)).catch(() => {});
@@ -115,6 +121,33 @@ export default function Tareas() {
           {aviso.enlace && <> · <Link to={aviso.enlace}>Ver la plantilla</Link></>}
           <button type="button" className="btn-texto" aria-label="Cerrar aviso" onClick={() => setAviso(null)}>×</button>
         </p>
+      )}
+
+      {repeticiones.length > 0 && (
+        <section className="card repeticiones">
+          <h3 className="titulo-lista" style={{ fontSize: 15 }}><Icono nombre="calendario" tam={16} /> Se agregan solas cada mes</h3>
+          <ul className="valor-lista">
+            {repeticiones.map((r) => (
+              <li key={r.id}>
+                <span><b>{r.plantilla.name}</b> · el día {r.dia} · próxima {fechaCorta(r.proxima)}{r.responsable ? ` · a cargo de ${r.responsable}` : ''}</span>
+                {r.error && <span className="error" style={{ display: 'block', margin: '2px 0' }}>La última vez no se pudo: {r.error}</span>}
+                {datos.permisos.crearLista && (
+                  <button
+                    type="button"
+                    className="btn-texto peligro"
+                    onClick={() => {
+                      if (window.confirm(`¿Dejar de agregar «${r.plantilla.name}» cada mes? Las listas ya creadas se quedan.`)) {
+                        accion(() => api(`/repeticiones/${r.id}`, { method: 'DELETE' }));
+                      }
+                    }}
+                  >
+                    Dejar de repetir
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {datos.listas.length === 0 && (
@@ -176,7 +209,7 @@ export default function Tareas() {
           onAgregada={(r) => {
             setDesdePlantilla(false);
             setAviso({
-              texto: `Lista «${r.lista.title}» creada con ${r.tareas} tareas.${r.sinCliente ? ' El proyecto no tiene clientes: sus tareas quedaron sin asignar (se asignan después o al invitarlo).' : ''}`,
+              texto: `Lista «${r.lista.title}» creada con ${r.tareas} tareas.${r.carpeta ? ' Su carpeta está en Archivos.' : ''}${r.repeticion ? ` Se vuelve a agregar sola el día ${r.repeticion.dia} de cada mes (próxima: ${fechaCorta(r.repeticion.proxima)}).` : ''}${r.sinCliente ? ' El proyecto no tiene clientes: sus tareas quedaron sin asignar (se asignan después o al invitarlo).' : ''}`,
             });
             cargar();
           }}
@@ -446,6 +479,8 @@ function AgregarPlantilla({ projectId, onCerrar, onAgregada }: { projectId: stri
   const [detalle, setDetalle] = useState<PlantillaDetalle | null>(null);
   const [inicio, setInicio] = useState(hoy());
   const [titulo, setTitulo] = useState('');
+  const [repetir, setRepetir] = useState(false);
+  const [diaRepetir, setDiaRepetir] = useState(1);
   const [responsable, setResponsable] = useState(yo.usuario.id);
   const [clientes, setClientes] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -466,7 +501,7 @@ function AgregarPlantilla({ projectId, onCerrar, onAgregada }: { projectId: stri
   useEffect(() => {
     setDetalle(null);
     if (!elegida) return;
-    api<PlantillaDetalle>(`/plantillas/${elegida}`).then((r) => { setDetalle(r); setTitulo(r.plantilla.name); }).catch((e) => setError(mensajeDe(e)));
+    api<PlantillaDetalle>(`/plantillas/${elegida}`).then((r) => { setDetalle(r); setTitulo(r.plantilla.listTitle ?? r.plantilla.name); }).catch((e) => setError(mensajeDe(e)));
   }, [elegida]);
 
   const fechaDe = (dia: number | null) => {
@@ -483,7 +518,7 @@ function AgregarPlantilla({ projectId, onCerrar, onAgregada }: { projectId: stri
     setError(null);
     try {
       const r = await api<PlantillaAplicada>(`/proyectos/${projectId}/plantillas`, {
-        body: { plantillaId: elegida, inicio, titulo: titulo.trim() || undefined, responsableId: responsable || null, clienteIds: marcados },
+        body: { plantillaId: elegida, inicio, titulo: titulo.trim() || undefined, responsableId: responsable || null, clienteIds: marcados, repetirDia: repetir ? diaRepetir : null },
       });
       onAgregada(r);
     } catch (err) {
@@ -523,6 +558,28 @@ function AgregarPlantilla({ projectId, onCerrar, onAgregada }: { projectId: stri
                   <input id="ap-titulo" maxLength={300} value={titulo} onChange={(e) => setTitulo(e.target.value)} />
                 </div>
               </div>
+
+              {/\{(mes|aaaa-mm)(-1)?\}/.test(titulo + (detalle.plantilla.folderPath ?? '')) && (
+                <p className="ayuda" style={{ marginTop: 0 }}>
+                  {'{mes}'} y {'{aaaa-mm}'} se cambian por el mes de la fecha de inicio; {'{mes-1}'} y {'{aaaa-mm-1}'}, por el anterior.
+                </p>
+              )}
+              {detalle.plantilla.folderPath && (
+                <p className="ayuda" style={{ marginTop: 0 }}>
+                  Crea la carpeta «{detalle.plantilla.folderPath}» en Archivos{detalle.plantilla.folderVisibleToClients ? ' (la ve el cliente)' : ''}.
+                </p>
+              )}
+
+              <label className="casilla">
+                <input type="checkbox" checked={repetir} onChange={(e) => setRepetir(e.target.checked)} /> Repetir cada mes
+              </label>
+              {repetir && (
+                <div className="sumar" style={{ alignItems: 'center', gap: 8 }}>
+                  <label htmlFor="ap-dia" style={{ margin: 0 }}>Agregarla sola el día</label>
+                  <input id="ap-dia" type="number" min={1} max={28} style={{ width: 80 }} value={diaRepetir} onChange={(e) => setDiaRepetir(Math.min(28, Math.max(1, Number(e.target.value) || 1)))} />
+                  <span className="ayuda" style={{ margin: 0 }}>de cada mes, a tu nombre, y te avisa.</span>
+                </div>
+              )}
 
               <label htmlFor="ap-resp">Tareas del equipo a cargo de</label>
               <select id="ap-resp" value={responsable} onChange={(e) => setResponsable(e.target.value)}>

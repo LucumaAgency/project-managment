@@ -164,6 +164,8 @@ export declare function tareaDetalle(tx: Tx, actor: Actor, id: string): Promise<
             tipo: import("./campos.js").TipoCampo;
             obligatorio: boolean;
             ayuda?: string;
+            aCarpeta?: boolean;
+            carpetaId?: string;
         }[];
         espera: import("./espera.js").InfoEspera | null;
         pasos: {
@@ -256,6 +258,8 @@ export declare function crearTarea(tx: Tx, actor: Actor, listaId: string, datos:
         tipo: import("./campos.js").TipoCampo;
         obligatorio: boolean;
         ayuda?: string;
+        aCarpeta?: boolean;
+        carpetaId?: string;
     }[];
     espera: import("./espera.js").InfoEspera | null;
     pasos: {
@@ -316,6 +320,8 @@ export declare function editarTarea(tx: Tx, actor: Actor, id: string, datos: Dat
         tipo: import("./campos.js").TipoCampo;
         obligatorio: boolean;
         ayuda?: string;
+        aCarpeta?: boolean;
+        carpetaId?: string;
     }[];
     espera: import("./espera.js").InfoEspera | null;
     pasos: {
@@ -376,6 +382,8 @@ export declare function completarTarea(tx: Tx, actor: Actor, id: string, complet
         tipo: import("./campos.js").TipoCampo;
         obligatorio: boolean;
         ayuda?: string;
+        aCarpeta?: boolean;
+        carpetaId?: string;
     }[];
     espera: import("./espera.js").InfoEspera | null;
     pasos: {
@@ -446,6 +454,8 @@ export declare const completarPorRespuestas: (tx: Tx, actor: Actor, id: string) 
         tipo: import("./campos.js").TipoCampo;
         obligatorio: boolean;
         ayuda?: string;
+        aCarpeta?: boolean;
+        carpetaId?: string;
     }[];
     espera: import("./espera.js").InfoEspera | null;
     pasos: {
@@ -507,6 +517,8 @@ export declare function activarAhora(tx: Tx, actor: Actor, id: string): Promise<
         tipo: import("./campos.js").TipoCampo;
         obligatorio: boolean;
         ayuda?: string;
+        aCarpeta?: boolean;
+        carpetaId?: string;
     }[];
     espera: import("./espera.js").InfoEspera | null;
     pasos: {

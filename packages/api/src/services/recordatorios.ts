@@ -101,6 +101,11 @@ export function dispararRecordatorios(accountId: string, log?: (e: unknown) => v
   const ahora = Date.now();
   if (ahora - (ultimo.get(accountId) ?? 0) < CADA_MS) return;
   ultimo.set(accountId, ahora);
-  setImmediate(() => recordatoriosDeCuenta(accountId).catch((e) => log?.(e)));
+  setImmediate(() =>
+    import('./repeticiones.js')
+      .then((m) => m.repeticionesDeCuenta(accountId))
+      .then(() => recordatoriosDeCuenta(accountId))
+      .catch((e) => log?.(e))
+  );
 }
 export const olvidarDisparos = () => ultimo.clear();

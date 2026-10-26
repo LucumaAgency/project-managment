@@ -17,6 +17,11 @@ export interface TareaPlantilla {
 export interface DatosPlantilla {
     name: string;
     description?: string | null;
+    /** Nombre de la lista al agregarla, con marcadores de mes (D-73). */
+    listTitle?: string | null;
+    /** Carpeta que se crea en Archivos al agregarla ("Reportes/{aaaa-mm-1} · Google Ads"). */
+    folderPath?: string | null;
+    folderVisibleToClients?: boolean;
     items: TareaPlantilla[];
 }
 export declare function listarPlantillas(tx: Tx, actor: Actor): Promise<{
@@ -34,6 +39,9 @@ export declare function listarPlantillas(tx: Tx, actor: Actor): Promise<{
 }>;
 export declare function plantillaDetalle(tx: Tx, actor: Actor, id: string): Promise<{
     plantilla: {
+        listTitle: string | null;
+        folderPath: string | null;
+        folderVisibleToClients: boolean;
         items: {
             campos: Campo[];
             id: string;
@@ -57,6 +65,9 @@ export declare function plantillaDetalle(tx: Tx, actor: Actor, id: string): Prom
 /** Crea (id null) o reemplaza una plantilla entera: nombre, descripción y tareas en orden. */
 export declare function guardarPlantilla(tx: Tx, actor: Actor, id: string | null, datos: DatosPlantilla): Promise<{
     plantilla: {
+        listTitle: string | null;
+        folderPath: string | null;
+        folderVisibleToClients: boolean;
         items: {
             campos: Campo[];
             id: string;
@@ -85,6 +96,9 @@ export declare function borrarPlantilla(tx: Tx, actor: Actor, id: string): Promi
  */
 export declare function plantillaDesdeLista(tx: Tx, actor: Actor, listaId: string, nombre?: string): Promise<{
     plantilla: {
+        listTitle: string | null;
+        folderPath: string | null;
+        folderVisibleToClients: boolean;
         items: {
             campos: Campo[];
             id: string;
@@ -118,6 +132,8 @@ export interface DatosAplicar {
     responsableId?: string | null;
     /** Clientes del proyecto que reciben sus tareas. Por defecto, todos los del proyecto. */
     clienteIds?: string[];
+    /** Que se vuelva a agregar sola cada mes ese día (1 a 28). D-73. */
+    repetirDia?: number | null;
 }
 /** Agrega una plantilla a un proyecto: una lista nueva con sus tareas, fechas y responsables. */
 export declare function aplicarPlantilla(tx: Tx, actor: Actor, projectId: string, datos: DatosAplicar): Promise<{
@@ -128,4 +144,12 @@ export declare function aplicarPlantilla(tx: Tx, actor: Actor, projectId: string
     tareas: number;
     inicio: string;
     sinCliente: boolean;
+    carpeta: {
+        id: string;
+    } | null;
+    repeticion: {
+        id: string;
+        dia: number;
+        proxima: string;
+    } | null;
 }>;

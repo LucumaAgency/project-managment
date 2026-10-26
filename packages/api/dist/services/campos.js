@@ -7,7 +7,7 @@ import { enlaceSeguro } from '../lib/documento.js';
 import { HttpError } from '../lib/errores.js';
 import { conBytes, crearBlob, exigirCupo } from './archivos.js';
 import { avisar, seguidoresComo } from './avisos.js';
-import { elementoPara } from './elementos.js';
+import { crearElemento, elementoPara } from './elementos.js';
 import { registrarEvento } from './eventos.js';
 import { exigir, puede } from './permisos.js';
 import { proyectoPara } from './proyectos.js';
@@ -52,7 +52,18 @@ export function normalizarCampos(entrada, existentes = []) {
             id = `c${siguiente++}`;
         }
         usados.add(id);
-        campos.push({ id, etiqueta, tipo: c.tipo, obligatorio: c.obligatorio !== false, ...(ayuda ? { ayuda } : {}) });
+        const tipo = c.tipo;
+        // La carpeta no la elige quien edita: se conserva la que puso la plantilla al agregarse.
+        const carpetaId = tipo === 'archivo' ? existentes.find((x) => x.id === id && x.tipo === 'archivo')?.carpetaId : undefined;
+        campos.push({
+            id,
+            etiqueta,
+            tipo,
+            obligatorio: c.obligatorio !== false,
+            ...(ayuda ? { ayuda } : {}),
+            ...(tipo === 'archivo' && c.aCarpeta === true ? { aCarpeta: true } : {}),
+            ...(carpetaId && c.aCarpeta !== false ? { carpetaId } : {}),
+        });
     }
     return campos.length ? campos : null;
 }
@@ -299,9 +310,33 @@ export async function subirArchivoCampo(actor, tareaId, campoId, nombre, entrada
         const lista = Array.isArray(actual?.value) ? actual.value : [];
         if (lista.length >= MAX_ARCHIVOS)
             throw new HttpError(400, `«${campo.etiqueta}»: como máximo ${MAX_ARCHIVOS} archivos.`);
+        const enCarpeta = campo.carpetaId ? await guardarEnCarpeta(tx, actor, campo.carpetaId, blob.id, g.nombre) : null;
         const r = await responder(tx, actor, tareaId, { [campoId]: [...lista, { blobId: blob.id }] }, completar);
-        return { blobId: blob.id, nombre: g.nombre, ...r };
+        return { blobId: blob.id, nombre: g.nombre, ...(enCarpeta ? { archivoId: enCarpeta } : {}), ...r };
     }));
+}
+/**
+ * Copia en la carpeta de la plantilla (D-73): un archivo nuevo en Archivos con el mismo blob
+ * (no ocupa espacio dos veces). Si quitan el archivo de la respuesta, en la carpeta se queda: el
+ * blob sigue en uso por la versión y la purga no lo toca. Si la carpeta ya no existe o quien sube
+ * no puede crear ahí, solo queda en la tarea.
+ */
+async function guardarEnCarpeta(tx, actor, carpetaId, blobId, nombre) {
+    const c = await tx.recording.findFirst({ where: { id: carpetaId, type: 'folder', status: 'active' }, select: { projectId: true } });
+    if (!c)
+        return null;
+    let cargado;
+    try {
+        cargado = await elementoPara(tx, actor, carpetaId, 'elemento.ver');
+    }
+    catch {
+        return null;
+    }
+    if (cargado.elemento.padreInactivo || !puede(actor, 'elemento.crear', { proyecto: cargado.proyecto, elemento: cargado.elemento, tipo: 'upload' }))
+        return null;
+    const archivo = await crearElemento(tx, actor, c.projectId, { type: 'upload', parentId: carpetaId, title: nombre, visibleToClients: cargado.elemento.visibleEnCadena });
+    await tx.uploadVersion.create({ data: { recordingId: archivo.id, blobId, version: 1, uploadedById: actor.ctx.userId } });
+    return archivo.id;
 }
 /**
  * Ficha del cliente: todo lo respondido en el proyecto, agrupado por tarea, en el orden de

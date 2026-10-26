@@ -4,6 +4,7 @@ import { leer } from '../lib/validar.js';
 import { MAX_CAMPOS } from '../services/campos.js';
 import { MAX_DIA, MAX_TAREAS_PLANTILLA, aplicarPlantilla, borrarPlantilla, guardarPlantilla, listarPlantillas, plantillaDesdeLista, plantillaDetalle } from '../services/plantillas.js';
 import { exigirCuenta } from '../plugins/contexto.js';
+import { MAX_DIA_REPETICION, quitarRepeticion, repeticionesDelProyecto } from '../services/repeticiones.js';
 const tarea = z.object({
     title: z.string().max(300, 'Máximo 300 caracteres.'),
     notes: z.string().max(5000).nullable().optional(),
@@ -15,6 +16,9 @@ const tarea = z.object({
 const plantilla = z.object({
     name: z.string().max(200, 'Máximo 200 caracteres.'),
     description: z.string().max(2000).nullable().optional(),
+    listTitle: z.string().max(300).nullable().optional(),
+    folderPath: z.string().max(600).nullable().optional(),
+    folderVisibleToClients: z.boolean().optional(),
     items: z.array(tarea).max(MAX_TAREAS_PLANTILLA, `Como máximo ${MAX_TAREAS_PLANTILLA} tareas.`),
 });
 const aplicar = z.object({
@@ -23,6 +27,7 @@ const aplicar = z.object({
     titulo: z.string().max(300).optional(),
     responsableId: z.string().min(1).max(40).nullable().optional(),
     clienteIds: z.array(z.string().min(1).max(40)).max(50).optional(),
+    repetirDia: z.number().int().min(1).max(MAX_DIA_REPETICION).nullable().optional(),
 });
 const desdeLista = z.object({ name: z.string().max(200).optional() });
 export default async function rutasPlantillas(app) {
@@ -60,5 +65,15 @@ export default async function rutasPlantillas(app) {
         const actor = exigirCuenta(req);
         const datos = leer(aplicar, req.body);
         return conCuenta(actor.ctx, (tx) => aplicarPlantilla(tx, actor, req.params.id, datos));
+    });
+    /** Plantillas que se agregan solas cada mes en el proyecto (D-73). */
+    app.get('/api/v1/proyectos/:id/repeticiones', async (req) => {
+        const actor = exigirCuenta(req);
+        return conCuenta(actor.ctx, (tx) => repeticionesDelProyecto(tx, actor, req.params.id));
+    });
+    app.delete('/api/v1/repeticiones/:id', async (req) => {
+        const actor = exigirCuenta(req);
+        await conCuenta(actor.ctx, (tx) => quitarRepeticion(tx, actor, req.params.id));
+        return { ok: true };
     });
 }

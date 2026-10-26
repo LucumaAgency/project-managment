@@ -21,6 +21,13 @@ export interface Campo {
     tipo: TipoCampo;
     obligatorio: boolean;
     ayuda?: string;
+    /**
+     * Solo archivos (D-73): lo que se sube aquí también se guarda en la carpeta que creó la
+     * plantilla (el PDF del reporte termina en Archivos/Reportes/…). En la plantilla es solo la
+     * marca; al agregarla, la tarea recibe `carpetaId`.
+     */
+    aCarpeta?: boolean;
+    carpetaId?: string;
 }
 export declare const MAX_CAMPOS = 20;
 /** Lo guardado en la base → campos (lo que no tenga forma de campo se ignora). */
@@ -67,6 +74,13 @@ export declare function camposConRespuestas(campos: Campo[], respuestas: Map<str
     tipo: TipoCampo;
     obligatorio: boolean;
     ayuda?: string;
+    /**
+     * Solo archivos (D-73): lo que se sube aquí también se guarda en la carpeta que creó la
+     * plantilla (el PDF del reporte termina en Archivos/Reportes/…). En la plantilla es solo la
+     * marca; al agregarla, la tarea recibe `carpetaId`.
+     */
+    aCarpeta?: boolean;
+    carpetaId?: string;
 }[];
 export declare function puedeResponder(tx: Tx, actor: Actor, proyecto: ProyectoCargado, elemento: ElementoCargado): Promise<boolean>;
 /**
@@ -90,6 +104,7 @@ export declare function fijarCampos(tx: Tx, actor: Actor, tareaId: string, entra
 export declare function subirArchivoCampo(actor: Actor, tareaId: string, campoId: string, nombre: string, entrada: Readable, completar: (tx: Tx, actor: Actor, id: string) => Promise<unknown>): Promise<{
     cambiaron: string[];
     seCompleto: boolean;
+    archivoId?: string | undefined;
     blobId: string;
     nombre: string;
 }>;
@@ -115,6 +130,13 @@ export declare function fichaProyecto(tx: Tx, actor: Actor, projectId: string): 
             tipo: TipoCampo;
             obligatorio: boolean;
             ayuda?: string;
+            /**
+             * Solo archivos (D-73): lo que se sube aquí también se guarda en la carpeta que creó la
+             * plantilla (el PDF del reporte termina en Archivos/Reportes/…). En la plantilla es solo la
+             * marca; al agregarla, la tarea recibe `carpetaId`.
+             */
+            aCarpeta?: boolean;
+            carpetaId?: string;
         }[];
     }[];
 }>;

@@ -3,6 +3,7 @@ import { env } from '../env.js';
 import { HttpError } from '../lib/errores.js';
 import { purgarTodas } from '../services/purga.js';
 import { recordatoriosDeTodas } from '../services/recordatorios.js';
+import { repeticionesDeTodas } from '../services/repeticiones.js';
 import { respaldoDelDia } from '../services/respaldo.js';
 /**
  * Latido externo (D-54): un servicio de cron de afuera (cron-job.org) llama esta dirección cada
@@ -29,11 +30,13 @@ export default async function rutasCron(app) {
         if (!tokenValido(dado))
             throw new HttpError(401, 'Token inválido.');
         const inicio = Date.now();
+        // Primero las plantillas que se repiten (D-73): sus tareas nuevas ya entran en los recordatorios.
+        const repeticiones = await repeticionesDeTodas();
         const r = await recordatoriosDeTodas();
         const purga = await purgarTodas(new Date(), (e) => app.log.error({ err: e }, 'Purga de papelera'));
         // Una vez al día, en segundo plano: el latido no espera al pg_dump.
         const respaldo = await respaldoDelDia((e) => app.log.error({ err: e }, 'Respaldo'));
-        return { ok: true, ...r, purga, respaldo, ms: Date.now() - inicio };
+        return { ok: true, ...r, repeticiones, purga, respaldo, ms: Date.now() - inicio };
     };
     app.get('/api/v1/cron/latido', latido);
     app.post('/api/v1/cron/latido', latido);

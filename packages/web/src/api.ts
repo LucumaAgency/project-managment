@@ -419,7 +419,13 @@ export interface Plantillas {
   permisos: { gestionar: boolean };
 }
 export interface PlantillaDetalle {
-  plantilla: PlantillaResumen & { items: TareaPlantilla[] };
+  plantilla: PlantillaResumen & {
+    items: TareaPlantilla[];
+    /** D-73: nombre de la lista y carpeta, con marcadores de mes. */
+    listTitle: string | null;
+    folderPath: string | null;
+    folderVisibleToClients: boolean;
+  };
   permisos: { gestionar: boolean };
 }
 export interface PlantillaAplicada {
@@ -427,6 +433,18 @@ export interface PlantillaAplicada {
   tareas: number;
   inicio: string;
   sinCliente: boolean;
+  carpeta: { id: string } | null;
+  repeticion: { id: string; dia: number; proxima: string } | null;
+}
+/** Plantilla que se agrega sola cada mes en un proyecto (D-73). */
+export interface Repeticion {
+  id: string;
+  plantilla: { id: string; name: string };
+  dia: number;
+  proxima: string;
+  ultima: string | null;
+  error: string | null;
+  responsable: string | null;
 }
 
 /** Lo que pide una tarea (D-65). */
@@ -438,6 +456,9 @@ export interface Campo {
   tipo: TipoCampo;
   obligatorio: boolean;
   ayuda?: string;
+  /** Archivos (D-73): lo subido también queda en la carpeta que crea la plantilla. */
+  aCarpeta?: boolean;
+  carpetaId?: string;
 }
 export interface ArchivoRespuesta {
   blobId: string;
