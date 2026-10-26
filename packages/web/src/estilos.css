@@ -37,9 +37,105 @@
   --sombra: 0 1px 2px rgba(16, 21, 28, .05);
   --ancho-lateral: 256px;
 
+  /* Derivados (D-74): todo color fijo vive aquí, así la versión noche los cambia de una vez.
+     REGLA: no escribir colores hex en componentes ni en reglas sueltas, usar estas variables. */
+  --texto-ambar: #8A5A00;
+  --texto-rojo: #A32424;
+  --texto-verde: #0B6B35;
+  --ambar-borde: #F3E2B5;
+  --gris-chip: #F0F2F6;
+  --borde-fuerte: #cfd6e2;
+  --rojo-osc: #b92e2e;
+  --no-leido: #FBFCFF;
+  --resaltado: #fff1b8;
+  --sobre-azul: #fff;
+  --lateral-hover: rgba(255, 255, 255, .6);
+  --sombra-suave: rgba(16, 21, 28, .06);
+  --sombra-media: rgba(16, 21, 28, .14);
+  --sombra-fuerte: rgba(16, 21, 28, .18);
+  --velo: rgba(16, 21, 28, .45);
+
   font-family: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-feature-settings: 'tnum' 1;
   color-scheme: light;
+}
+/* Versión noche (D-74), la misma paleta del CRM. data-tema lo pone lib/tema.ts (y el script de
+   index.html antes de pintar): «oscuro» fuerza la noche, «auto» sigue al sistema, sin atributo = claro. */
+:root[data-tema="oscuro"] {
+  --azul: #4A7CF0;
+  --azul-osc: #2F5BC7;
+  --azul-brillo: #7BA2FF;
+  --azul-suave: #3C5C9E;
+  --azul-tinte: #1A2540;
+  --texto: #E6EAF0;
+  --suave: #A3ACBA;
+  --tenue: #7D8797;
+  --borde: #2A313C;
+  --borde-suave: #222831;
+  --fondo: #0F1318;
+  --lateral: #141920;
+  --blanco: #181D25;
+  --verde: #3CC37A;
+  --verde-tinte: #12301F;
+  --rojo: #F06565;
+  --rojo-tinte: #3A1A1C;
+  --ambar: #E0A93A;
+  --ambar-tinte: #33280F;
+  --texto-ambar: #F2C66B;
+  --texto-rojo: #FF9A9A;
+  --texto-verde: #7EE0A6;
+  --ambar-borde: #5A4618;
+  --gris-chip: #262C36;
+  --borde-fuerte: #3A4250;
+  --rojo-osc: #D04C4C;
+  --no-leido: #1B2436;
+  --resaltado: #5A4A12;
+  --lateral-hover: rgba(255, 255, 255, .06);
+  --sombra: 0 1px 2px rgba(0, 0, 0, .3);
+  --sombra-suave: rgba(0, 0, 0, .3);
+  --sombra-media: rgba(0, 0, 0, .45);
+  --sombra-fuerte: rgba(0, 0, 0, .55);
+  --velo: rgba(0, 0, 0, .6);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-tema="auto"] {
+    --azul: #4A7CF0;
+    --azul-osc: #2F5BC7;
+    --azul-brillo: #7BA2FF;
+    --azul-suave: #3C5C9E;
+    --azul-tinte: #1A2540;
+    --texto: #E6EAF0;
+    --suave: #A3ACBA;
+    --tenue: #7D8797;
+    --borde: #2A313C;
+    --borde-suave: #222831;
+    --fondo: #0F1318;
+    --lateral: #141920;
+    --blanco: #181D25;
+    --verde: #3CC37A;
+    --verde-tinte: #12301F;
+    --rojo: #F06565;
+    --rojo-tinte: #3A1A1C;
+    --ambar: #E0A93A;
+    --ambar-tinte: #33280F;
+    --texto-ambar: #F2C66B;
+    --texto-rojo: #FF9A9A;
+    --texto-verde: #7EE0A6;
+    --ambar-borde: #5A4618;
+    --gris-chip: #262C36;
+    --borde-fuerte: #3A4250;
+    --rojo-osc: #D04C4C;
+    --no-leido: #1B2436;
+    --resaltado: #5A4A12;
+    --lateral-hover: rgba(255, 255, 255, .06);
+    --sombra: 0 1px 2px rgba(0, 0, 0, .3);
+    --sombra-suave: rgba(0, 0, 0, .3);
+    --sombra-media: rgba(0, 0, 0, .45);
+    --sombra-fuerte: rgba(0, 0, 0, .55);
+    --velo: rgba(0, 0, 0, .6);
+    color-scheme: dark;
+  }
 }
 * { box-sizing: border-box; }
 body {
@@ -73,12 +169,12 @@ h1, h2, h3 { letter-spacing: -0.01em; }
   transform: translateX(-100%); transition: transform .18s ease;
   padding-bottom: env(safe-area-inset-bottom);
 }
-.lateral.abierto { transform: translateX(0); box-shadow: 0 0 40px rgba(16,21,28,.18); }
+.lateral.abierto { transform: translateX(0); box-shadow: 0 0 40px var(--sombra-fuerte); }
 .lateral .marca { padding: 18px 16px 14px; gap: 6px; }
 .lateral .wordmark { font-size: 16px; }
 .lateral-cuenta {
   margin: 0 10px 4px; padding: 8px 10px; border-radius: 8px;
-  background: rgba(255,255,255,.6); font-weight: 600; font-size: 13px;
+  background: var(--lateral-hover); font-weight: 600; font-size: 13px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
@@ -92,7 +188,7 @@ h1, h2, h3 { letter-spacing: -0.01em; }
   padding: 8px 10px; border-radius: 8px; color: var(--suave);
   font-weight: 500; font-size: 13.5px; margin-bottom: 1px;
 }
-.lateral-nav a:hover { background: rgba(255,255,255,.6); color: var(--texto); text-decoration: none; }
+.lateral-nav a:hover { background: var(--lateral-hover); color: var(--texto); text-decoration: none; }
 .lateral-nav a svg { color: var(--tenue); flex: none; }
 .lateral-nav a.activo { background: var(--blanco); color: var(--texto); font-weight: 600; box-shadow: var(--sombra); }
 .lateral-nav a.activo svg { color: var(--azul); }
@@ -110,7 +206,7 @@ h1, h2, h3 { letter-spacing: -0.01em; }
 .usuario svg { color: var(--tenue); flex: none; }
 .avatar {
   width: 30px; height: 30px; border-radius: 50%; flex: none;
-  background: var(--azul); color: #fff; font-weight: 700; font-size: 12px;
+  background: var(--azul); color: var(--sobre-azul); font-weight: 700; font-size: 12px;
   display: flex; align-items: center; justify-content: center;
 }
 .avatar.gris { background: var(--borde); color: var(--suave); }
@@ -119,7 +215,7 @@ h1, h2, h3 { letter-spacing: -0.01em; }
 .usuario-menu {
   position: absolute; left: 10px; right: 10px; bottom: 66px;
   background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio);
-  box-shadow: 0 8px 24px rgba(16,21,28,.12); padding: 6px; z-index: 5;
+  box-shadow: 0 8px 24px var(--sombra-media); padding: 6px; z-index: 5;
 }
 .usuario-menu a, .usuario-menu button {
   display: flex; align-items: center; gap: 9px; width: 100%;
@@ -131,7 +227,7 @@ h1, h2, h3 { letter-spacing: -0.01em; }
 .aviso-pass { color: var(--ambar); font-size: 11px; font-weight: 600; }
 
 /* Velo que cierra el cajón en móvil. */
-.velo { position: fixed; inset: 0; z-index: 20; background: rgba(16, 21, 28, .45); }
+.velo { position: fixed; inset: 0; z-index: 20; background: var(--velo); }
 
 .hamburguesa {
   background: none; border: 0; padding: 6px; color: var(--texto);
@@ -150,7 +246,7 @@ h1, h2, h3 { letter-spacing: -0.01em; }
 
 /* Soporte de Lucuma dentro de una cuenta ajena (beta): siempre visible. */
 .franja-soporte {
-  background: var(--ambar-tinte); color: #8A5A00; border-bottom: 1px solid #F3E2B5;
+  background: var(--ambar-tinte); color: var(--texto-ambar); border-bottom: 1px solid var(--ambar-borde);
   padding: 8px 16px; font-size: 12.5px; font-weight: 600;
   display: flex; align-items: center; gap: 8px;
 }
@@ -175,26 +271,26 @@ h1, h2, h3 { letter-spacing: -0.01em; }
   font-size: 11.5px; font-weight: 600; background: var(--azul-tinte); color: var(--azul);
   white-space: nowrap;
 }
-.chip-gris { background: #F0F2F6; color: var(--suave); }
-.chip-alerta { background: var(--ambar-tinte); color: #8A5A00; }
-.chip-rojo { background: var(--rojo-tinte); color: #A32424; }
-.chip-verde { background: var(--verde-tinte); color: #0B6B35; }
+.chip-gris { background: var(--gris-chip); color: var(--suave); }
+.chip-alerta { background: var(--ambar-tinte); color: var(--texto-ambar); }
+.chip-rojo { background: var(--rojo-tinte); color: var(--texto-rojo); }
+.chip-verde { background: var(--verde-tinte); color: var(--texto-verde); }
 
 /* --- Botones ------------------------------------------------------------- */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  background: var(--azul); color: #fff; border: 1px solid var(--azul);
+  background: var(--azul); color: var(--sobre-azul); border: 1px solid var(--azul);
   border-radius: var(--radio-btn); padding: 9px 14px; font-weight: 600; font-size: 13px;
   white-space: nowrap;
 }
 .btn:hover { background: var(--azul-osc); border-color: var(--azul-osc); text-decoration: none; }
 .btn:disabled { opacity: .55; cursor: default; }
 .btn-sec { background: var(--blanco); color: var(--texto); border: 1px solid var(--borde); }
-.btn-sec:hover { background: var(--fondo); border-color: #cfd6e2; }
+.btn-sec:hover { background: var(--fondo); border-color: var(--borde-fuerte); }
 .btn-chico { padding: 5px 10px; font-size: 12px; }
 .btn-bloque { width: 100%; }
-.btn-peligro { background: var(--rojo); border-color: var(--rojo); color: #fff; }
-.btn-peligro:hover { background: #b92e2e; border-color: #b92e2e; }
+.btn-peligro { background: var(--rojo); border-color: var(--rojo); color: var(--sobre-azul); }
+.btn-peligro:hover { background: var(--rojo-osc); border-color: var(--rojo-osc); }
 .btn-texto { background: none; border: 0; color: var(--azul); padding: 0; font-weight: 600; font-size: inherit; }
 .btn-texto:hover { text-decoration: underline; }
 .btn-texto.peligro { color: var(--rojo); }
@@ -223,7 +319,7 @@ label { display: block; font-size: 12.5px; font-weight: 600; margin: 12px 0 5px;
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
   padding: 24px 16px; background: var(--lateral);
 }
-.login { width: 100%; max-width: 400px; padding: 28px; margin: 0; box-shadow: 0 8px 30px rgba(16,21,28,.06); }
+.login { width: 100%; max-width: 400px; padding: 28px; margin: 0; box-shadow: 0 8px 30px var(--sombra-suave); }
 .login .wordmark { font-size: 22px; }
 .login h2 { font-size: 18px; margin: 18px 0 4px; }
 .login .pie { margin-top: 16px; text-align: center; }
@@ -273,7 +369,7 @@ label { display: block; font-size: 12.5px; font-weight: 600; margin: 12px 0 5px;
   background: var(--azul-tinte); color: var(--azul-osc); border-radius: 8px;
   padding: 10px 12px; font-size: 12.5px; margin: 12px 0 0;
 }
-.aviso.ambar { background: var(--ambar-tinte); color: #8A5A00; }
+.aviso.ambar { background: var(--ambar-tinte); color: var(--texto-ambar); }
 
 /* --- Pestañas ----------------------------------------------------------- */
 .pestanas { display: flex; gap: 2px; margin-bottom: 14px; border-bottom: 1px solid var(--borde); overflow-x: auto; }
@@ -442,14 +538,14 @@ label.casilla { display: flex; align-items: center; gap: 8px; font-weight: 500; 
 /* --- Bandeja ---------------------------------------------------------------- */
 .lateral-nav .globo {
   margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px;
-  background: var(--azul); color: #fff; font-size: 11.5px; font-weight: 700; line-height: 20px; text-align: center;
+  background: var(--azul); color: var(--sobre-azul); font-size: 11.5px; font-weight: 700; line-height: 20px; text-align: center;
 }
 .lista-avisos { list-style: none; padding: 0; margin: 0; background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio); overflow: hidden; }
 .lista-avisos li + li { border-top: 1px solid var(--borde-suave); }
 .aviso-fila { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; background: none; border: 0; padding: 12px 14px; color: var(--texto); }
 .aviso-fila:hover { background: var(--fondo); }
 .aviso-fila .punto { width: 8px; height: 8px; border-radius: 50%; margin-top: 10px; flex: none; }
-.aviso-fila.no-leido { background: #FBFCFF; }
+.aviso-fila.no-leido { background: var(--no-leido); }
 .aviso-fila.no-leido .punto { background: var(--azul); }
 .aviso-fila .avatar { width: 28px; height: 28px; font-size: 11px; }
 .aviso-fila .datos { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
@@ -468,8 +564,8 @@ label.casilla { display: flex; align-items: center; gap: 8px; font-weight: 500; 
 .prosa ul, .prosa ol { margin: 0 0 8px; padding-left: 22px; }
 .prosa li > p { margin: 0 0 2px; }
 .prosa blockquote { margin: 0 0 8px; padding: 2px 0 2px 12px; border-left: 3px solid var(--borde); color: var(--suave); }
-.prosa code { font-family: ui-monospace, monospace; font-size: 12.5px; background: #F0F2F6; padding: 1px 5px; border-radius: 4px; }
-.prosa pre { background: #F0F2F6; padding: 10px 12px; border-radius: 8px; overflow-x: auto; }
+.prosa code { font-family: ui-monospace, monospace; font-size: 12.5px; background: var(--gris-chip); padding: 1px 5px; border-radius: 4px; }
+.prosa pre { background: var(--gris-chip); padding: 10px 12px; border-radius: 8px; overflow-x: auto; }
 .prosa pre code { background: none; padding: 0; }
 .prosa hr { border: 0; border-top: 1px solid var(--borde); margin: 12px 0; }
 .prosa a { text-decoration: underline; }
@@ -494,7 +590,7 @@ label.casilla { display: flex; align-items: center; gap: 8px; font-weight: 500; 
 }
 .sugerencias {
   background: var(--blanco); border: 1px solid var(--borde); border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(16,21,28,.14); padding: 4px; width: 240px; max-height: 230px; overflow-y: auto;
+  box-shadow: 0 8px 24px var(--sombra-media); padding: 4px; width: 240px; max-height: 230px; overflow-y: auto;
 }
 .sugerencias button {
   display: block; width: 100%; text-align: left; border: 0; background: none; padding: 7px 9px;
@@ -505,7 +601,7 @@ label.casilla { display: flex; align-items: center; gap: 8px; font-weight: 500; 
 
 /* --- Modal --------------------------------------------------------------- */
 .modal-fondo {
-  position: fixed; inset: 0; z-index: 40; background: rgba(16,21,28,.5);
+  position: fixed; inset: 0; z-index: 40; background: var(--velo);
   display: flex; align-items: flex-end; justify-content: center;
 }
 .modal {
@@ -583,7 +679,7 @@ label.casilla { display: flex; align-items: center; gap: 8px; font-weight: 500; 
 .resultado .nombre.tachada { color: var(--tenue); text-decoration: line-through; }
 .resultado .fragmento { font-size: 13.5px; color: var(--suave); overflow-wrap: anywhere; }
 .resultado .meta { font-size: 12.5px; }
-mark { background: #fff1b8; color: inherit; border-radius: 3px; padding: 0 1px; }
+mark { background: var(--resaltado); color: inherit; border-radius: 3px; padding: 0 1px; }
 
 /* ── Papelera del proyecto (día 14) ───────────────────────────────────────── */
 .papelera-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
@@ -601,7 +697,7 @@ mark { background: #fff1b8; color: inherit; border-radius: 3px; padding: 0 1px; 
 /* ---------------------------------------------------------------- plantillas (D-64) */
 .rejilla-2 { display: grid; grid-template-columns: 1fr; gap: 0 12px; }
 @media (min-width: 520px) { .rejilla-2 { grid-template-columns: 1fr 1fr; } }
-.aviso-ok { display: flex; align-items: center; gap: 8px; background: var(--verde-tinte); color: #0B6B35; border-radius: var(--radio); padding: 10px 14px; margin: 0 0 12px; font-size: 14px; }
+.aviso-ok { display: flex; align-items: center; gap: 8px; background: var(--verde-tinte); color: var(--texto-verde); border-radius: var(--radio); padding: 10px 14px; margin: 0 0 12px; font-size: 14px; }
 .aviso-ok a { color: inherit; font-weight: 600; }
 .aviso-ok .btn-texto { margin-left: auto; color: inherit; font-size: 18px; line-height: 1; }
 .plantilla-filas { list-style: none; margin: 0 0 12px; padding: 0; counter-reset: paso; }
@@ -731,7 +827,7 @@ mark { background: #fff1b8; color: inherit; border-radius: 3px; padding: 0 1px; 
 .tl-nombre span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .tl-nombre .meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
 .tl-carril { position: relative; border-top: 1px solid var(--borde-suave); min-height: 38px; background-image: linear-gradient(to right, var(--borde-suave) 1px, transparent 1px); }
-.tl-barra { position: absolute; top: 9px; height: 20px; border-radius: 10px; border: 0; padding: 0 8px; color: #fff; font: inherit; font-size: 11.5px; font-weight: 600; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: pointer; background: var(--azul); }
+.tl-barra { position: absolute; top: 9px; height: 20px; border-radius: 10px; border: 0; padding: 0 8px; color: var(--sobre-azul); font: inherit; font-size: 11.5px; font-weight: 600; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: pointer; background: var(--azul); }
 .tl-barra.punto { background: transparent; padding: 0; }
 .tl-barra.punto::after { content: ''; position: absolute; left: 50%; top: 2px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--azul); box-shadow: 0 0 0 2px var(--blanco); }
 .tl-barra.punto.revision::after { background: var(--ambar); }
@@ -765,3 +861,9 @@ mark { background: #fff1b8; color: inherit; border-radius: 3px; padding: 0 1px; 
 .tarjeta-lugar { color: var(--suave); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 .agenda-hora { display: inline-block; min-width: 46px; margin-right: 6px; color: var(--azul); font-variant-numeric: tabular-nums; }
 .agenda-lugar { display: inline-flex; align-items: center; gap: 4px; margin: 0 0 4px 17px; font-size: 12px; color: var(--suave); overflow-wrap: anywhere; }
+
+/* Apariencia (Mi cuenta): control segmentado, como en el CRM. */
+.segmentado { display: inline-flex; border: 1px solid var(--borde); border-radius: var(--radio-btn); overflow: hidden; margin-top: 4px; flex-wrap: wrap; }
+.segmentado button { background: var(--blanco); color: var(--suave); border: 0; padding: 8px 14px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.segmentado button + button { border-left: 1px solid var(--borde); }
+.segmentado button.activo { background: var(--azul); color: var(--sobre-azul); }

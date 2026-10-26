@@ -9,6 +9,7 @@ import Icono from './Icono';
 import Marca, { iniciales } from './Marca';
 import PaginaAcceso from './PaginaAcceso';
 import { AtajoDeErrores } from './errores';
+import { esOscuroAhora, guardarTema } from '../tema';
 
 /** Título de la barra superior según la ruta. */
 const TITULOS: [string, string][] = [
@@ -143,6 +144,7 @@ export default function Marco() {
                 <NavLink to="/mi-cuenta" role="menuitem">
                   <Icono nombre="cuenta" tam={16} />Mi cuenta
                 </NavLink>
+                <BotonTema />
                 <button type="button" role="menuitem" onClick={verCuentas}>
                   <Icono nombre="cambiar" tam={16} />Cambiar de cuenta
                 </button>
@@ -207,5 +209,15 @@ function EnlaceBandeja() {
       <Icono nombre="bandeja" />Bandeja
       {noLeidos > 0 && <span className="globo" aria-label={`${noLeidos} sin leer`}>{noLeidos > 99 ? '99+' : noLeidos}</span>}
     </NavLink>
+  );
+}
+
+/** Cambio rápido claro ↔ noche desde el menú (con «según el sistema», en Mi cuenta). */
+function BotonTema() {
+  const [oscuro, setOscuro] = useState(esOscuroAhora());
+  return (
+    <button type="button" role="menuitem" onClick={() => { guardarTema(oscuro ? 'claro' : 'oscuro'); setOscuro(!oscuro); }}>
+      <Icono nombre={oscuro ? 'sol' : 'luna'} tam={16} />{oscuro ? 'Versión clara' : 'Versión noche'}
+    </button>
   );
 }

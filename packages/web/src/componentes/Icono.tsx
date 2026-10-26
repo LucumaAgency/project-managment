@@ -48,6 +48,8 @@ const TRAZOS = {
   ficha: 'M16 3h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2M9 2h6v3H9zM9 11h6M9 15h6M9 19h3',
   plantilla: 'M4 4h16v5H4zM4 13h7v7H4zM15 13h5M15 17h5M15 21h5',
   whatsapp: 'M3 21l1.7-5A8.5 8.5 0 1 1 8 19.3z',
+  luna: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8',
+  sol: 'M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4',
 } as const;
 
 export type NombreIcono = keyof typeof TRAZOS;

@@ -873,6 +873,15 @@ día 1, crea su carpeta en Archivos y deja el PDF ahí, a la vista del cliente.
 - Ajuste del usuario el mismo día: las plantillas reales no crean carpeta; el informe va como
   enlace (Drive) en una tarea visible para el cliente. Los archivos quedan en la carpeta `reportes/` de cada cliente.
 
+### 2026-10-26 · Versión noche (D-74)
+
+Como en el CRM: menú de usuario → «Versión noche» (cambio rápido) y Mi cuenta → Apariencia
+(Claro, Noche, Según el sistema), guardado por navegador y aplicado antes de pintar para que no
+parpadee. Los ~25 colores fijos de `estilos.css` pasaron a variables y la paleta oscura es la del
+CRM. Revisado en el navegador en noche: entrar, cuentas, portada, proyecto, tareas, detalle de
+tarea, mensajes, archivos, timeline, bandeja, plantillas, actividad, Mi cuenta, menú y celular.
+Solo web, sin migración. Desplegar: el de siempre (no hace falta `prisma:deploy`).
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
