@@ -839,6 +839,16 @@ Para desplegar: va junto con el tablero (la migración `tablero` es la única).
   Trello, ClickUp y monday; propuesta de topes por plan, video crudo como enlace, y pasar a
   Cloudflare R2 cuando el disco no alcance (D-71).
 
+### 2026-10-25 · Proyectos ordenados por actividad (D-72)
+
+Pedido del usuario: las tarjetas de proyecto de la portada se ordenan por la **última actividad**
+(el evento más reciente del proyecto), no por `updatedAt`, que solo cambiaba al editar nombre o
+descripción. `GET /proyectos` devuelve `ultimaActividad` (último evento o, sin eventos, la creación)
+y ordena por ahí; la tarjeta dice «Última actividad el …». Para el equipo es un `groupBy` sobre
+`events` (índice `projectId, createdAt`); para un cliente, el primer evento que le mostraría su feed
+(`actividadDelProyecto` con límite 1), así el orden no delata actividad interna. Sin migración.
+Test nuevo en `proyectos.test.ts`; suite completa 319 en verde. Falta desplegar.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -873,6 +883,7 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
 ### Antes de la fase 2
 
+- [ ] Desplegar el orden por actividad de los proyectos (D-72, sin migración).
 - [ ] Desplegar hora y lugar (migración `hora_y_lugar`).
 
 - [ ] Fase 3 (vender a otras agencias): empezar por el paso 1 de [14-FASE-3-VENDER.md](14-FASE-3-VENDER.md) cuando el usuario lo decida. (WhatsApp/Meta: descartado por ahora, D-70.)

@@ -515,3 +515,8 @@ de clientes (el `.gitignore` los excluye).
 
 **D-21 · Cobros: Paddle o Lemon Squeezy afuera; Culqi o Mercado Pago en Perú** (2026-10-24)
 Stripe no acepta comercios con sede en Perú. Se decide en la fase 3.
+
+**D-72 · Los proyectos se ordenan por su última actividad** (2026-10-25, pedido del usuario)
+La portada ordena las tarjetas por el evento más reciente de cada proyecto, del más activo al menos
+activo. Un cliente solo cuenta la actividad que puede ver en el feed, para que el orden no revele
+trabajo interno. `updatedAt` deja de usarse para ordenar.

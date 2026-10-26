@@ -7,6 +7,7 @@ import { conCuenta, type Tx } from '../lib/contexto.js';
 import { HttpError } from '../lib/errores.js';
 import { leer } from '../lib/validar.js';
 import { registrarEvento } from '../services/eventos.js';
+import { actividadDelProyecto } from '../services/actividad.js';
 import { puede, type Accion, type Actor, type ProyectoCargado } from '../services/permisos.js';
 import { exigirCupoProyectos, proyectoPara } from '../services/proyectos.js';
 import { exigirCuenta } from '../plugins/contexto.js';
@@ -60,6 +61,30 @@ async function vistaCliente(tx: Tx, projectId: string) {
   return { listas: n.todolist ?? 0, mensajes: n.message ?? 0, carpetas: n.folder ?? 0, archivos: n.upload ?? 0 };
 }
 
+/**
+ * Fecha del último evento de cada proyecto, para ordenar las tarjetas por actividad (D-72).
+ * El equipo ve todo; un cliente, solo la actividad que su feed le mostraría: así el orden no
+ * delata movimiento interno.
+ */
+async function ultimaActividad(tx: Tx, actor: Actor, proyectos: { id: string }[]) {
+  const ultima = new Map<string, Date>();
+  if (!proyectos.length) return ultima;
+  if (!esCliente(actor.rol)) {
+    const filas = await tx.event.groupBy({
+      by: ['projectId'],
+      where: { projectId: { in: proyectos.map((p) => p.id) } },
+      _max: { createdAt: true },
+    });
+    for (const f of filas) if (f._max.createdAt) ultima.set(f.projectId, f._max.createdAt);
+    return ultima;
+  }
+  for (const p of proyectos) {
+    const { eventos } = await actividadDelProyecto(tx, actor, { id: p.id } as ProyectoCargado, { limite: 1 });
+    if (eventos[0]) ultima.set(p.id, new Date(eventos[0].createdAt));
+  }
+  return ultima;
+}
+
 export default async function rutasProyectos(app: FastifyInstance) {
   /**
    * Proyectos que puedo ver. Owner y admin ven todos; el resto, donde es miembro. Archivados
@@ -90,10 +115,18 @@ export default async function rutasProyectos(app: FastifyInstance) {
           _count: { select: { members: true } },
           members: { where: { userId: actor.ctx.userId }, select: { id: true } },
         },
-        orderBy: { updatedAt: 'desc' },
       });
+      const ultima = await ultimaActividad(tx, actor, proyectos);
+      const lista = proyectos
+        .map(({ _count, members, ...p }) => ({
+          ...p,
+          ultimaActividad: ultima.get(p.id) ?? p.createdAt,
+          personas: _count.members,
+          soyMiembro: members.length > 0,
+        }))
+        .sort((a, b) => b.ultimaActividad.getTime() - a.ultimaActividad.getTime());
       return {
-        proyectos: proyectos.map(({ _count, members, ...p }) => ({ ...p, personas: _count.members, soyMiembro: members.length > 0 })),
+        proyectos: lista,
         puedeCrear: puede(actor, 'proyecto.crear'),
       };
     });
