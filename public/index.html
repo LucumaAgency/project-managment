@@ -12,8 +12,18 @@
       rel="stylesheet"
     />
     <title>Lucuma Proyectos</title>
-    <script type="module" crossorigin src="/assets/index-D3NliUUI.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DioM1jXE.css">
+    <script>
+      // Versión noche guardada (src/tema.ts), antes de pintar para no parpadear en claro.
+      try {
+        var t = localStorage.getItem('lpm-tema');
+        if (t === 'oscuro' || t === 'auto') document.documentElement.setAttribute('data-tema', t);
+        if (t === 'oscuro' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#141920');
+        }
+      } catch (e) {}
+    </script>
+    <script type="module" crossorigin src="/assets/index-BmuvdyXs.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-bxVwjB63.css">
   </head>
   <body>
     <div id="root"></div>

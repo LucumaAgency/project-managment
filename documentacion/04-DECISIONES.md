@@ -533,3 +533,11 @@ análisis los arman el usuario y Claude con el kit de `lucuma/reportes-mensuales
 Descartado por ahora: módulos dentro de una sola plantilla (B) y que el proyecto sepa sus
 servicios y cree los reportes solo (C); C se puede construir encima de esto.
 
+**D-74 · Versión noche, igual que en el CRM** (2026-10-26, pedido del usuario)
+Claro / noche / según el sistema, por dispositivo (`web/src/tema.ts`, clave `lpm-tema` en
+localStorage; `index.html` lo aplica antes de pintar). Cambio rápido en el menú de usuario
+(«Versión noche/clara») y las tres opciones en Mi cuenta → Apariencia. Por defecto claro. La
+paleta oscura es la del CRM, en `:root[data-tema="oscuro"]` y en `@media (prefers-color-scheme:
+dark) :root[data-tema="auto"]`. Todos los colores fijos de `estilos.css` pasaron a variables.
+REGLA para lo nuevo: no escribir colores hex en componentes ni reglas sueltas, usar las variables.
+

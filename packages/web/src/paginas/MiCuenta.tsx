@@ -3,6 +3,7 @@ import { MIN_LARGO_PASSWORD } from '@lucuma-pm/shared';
 import { api, ErrorApi, urlExportar, type Sesion } from '../api';
 import Icono from '../componentes/Icono';
 import { useYo } from '../contexto';
+import { guardarTema, temaGuardado, type Tema } from '../tema';
 
 /** Datos propios: la contraseña y, para el dueño, exportar la cuenta. */
 export default function MiCuenta() {
@@ -53,6 +54,7 @@ export default function MiCuenta() {
       <button className="btn" style={{ marginTop: 12 }} disabled={guardando}>{guardando ? 'Guardando…' : 'Guardar'}</button>
       {mensaje && <p className={mensaje.tipo} role="status">{mensaje.texto}</p>}
     </form>
+    <Apariencia />
     {yo.rol === 'owner' && !yo.soporte && (
       <section className="card card-estrecha" style={{ marginTop: 16 }}>
         <h2 className="titulo-panel">Exportar la cuenta</h2>
@@ -66,5 +68,39 @@ export default function MiCuenta() {
       </section>
     )}
     </>
+  );
+}
+
+const TEMAS: { id: Tema; texto: string }[] = [
+  { id: 'claro', texto: 'Claro' },
+  { id: 'oscuro', texto: 'Noche' },
+  { id: 'auto', texto: 'Según el sistema' },
+];
+
+/** Versión noche (D-74): por dispositivo, como en el CRM. */
+function Apariencia() {
+  const [tema, setTema] = useState<Tema>(temaGuardado());
+  return (
+    <section className="card card-estrecha" style={{ marginTop: 16 }}>
+      <h2 className="titulo-panel">Apariencia</h2>
+      <p className="meta" style={{ marginTop: 0 }}>
+        La versión noche cansa menos la vista con poca luz. «Según el sistema» cambia sola con el modo oscuro del celular o la
+        computadora. Se guarda en este navegador.
+      </p>
+      <div className="segmentado" role="radiogroup" aria-label="Apariencia">
+        {TEMAS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="radio"
+            aria-checked={tema === t.id}
+            className={tema === t.id ? 'activo' : ''}
+            onClick={() => { setTema(t.id); guardarTema(t.id); }}
+          >
+            {t.texto}
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
