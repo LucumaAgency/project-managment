@@ -81,6 +81,28 @@ describe('proyectos', () => {
     expect((await client.get('/proyectos')).json.puedeCrear).toBe(false);
   });
 
+  it('las tarjetas se ordenan por la última actividad; el cliente no ve la actividad interna (D-72)', async () => {
+    const viejo = await proyectoConTodos(owner, 'Viejo');
+    const nuevo = await proyectoConTodos(owner, 'Nuevo');
+    const orden = async (c: Cliente) =>
+      (await c.get('/proyectos')).json.proyectos.map((p: { id: string }) => p.id).filter((id: string) => id === viejo || id === nuevo);
+    expect(await orden(owner)).toEqual([nuevo, viejo]);
+
+    // Actividad interna en el viejo: el equipo lo ve primero; el cliente, no.
+    const interna = (await member.post(`/proyectos/${viejo}/listas`, { title: 'Interna', visibleToClients: false })).json;
+    await member.post(`/listas/${interna.lista.id}/tareas`, { title: 'Algo' });
+    expect(await orden(owner)).toEqual([viejo, nuevo]);
+    expect(await orden(client)).toEqual([nuevo, viejo]);
+
+    // Actividad visible para el cliente en el viejo: ahora también sube para él.
+    const visible = (await member.post(`/proyectos/${viejo}/listas`, { title: 'Visible', visibleToClients: true })).json;
+    await member.post(`/listas/${visible.lista.id}/tareas`, { title: 'Para el cliente' });
+    expect(await orden(client)).toEqual([viejo, nuevo]);
+
+    const tarjeta = (await owner.get('/proyectos')).json.proyectos.find((p: { id: string }) => p.id === viejo);
+    expect(new Date(tarjeta.ultimaActividad).getTime()).toBeGreaterThan(Date.now() - 60_000);
+  });
+
   it('el detalle trae personas, secciones y permisos; el cliente no ve correos', async () => {
     const id = await proyectoConTodos();
     const deOwner = (await owner.get(`/proyectos/${id}`)).json;

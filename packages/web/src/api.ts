@@ -131,6 +131,8 @@ export interface ProyectoResumen {
   description: string | null;
   status: EstadoProyecto;
   updatedAt: string;
+  /** Último evento del proyecto (o su creación): las tarjetas se ordenan por esto. */
+  ultimaActividad: string;
   archivedAt: string | null;
   trashedAt: string | null;
   personas: number;

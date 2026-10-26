@@ -95,7 +95,7 @@ export default function Portada() {
                     ? `En la papelera desde el ${fecha(p.trashedAt)}`
                     : p.status === 'archived' && p.archivedAt
                       ? `Archivado el ${fecha(p.archivedAt)}`
-                      : `Actualizado el ${fecha(p.updatedAt)}`}
+                      : `Última actividad el ${fecha(p.ultimaActividad)}`}
                 </span>
               </span>
             </Link>
