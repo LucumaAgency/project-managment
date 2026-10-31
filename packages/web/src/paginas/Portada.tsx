@@ -4,6 +4,7 @@ import { veTodosLosProyectos } from '@lucuma-pm/shared';
 import { api, ErrorApi, type EstadoProyecto, type ProyectoResumen } from '../api';
 import Icono from '../componentes/Icono';
 import Modal from '../componentes/Modal';
+import { TarjetaPrimerosPasos } from '../componentes/PrimerosPasos';
 import { useYo } from '../contexto';
 
 const fecha = (iso: string) => new Date(iso).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
@@ -53,6 +54,8 @@ export default function Portada() {
           </button>
         )}
       </div>
+
+      {estado === 'active' && <TarjetaPrimerosPasos />}
 
       <div className="pestanas" role="tablist">
         {pestanas.map((p) => (

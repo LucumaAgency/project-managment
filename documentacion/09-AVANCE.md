@@ -891,6 +891,14 @@ Avisarle: sin correo (contraseña olvidada = `usuario:prod -- clave <correo>`), 
 puede entrar a su cuenta con registro durante la beta, puede exportar todo en ZIP, videos pesados
 como enlace. Este despliegue lleva también D-72, hora y lugar, D-73 y D-74 (con `prisma:deploy`).
 
+### 2026-10-31 · Guía de primeros pasos (D-76)
+
+Asistente de bienvenida, un paso por pantalla, como el del CRM, con pasos distintos para quien
+administra, el equipo y los clientes; cada uno se marca solo con los datos. Tarjeta de avance en
+Proyectos y opción en el menú de usuario. Test nuevo `primeros-pasos.test.ts`; suite completa 338
+en verde. Revisado en el navegador (escritorio, menú y 390 px). Solo código, sin migración:
+desplegar = Git → Desplegar → Reiniciar.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
