@@ -882,6 +882,15 @@ CRM. Revisado en el navegador en noche: entrar, cuentas, portada, proyecto, tare
 tarea, mensajes, archivos, timeline, bandeja, plantillas, actividad, Mi cuenta, menú y celular.
 Solo web, sin migración. Desplegar: el de siempre (no hace falta `prisma:deploy`).
 
+### 2026-10-31 · Primera agencia externa en beta y marca por cuenta (D-75)
+
+Una agencia amiga entra a la beta en la misma instancia con su propia cuenta (plan `interno`, sin
+topes), creada con `cuenta:crear:prod`. Sus datos de contacto NO van al repo (es público): están
+en `privados/`. El menú muestra el nombre de la cuenta en lugar de «Lucuma Agency» (D-75).
+Avisarle: sin correo (contraseña olvidada = `usuario:prod -- clave <correo>`), soporte de Lucuma
+puede entrar a su cuenta con registro durante la beta, puede exportar todo en ZIP, videos pesados
+como enlace. Este despliegue lleva también D-72, hora y lugar, D-73 y D-74 (con `prisma:deploy`).
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -916,7 +925,7 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 
 ### Antes de la fase 2
 
-- [ ] Desplegar el orden por actividad de los proyectos (D-72, sin migración).
-- [ ] Desplegar hora y lugar (migración `hora_y_lugar`).
+- [ ] Desplegar D-72, hora y lugar, D-73, D-74 y D-75 (con `prisma:deploy`).
+- [ ] Crear la cuenta de la agencia beta en producción y pasarle la contraseña a la dueña.
 
 - [ ] Fase 3 (vender a otras agencias): empezar por el paso 1 de [14-FASE-3-VENDER.md](14-FASE-3-VENDER.md) cuando el usuario lo decida. (WhatsApp/Meta: descartado por ahora, D-70.)

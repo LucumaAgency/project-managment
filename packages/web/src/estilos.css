@@ -151,7 +151,7 @@ h1, h2, h3 { letter-spacing: -0.01em; }
 .marca { display: flex; align-items: center; gap: 8px; }
 .wordmark {
   font-weight: 800; color: var(--azul); letter-spacing: -0.02em; font-size: 17px;
-  white-space: nowrap;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
 }
 .producto {
   font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;

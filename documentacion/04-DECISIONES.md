@@ -541,3 +541,10 @@ paleta oscura es la del CRM, en `:root[data-tema="oscuro"]` y en `@media (prefer
 dark) :root[data-tema="auto"]`. Todos los colores fijos de `estilos.css` pasaron a variables.
 REGLA para lo nuevo: no escribir colores hex en componentes ni reglas sueltas, usar las variables.
 
+**D-75 · La marca del menú es el nombre de la cuenta** (2026-10-31, pedido del usuario)
+Para la primera agencia externa en beta: en vez de «Lucuma Agency», el menú muestra el nombre de
+la cuenta (`yo.cuenta.name`) con «Proyectos»; cada agencia ve la suya y Lucuma no cambia. Las
+pantallas sin cuenta (entrar, elegir cuenta, invitación), el título de la pestaña y el texto de
+invitación dicen solo «Proyectos». Los textos de soporte de Lucuma quedan (solo los ve soporte).
+Solo web, sin migración.
+
