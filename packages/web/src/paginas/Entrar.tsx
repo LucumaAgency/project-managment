@@ -58,7 +58,7 @@ export default function Entrar() {
             {modo === 'password' ? '¿Sin contraseña u olvidada? Entra con enlace al correo' : 'Entrar con contraseña'}
           </button>
         ) : (
-          '¿Olvidaste tu contraseña? Pide a soporte de Lucuma que te genere una nueva.'
+          '¿Olvidaste tu contraseña? Pide a soporte que te genere una nueva.'
         )}
       </p>
     </PaginaAcceso>

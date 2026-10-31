@@ -112,7 +112,7 @@ export default function Marco() {
       <ProveedorAvisos>
       <div className="app">
         <aside className={`lateral${menuAbierto ? ' abierto' : ''}`}>
-          <Marca />
+          <Marca nombre={yo.cuenta.name} />
           <div className="lateral-cuenta" title={yo.cuenta.name}>{yo.cuenta.name}</div>
           <nav className="lateral-nav">
             <div className="nav-seccion">Menú</div>

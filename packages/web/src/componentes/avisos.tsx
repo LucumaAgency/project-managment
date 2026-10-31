@@ -8,7 +8,7 @@ import { api } from '../api';
  */
 const Ctx = createContext<{ noLeidos: number; refrescar: () => void }>({ noLeidos: 0, refrescar: () => {} });
 const CADA_MS = 30_000;
-const TITULO = 'Lucuma Proyectos';
+const TITULO = 'Proyectos';
 
 export function ProveedorAvisos({ children }: { children: ReactNode }) {
   const [noLeidos, setNoLeidos] = useState(0);
