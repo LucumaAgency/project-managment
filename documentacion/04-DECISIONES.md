@@ -548,3 +548,14 @@ pantallas sin cuenta (entrar, elegir cuenta, invitación), el título de la pest
 invitación dicen solo «Proyectos». Los textos de soporte de Lucuma quedan (solo los ve soporte).
 Solo web, sin migración.
 
+**D-76 · Guía de primeros pasos, como en el CRM** (2026-10-31, pedido del usuario)
+Para quien recién empieza (primera agencia externa en beta). `routes/primeros-pasos.ts` +
+`web/componentes/PrimerosPasos.tsx`. Pasos por rol, marcados solos mirando los datos:
+dueño/admin = proyecto, tareas, equipo (opc.), cliente, mensaje (opc.), plantillas (opc.), bandeja;
+equipo = tareas, comentario, timeline (opc.), bandeja; cliente = lo que le piden (completar o
+responder), comentario, archivos (opc.), bandeja. Se abre sola una vez a quien entró a la cuenta
+desde el 31-oct (a los de antes no se les impone); siempre desde el menú de usuario → «Primeros
+pasos»; tarjeta de avance en Proyectos hasta completar u ocultarla, y luego un aviso para reabrirla.
+Lo vista/oculta va en `Membership.prefs` de esa cuenta (sin migración). Soporte no tiene guía.
+`/primeros-pasos` sumada a la auditoría de fugas del cliente (D-55).
+

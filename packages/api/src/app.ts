@@ -25,6 +25,7 @@ import rutasProyectos from './routes/proyectos.js';
 import rutasTareas from './routes/tareas.js';
 import rutasPlantillas from './routes/plantillas.js';
 import rutasYo from './routes/yo.js';
+import rutasPrimerosPasos from './routes/primeros-pasos.js';
 
 export interface OpcionesApp {
   /** Por defecto `env.baseDomain`. Los tests lo cambian para probar ambos modos. */
@@ -123,6 +124,7 @@ export async function buildApp(opciones: OpcionesApp = {}) {
   await app.register(rutasBusqueda);
   await app.register(rutasCron);
   await app.register(rutasExportar);
+  await app.register(rutasPrimerosPasos);
 
   // La web: nginx entrega los estáticos desde el docroot; lo que llega aquí son las rutas del
   // SPA (/proyectos/abc al recargar). Un archivo que falta da 404, no el index.html.

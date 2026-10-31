@@ -154,6 +154,7 @@ describe('ninguna ruta del cliente muestra lo interno', () => {
       '/bandeja',
       '/bandeja/contador',
       '/yo',
+      '/primeros-pasos',
       `/buscar?q=${MARCA}`,
       '/buscar?q=lista',
       '/buscar?q=tarea',

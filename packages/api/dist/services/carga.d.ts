@@ -66,6 +66,10 @@ export declare const esquemaCarga: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         personas: string[];
         nombre: string;
+        mensajes: {
+            texto: string;
+            titulo: string;
+        }[];
         listas: {
             tareas: (string | {
                 titulo: string;
@@ -75,15 +79,15 @@ export declare const esquemaCarga: z.ZodObject<{
             })[];
             titulo: string;
         }[];
-        mensajes: {
-            texto: string;
-            titulo: string;
-        }[];
         descripcion?: string | undefined;
     }, {
         nombre: string;
         personas?: string[] | undefined;
         descripcion?: string | undefined;
+        mensajes?: {
+            titulo: string;
+            texto?: string | undefined;
+        }[] | undefined;
         listas?: {
             titulo: string;
             tareas?: (string | {
@@ -93,16 +97,16 @@ export declare const esquemaCarga: z.ZodObject<{
                 responsables?: string[] | undefined;
             })[] | undefined;
         }[] | undefined;
-        mensajes?: {
-            titulo: string;
-            texto?: string | undefined;
-        }[] | undefined;
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
     cuenta: string;
     proyectos: {
         personas: string[];
         nombre: string;
+        mensajes: {
+            texto: string;
+            titulo: string;
+        }[];
         listas: {
             tareas: (string | {
                 titulo: string;
@@ -110,10 +114,6 @@ export declare const esquemaCarga: z.ZodObject<{
                 notas?: string | undefined;
                 vence?: string | undefined;
             })[];
-            titulo: string;
-        }[];
-        mensajes: {
-            texto: string;
             titulo: string;
         }[];
         descripcion?: string | undefined;
@@ -125,6 +125,10 @@ export declare const esquemaCarga: z.ZodObject<{
         nombre: string;
         personas?: string[] | undefined;
         descripcion?: string | undefined;
+        mensajes?: {
+            titulo: string;
+            texto?: string | undefined;
+        }[] | undefined;
         listas?: {
             titulo: string;
             tareas?: (string | {
@@ -133,10 +137,6 @@ export declare const esquemaCarga: z.ZodObject<{
                 vence?: string | undefined;
                 responsables?: string[] | undefined;
             })[] | undefined;
-        }[] | undefined;
-        mensajes?: {
-            titulo: string;
-            texto?: string | undefined;
         }[] | undefined;
     }[];
     como: string;
@@ -156,6 +156,10 @@ export declare function prepararCarga(datos: unknown): Promise<{
         proyectos: {
             personas: string[];
             nombre: string;
+            mensajes: {
+                texto: string;
+                titulo: string;
+            }[];
             listas: {
                 tareas: (string | {
                     titulo: string;
@@ -163,10 +167,6 @@ export declare function prepararCarga(datos: unknown): Promise<{
                     notas?: string | undefined;
                     vence?: string | undefined;
                 })[];
-                titulo: string;
-            }[];
-            mensajes: {
-                texto: string;
                 titulo: string;
             }[];
             descripcion?: string | undefined;

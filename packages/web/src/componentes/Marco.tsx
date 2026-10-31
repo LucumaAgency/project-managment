@@ -9,6 +9,7 @@ import Icono from './Icono';
 import Marca, { iniciales } from './Marca';
 import PaginaAcceso from './PaginaAcceso';
 import { AtajoDeErrores } from './errores';
+import { ProveedorGuia, useGuia } from './PrimerosPasos';
 import { esOscuroAhora, guardarTema } from '../tema';
 
 /** Título de la barra superior según la ruta. */
@@ -110,6 +111,7 @@ export default function Marco() {
   return (
     <YoCtx.Provider value={yo}>
       <ProveedorAvisos>
+      <ProveedorGuia>
       <div className="app">
         <aside className={`lateral${menuAbierto ? ' abierto' : ''}`}>
           <Marca nombre={yo.cuenta.name} />
@@ -144,6 +146,7 @@ export default function Marco() {
                 <NavLink to="/mi-cuenta" role="menuitem">
                   <Icono nombre="cuenta" tam={16} />Mi cuenta
                 </NavLink>
+                <BotonGuia onAbrir={() => { setMenuUsuario(false); setMenuAbierto(false); }} />
                 <BotonTema />
                 <button type="button" role="menuitem" onClick={verCuentas}>
                   <Icono nombre="cambiar" tam={16} />Cambiar de cuenta
@@ -197,6 +200,7 @@ export default function Marco() {
           </main>
         </div>
       </div>
+      </ProveedorGuia>
       </ProveedorAvisos>
     </YoCtx.Provider>
   );
@@ -218,6 +222,17 @@ function BotonTema() {
   return (
     <button type="button" role="menuitem" onClick={() => { guardarTema(oscuro ? 'claro' : 'oscuro'); setOscuro(!oscuro); }}>
       <Icono nombre={oscuro ? 'sol' : 'luna'} tam={16} />{oscuro ? 'Versión clara' : 'Versión noche'}
+    </button>
+  );
+}
+
+/** Reabre la guía de primeros pasos (no aparece para soporte, que no tiene guía). */
+function BotonGuia({ onAbrir }: { onAbrir: () => void }) {
+  const { datos, abrir } = useGuia();
+  if (!datos || datos.total === 0) return null;
+  return (
+    <button type="button" role="menuitem" onClick={() => { onAbrir(); abrir(); }}>
+      <Icono nombre="check" tam={16} />Primeros pasos
     </button>
   );
 }
