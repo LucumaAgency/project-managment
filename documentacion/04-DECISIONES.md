@@ -559,3 +559,9 @@ pasos»; tarjeta de avance en Proyectos hasta completar u ocultarla, y luego un 
 Lo vista/oculta va en `Membership.prefs` de esa cuenta (sin migración). Soporte no tiene guía.
 `/primeros-pasos` sumada a la auditoría de fugas del cliente (D-55).
 
+**D-77 · Contador de tareas pendientes en cada proyecto** (2026-11-02, pedido del usuario)
+`GET /proyectos` trae `pendientes` por proyecto (un `groupBy`, sin migración). Cuenta lo mismo que
+la página Tareas: tareas activas sin completar en listas activas de primer nivel. Un cliente cuenta
+solo lo que ve (tarea y lista visibles), así el número no delata trabajo interno. En la tarjeta va
+como insignia azul arriba a la derecha; en gris cuando es 0.
+

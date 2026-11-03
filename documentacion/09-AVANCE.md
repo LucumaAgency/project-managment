@@ -899,6 +899,12 @@ Proyectos y opción en el menú de usuario. Test nuevo `primeros-pasos.test.ts`;
 en verde. Revisado en el navegador (escritorio, menú y 390 px). Solo código, sin migración:
 desplegar = Git → Desplegar → Reiniciar.
 
+### 2026-11-02 · Contador de tareas pendientes por proyecto (D-77)
+
+Cada tarjeta de Proyectos muestra cuántas tareas le quedan sin completar (el cliente, solo las
+suyas visibles). Test nuevo en `proyectos.test.ts`; suite completa 339 en verde. Solo código, sin
+migración: desplegar = Git → Desplegar → Reiniciar.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;

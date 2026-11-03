@@ -103,6 +103,26 @@ describe('proyectos', () => {
     expect(new Date(tarjeta.ultimaActividad).getTime()).toBeGreaterThan(Date.now() - 60_000);
   });
 
+  it('cada tarjeta cuenta sus tareas pendientes; el cliente solo las que ve', async () => {
+    const id = await proyectoConTodos();
+    const pendientes = async (quien: typeof owner) =>
+      (await quien.get('/proyectos')).json.proyectos.find((p: { id: string }) => p.id === id).pendientes;
+    expect(await pendientes(owner)).toBe(0);
+
+    const interna = (await member.post(`/proyectos/${id}/listas`, { title: 'Interna' })).json.lista.id;
+    const visible = (await member.post(`/proyectos/${id}/listas`, { title: 'Visible', visibleToClients: true })).json.lista.id;
+    await member.post(`/listas/${interna}/tareas`, { title: 'Solo equipo' });
+    const hecha = (await member.post(`/listas/${visible}/tareas`, { title: 'Hecha', visibleToClients: true })).json.tarea.id;
+    await member.post(`/listas/${visible}/tareas`, { title: 'Para el cliente', visibleToClients: true });
+    await member.post(`/listas/${visible}/tareas`, { title: 'Oculta' });
+    expect(await pendientes(owner)).toBe(4);
+
+    await member.post(`/tareas/${hecha}/completar`);
+    expect(await pendientes(owner)).toBe(3);
+    expect(await pendientes(member)).toBe(3);
+    expect(await pendientes(client)).toBe(1);
+  });
+
   it('el detalle trae personas, secciones y permisos; el cliente no ve correos', async () => {
     const id = await proyectoConTodos();
     const deOwner = (await owner.get(`/proyectos/${id}`)).json;
