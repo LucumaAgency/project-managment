@@ -88,7 +88,17 @@ export default function Portada() {
         <div className="rejilla-proyectos">
           {datos.proyectos.map((p) => (
             <Link key={p.id} to={`/proyectos/${p.id}`} className="tarjeta-proyecto">
-              <span className="nombre">{p.name}</span>
+              <span className="cabeza">
+                <span className="nombre">{p.name}</span>
+                <span
+                  className={`contador-pendientes${p.pendientes ? '' : ' cero'}`}
+                  title={p.pendientes ? `${p.pendientes} ${p.pendientes === 1 ? 'tarea pendiente' : 'tareas pendientes'}` : 'Sin tareas pendientes'}
+                >
+                  <Icono nombre="tareas" tam={13} />
+                  {p.pendientes}
+                  <span className="sr">{p.pendientes === 1 ? ' tarea pendiente' : ' tareas pendientes'}</span>
+                </span>
+              </span>
               <span className="descripcion">{p.description || 'Sin descripción'}</span>
               <span className="pie">
                 <Icono nombre="personas" tam={14} />

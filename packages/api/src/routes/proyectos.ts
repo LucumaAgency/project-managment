@@ -85,6 +85,31 @@ async function ultimaActividad(tx: Tx, actor: Actor, proyectos: { id: string }[]
   return ultima;
 }
 
+/**
+ * Tareas sin completar de cada proyecto, para el contador de la tarjeta. Cuenta lo mismo que
+ * muestra la página Tareas: tareas activas en listas activas de primer nivel; un cliente, solo
+ * lo visible para él (tarea y lista).
+ */
+async function tareasPendientes(tx: Tx, actor: Actor, proyectos: { id: string }[]) {
+  const pendientes = new Map<string, number>();
+  if (!proyectos.length) return pendientes;
+  const visibles = esCliente(actor.rol) ? { visibleToClients: true } : {};
+  const filas = await tx.recording.groupBy({
+    by: ['projectId'],
+    where: {
+      projectId: { in: proyectos.map((p) => p.id) },
+      type: 'todo',
+      status: 'active',
+      ...visibles,
+      parent: { type: 'todolist', parentId: null, status: 'active', ...visibles },
+      OR: [{ todo: { is: null } }, { todo: { is: { completedAt: null } } }],
+    },
+    _count: { _all: true },
+  });
+  for (const f of filas) pendientes.set(f.projectId, f._count._all);
+  return pendientes;
+}
+
 export default async function rutasProyectos(app: FastifyInstance) {
   /**
    * Proyectos que puedo ver. Owner y admin ven todos; el resto, donde es miembro. Archivados
@@ -117,11 +142,13 @@ export default async function rutasProyectos(app: FastifyInstance) {
         },
       });
       const ultima = await ultimaActividad(tx, actor, proyectos);
+      const pendientes = await tareasPendientes(tx, actor, proyectos);
       const lista = proyectos
         .map(({ _count, members, ...p }) => ({
           ...p,
           ultimaActividad: ultima.get(p.id) ?? p.createdAt,
           personas: _count.members,
+          pendientes: pendientes.get(p.id) ?? 0,
           soyMiembro: members.length > 0,
         }))
         .sort((a, b) => b.ultimaActividad.getTime() - a.ultimaActividad.getTime());

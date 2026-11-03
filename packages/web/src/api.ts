@@ -136,6 +136,8 @@ export interface ProyectoResumen {
   archivedAt: string | null;
   trashedAt: string | null;
   personas: number;
+  /** Tareas sin completar (un cliente cuenta solo las que ve). */
+  pendientes: number;
   soyMiembro: boolean;
 }
 export interface PersonaProyecto {
