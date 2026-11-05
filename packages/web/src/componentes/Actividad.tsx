@@ -8,6 +8,7 @@ const QUE: Record<string, string> = {
   message: 'el mensaje',
   folder: 'la carpeta',
   upload: 'el archivo',
+  link: 'el enlace',
 };
 
 function fechaCorta(dia: unknown) {
@@ -29,6 +30,7 @@ export function enlaceDe(projectId: string, e: Evento): string | null {
     case 'todolist':
       return `/proyectos/${projectId}/tareas`;
     case 'upload':
+    case 'link':
       return `/proyectos/${projectId}/archivos/${destino.id}`;
     case 'folder':
       return `/proyectos/${projectId}/archivos?carpeta=${destino.id}`;
@@ -63,7 +65,7 @@ export function frase(e: Evento): string {
   }
   const algo = `${QUE[el.type] ?? ''} ${nombre(el.title)}`.trim();
   switch (e.action) {
-    case 'created': return el.type === 'message' ? `publicó ${algo}` : el.type === 'todo' ? `agregó ${algo}` : el.type === 'upload' ? `subió ${algo}` : `creó ${algo}`;
+    case 'created': return el.type === 'message' ? `publicó ${algo}` : el.type === 'todo' || el.type === 'link' ? `agregó ${algo}` : el.type === 'upload' ? `subió ${algo}` : `creó ${algo}`;
     case 'version_uploaded': return `subió una versión nueva de ${algo}`;
     case 'updated': return `editó ${algo}`;
     case 'completed': return `completó ${algo}`;

@@ -16,7 +16,7 @@ import type { Actor } from './permisos.js';
 
 export interface Resultado {
   id: string;
-  type: 'todolist' | 'todo' | 'message' | 'folder' | 'upload' | 'comment';
+  type: 'todolist' | 'todo' | 'message' | 'folder' | 'upload' | 'link' | 'comment';
   titulo: { texto: string; marcas: Marcas };
   fragmento: { texto: string; marcas: Marcas } | null;
   proyecto: { id: string; name: string; archivado: boolean };

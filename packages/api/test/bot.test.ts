@@ -171,3 +171,25 @@ describe('crear y completar', () => {
     expect((await pedir('POST', '/bot/tareas', claveB, { proyecto: p, titulo: 'x' })).statusCode).toBe(404);
   });
 });
+
+describe('enlaces en Archivos (D-78)', () => {
+  it('crea la carpeta por nombre si no existe, deja el enlace y no duplica la carpeta', async () => {
+    const r = await pedir('POST', '/bot/enlaces', clave, { proyecto: 'fenix google', titulo: 'Reporte octubre', url: 'https://previews.example.com/r.pdf', carpeta: 'Reportes' });
+    expect(r.statusCode).toBe(200);
+    const e = r.json().enlace;
+    expect(e).toMatchObject({ titulo: 'Reporte octubre', url: 'https://previews.example.com/r.pdf', carpeta: 'Reportes', visibleParaCliente: false });
+    expect(e.enlace).toContain(`/proyectos/${p}/archivos/${e.id}`);
+    const otro = (await pedir('POST', '/bot/enlaces', clave, { proyecto: p, titulo: 'Reporte noviembre', url: 'https://previews.example.com/n.pdf', carpeta: 'reportes' })).json().enlace;
+    expect(otro.carpeta).toBe('Reportes');
+    const carpetas = (await owner.get(`/proyectos/${p}/archivos`)).json.carpetas.filter((c: { title: string }) => c.title === 'Reportes');
+    expect(carpetas).toHaveLength(1);
+  });
+
+  it('sin carpeta va a la raíz; dirección mala o de otra cuenta: error', async () => {
+    const r = (await pedir('POST', '/bot/enlaces', clave, { proyecto: p, titulo: 'Brief', url: 'https://example.com/brief' })).json().enlace;
+    expect(r.carpeta).toBeNull();
+    expect((await owner.get(`/proyectos/${p}/archivos`)).json.enlaces.map((x: { id: string }) => x.id)).toContain(r.id);
+    expect((await pedir('POST', '/bot/enlaces', clave, { proyecto: p, titulo: 'x', url: 'javascript:alert(1)' })).statusCode).toBe(400);
+    expect((await pedir('POST', '/bot/enlaces', claveB, { proyecto: p, titulo: 'x', url: 'https://example.com' })).statusCode).toBe(404);
+  });
+});

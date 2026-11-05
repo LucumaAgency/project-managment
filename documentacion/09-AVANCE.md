@@ -905,6 +905,16 @@ Cada tarjeta de Proyectos muestra cuántas tareas le quedan sin completar (el cl
 suyas visibles). Test nuevo en `proyectos.test.ts`; suite completa 339 en verde. Solo código, sin
 migración: desplegar = Git → Desplegar → Reiniciar.
 
+### 2026-11-05 · Enlaces en Archivos (D-78)
+
+Botón **Agregar enlace** en Archivos (al lado de Subir): dirección + nombre (se sugiere solo) y
+visibilidad. Tarjeta con icono de enlace y el dominio; el detalle tiene Abrir, Cambiar dirección,
+Renombrar, visibilidad, Papelera y comentarios. También en Papelera, Buscar y Actividad
+("agregó el enlace…"), y como `.url` en el ZIP. Ruta de bot `POST /bot/enlaces` y comando
+`proyectos.py enlace`. Tests nuevos en `archivos.test.ts` y `bot.test.ts`, y los enlaces sumados a la
+auditoría de fugas del cliente (D-55); suite completa 346 en verde. **Con migración**: desplegar =
+Git → Desplegar → NPM install → `run prisma:deploy` → `run base:verificar:prod` → Reiniciar.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -940,6 +950,7 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 ### Antes de la fase 2
 
 - [ ] Desplegar D-72, hora y lugar, D-73, D-74 y D-75 (con `prisma:deploy`).
+- [ ] Desplegar D-78 enlaces en Archivos (migración `enlaces`: con `prisma:deploy`).
 - [ ] Crear la cuenta de la agencia beta en producción y pasarle la contraseña a la dueña.
 
 - [ ] Fase 3 (vender a otras agencias): empezar por el paso 1 de [14-FASE-3-VENDER.md](14-FASE-3-VENDER.md) cuando el usuario lo decida. (WhatsApp/Meta: descartado por ahora, D-70.)

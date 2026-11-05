@@ -83,6 +83,14 @@ beforeAll(async () => {
   ids.blobInterno2 = internoEnVisible.versiones[0].blobId;
   ids.archivoVisible = (await subir('entrega-VISIBLE.png', ids.carpetaVisible, true)).id;
 
+  // Enlaces (D-78): interno en carpeta visible, "visible" en carpeta interna y uno visible.
+  const enlace = async (titulo: string, url: string, carpeta: string, visible: boolean) =>
+    (await member.post(`/proyectos/${p}/enlaces`, { titulo, url, carpeta, visible })).json.archivo.id as string;
+  ids.enlaceInterno = await enlace(`Enlace ${MARCA}`, `https://drive.google.com/file/${MARCA}`, ids.carpetaVisible, false);
+  ids.enlaceEnCarpetaInterna = await enlace(`Otro ${MARCA}`, `https://example.com/${MARCA}`, ids.carpetaInterna, true);
+  ids.enlaceVisible = await enlace('Enlace VISIBLE', 'https://example.com/VISIBLE.pdf', ids.carpetaVisible, true);
+  await comentar(ids.enlaceVisible, 'comentario VISIBLE en enlace');
+
   // Algo que fue visible y pasó a interno (su historial también tiene que desaparecer).
   ids.exVisible = await nuevo({ type: 'message', title: `Ex visible ${MARCA}`, visibleToClients: true });
   await member.patch(`/elementos/${ids.exVisible}`, { visibleToClients: false });
@@ -151,6 +159,8 @@ describe('ninguna ruta del cliente muestra lo interno', () => {
       `/elementos/${ids.msgVisible}/comentarios`,
       `/archivos/${ids.archivoVisible}`,
       `/elementos/${ids.archivoVisible}/comentarios`,
+      `/archivos/${ids.enlaceVisible}`,
+      `/elementos/${ids.enlaceVisible}/comentarios`,
       '/bandeja',
       '/bandeja/contador',
       '/yo',
@@ -187,6 +197,8 @@ describe('ninguna ruta del cliente muestra lo interno', () => {
       `/proyectos/${p}/archivos?carpeta=${ids.carpetaInterna}`,
       `/archivos/${ids.archivoEnCarpetaInterna}`,
       `/archivos/${ids.archivoInterno}`,
+      `/archivos/${ids.enlaceInterno}`,
+      `/archivos/${ids.enlaceEnCarpetaInterna}`,
       `/blobs/${ids.blobInterno}/contenido`,
       `/blobs/${ids.blobInterno2}/contenido`,
       `/proyectos/${p}/papelera`,
@@ -219,6 +231,8 @@ describe('ninguna ruta del cliente muestra lo interno', () => {
       ['agregar plantilla', () => client.post(`/proyectos/${p}/plantillas`, { plantillaId: ids.plantilla })],
       ['guardar como plantilla', () => client.post(`/listas/${ids.listaVisible}/plantilla`, {})],
       ['editar plantilla', () => client.put(`/plantillas/${ids.plantilla}`, { name: 'x', items: [] })],
+      ['cambiar enlace interno', () => client.patch(`/enlaces/${ids.enlaceInterno}`, { url: 'https://example.com/x' })],
+      ['enlace en carpeta interna', () => client.post(`/proyectos/${p}/enlaces`, { titulo: 'x', url: 'https://example.com/x', carpeta: ids.carpetaInterna })],
     ];
     const mal = [];
     for (const [que, f] of intentos) {

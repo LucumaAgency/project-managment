@@ -14,8 +14,8 @@ interface Borrado {
   parent: { type: string; title: string | null } | null;
 }
 
-const ICONO: Record<string, NombreIcono> = { todolist: 'tareas', todo: 'check', message: 'mensajes', comment: 'mensajes', folder: 'carpeta', upload: 'archivo' };
-const TIPO: Record<string, string> = { todolist: 'Lista', todo: 'Tarea', message: 'Mensaje', comment: 'Comentario', folder: 'Carpeta', upload: 'Archivo' };
+const ICONO: Record<string, NombreIcono> = { todolist: 'tareas', todo: 'check', message: 'mensajes', comment: 'mensajes', folder: 'carpeta', upload: 'archivo', link: 'enlace' };
+const TIPO: Record<string, string> = { todolist: 'Lista', todo: 'Tarea', message: 'Mensaje', comment: 'Comentario', folder: 'Carpeta', upload: 'Archivo', link: 'Enlace' };
 const fecha = (iso: string) => new Date(iso).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' });
 const mensajeDe = (e: unknown) => (e instanceof ErrorApi ? e.message : 'No se pudo conectar.');
 

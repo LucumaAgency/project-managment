@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { conCuenta } from '../lib/contexto.js';
 import { leer } from '../lib/validar.js';
-import { aplicarPlantillaBot, completarTareaBot, guardarPlantillaBot, crearProyectoBot, crearTareaBot, exigirBot, plantillasBot, tareasBot } from '../services/bot.js';
+import { aplicarPlantillaBot, completarTareaBot, crearEnlaceBot, guardarPlantillaBot, crearProyectoBot, crearTareaBot, exigirBot, plantillasBot, tareasBot } from '../services/bot.js';
 
 /**
  * API para bots (D-63, services/bot.ts). Autenticación: `Authorization: Bearer lpm_…`.
@@ -25,6 +25,14 @@ const nuevaTarea = z.object({
   hora: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'La hora va como HH:MM (24 horas).').optional(),
   horaFin: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'La hora va como HH:MM (24 horas).').optional(),
   lugar: z.string().max(200).optional(),
+});
+
+const nuevoEnlace = z.object({
+  proyecto: z.string().trim().min(1, 'Falta el proyecto.').max(200),
+  titulo: z.string().trim().min(1, 'Falta el nombre del enlace.').max(300),
+  url: z.string().trim().min(1, 'Falta la dirección.').max(2000),
+  carpeta: z.string().trim().max(300).optional(),
+  visible: z.boolean().optional(),
 });
 
 export default async function rutasBot(app: FastifyInstance) {
@@ -81,6 +89,12 @@ export default async function rutasBot(app: FastifyInstance) {
     const a = await exigirBot(req);
     const d = leer(nuevaTarea, req.body);
     return { tarea: await crearTareaBot(a, { ...d, responsables: d.responsables ?? [] }) };
+  });
+
+  /** Enlace en Archivos (D-78): `{ proyecto, titulo, url, carpeta?, visible? }`. */
+  app.post('/api/v1/bot/enlaces', async (req) => {
+    const a = await exigirBot(req);
+    return { enlace: await crearEnlaceBot(a, leer(nuevoEnlace, req.body)) };
   });
 
   app.post<{ Params: { id: string } }>('/api/v1/bot/tareas/:id/completar', async (req) => {

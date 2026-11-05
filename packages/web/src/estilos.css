@@ -527,6 +527,7 @@ label.casilla { display: flex; align-items: center; gap: 8px; font-weight: 500; 
   overflow: hidden; margin-bottom: 4px; color: var(--azul);
 }
 .tarjeta-archivo .vista img { width: 100%; height: 100%; object-fit: cover; }
+.tarjeta-archivo .vista.enlace { background: var(--azul-tinte); }
 .tarjeta-archivo .vista .tipo { font-weight: 800; font-size: 15px; color: var(--suave); letter-spacing: .04em; }
 .tarjeta-archivo .nombre { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tarjeta-archivo .meta { font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -10,6 +10,7 @@ const ICONO: Record<string, NombreIcono> = {
   comment: 'mensajes',
   folder: 'carpeta',
   upload: 'archivo',
+  link: 'enlace',
 };
 const TIPO: Record<string, string> = {
   todolist: 'Lista',
@@ -18,6 +19,7 @@ const TIPO: Record<string, string> = {
   comment: 'Comentario',
   folder: 'Carpeta',
   upload: 'Archivo',
+  link: 'Enlace',
 };
 
 /** A dónde lleva un resultado (lo comentado, si es un comentario). */
@@ -31,6 +33,7 @@ export function enlaceResultado(r: ResultadoBusqueda): string {
     case 'message':
       return `${p}/mensajes/${r.abre.id}`;
     case 'upload':
+    case 'link':
       return `${p}/archivos/${r.abre.id}`;
     case 'folder':
       return `${p}/archivos?carpeta=${r.abre.id}`;

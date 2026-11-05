@@ -251,6 +251,7 @@ enum RecordingType {
   message // anuncio / tema del proyecto
   folder // carpeta de archivos (parent = otra carpeta o null = raíz)
   upload // archivo con versiones (parent = folder o null)
+  link // enlace a un archivo de afuera (Drive, Previews…): título + url, sin bytes (D-78)
   comment // comentario (parent = cualquier otro recording)
 }
 
@@ -286,6 +287,8 @@ model Recording {
   bodyHtml         String?
   /// Texto plano para búsqueda, previews de notificación y resumen diario.
   bodyText         String?
+  /// Solo `link`: la dirección (http o https) a la que lleva. Validada en services/archivos.ts.
+  url              String?
   visibleToClients Boolean                  @default(false)
   status           RecordingStatus          @default(active)
   /// Orden dentro del padre (listas, tareas, carpetas). Float para insertar entre dos sin
