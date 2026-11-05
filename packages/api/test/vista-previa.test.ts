@@ -81,3 +81,31 @@ describe('vista previa', () => {
     expect(JSON.stringify(v)).not.toContain('Secreta');
   });
 });
+
+describe('carpetas en la tarjeta de Archivos (D-79)', () => {
+  it('cada carpeta con sus primeros elementos; el cliente solo ve lo visible', async () => {
+    const carpeta = async (title: string, visibleToClients: boolean) => (await owner.post(`/proyectos/${p}/elementos`, { type: 'folder', title, visibleToClients })).json.elemento.id as string;
+    const reportes = await carpeta('Reportes', true);
+    await carpeta('Zona interna', false);
+    await owner.post(`/proyectos/${p}/enlaces`, { titulo: 'Reporte octubre', url: 'https://example.com/r.pdf', carpeta: reportes, visible: true });
+    await subir('borrador-interno.png', reportes, false);
+    const sub = (await owner.post(`/proyectos/${p}/elementos`, { type: 'folder', title: 'Anexos', parentId: reportes, visibleToClients: true })).json.elemento.id;
+    expect(sub).toBeTruthy();
+
+    const v = (await owner.get(`/proyectos/${p}`)).json.vistaPrevia.carpetas;
+    expect(v.total).toBe(2); // la de la papelera no cuenta
+    expect(v.lista.map((c: { title: string }) => c.title)).toEqual(['Reportes', 'Zona interna']);
+    expect(v.lista[0].total).toBe(3);
+    expect(v.lista[0].elementos.map((e: { tipo: string }) => e.tipo)).toEqual(['carpeta', 'archivo', 'enlace']);
+    expect(v.lista[1]).toMatchObject({ total: 0, elementos: [] });
+    expect(v.sueltos.total).toBe(2);
+
+    const c = (await client.get(`/proyectos/${p}`)).json.vistaPrevia.carpetas;
+    expect(c.total).toBe(1);
+    expect(c.lista).toHaveLength(1);
+    expect(c.lista[0].total).toBe(2);
+    expect(c.lista[0].elementos.map((e: { title: string }) => e.title).sort()).toEqual(['Anexos', 'Reporte octubre']);
+    expect(c.sueltos.elementos.map((e: { title: string }) => e.title)).toEqual(['logo.png']);
+    expect(JSON.stringify(c)).not.toContain('interno');
+  });
+});

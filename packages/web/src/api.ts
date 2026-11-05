@@ -504,10 +504,22 @@ export interface Ficha {
   tareas: { id: string; title: string; lista: string | null; completada: boolean; respondidos: number; campos: CampoConRespuesta[] }[];
 }
 
+export interface ElementoPrevia {
+  id: string;
+  title: string;
+  tipo: 'carpeta' | 'archivo' | 'enlace';
+}
+
 export interface VistaPrevia {
   tareas: { pendientes: number; listas: { id: string; title: string; total: number; hechas: number; tareas: { id: string; title: string; dueOn: string | null }[] }[] };
   mensajes: { id: string; title: string; autor: string; createdAt: string; extracto: string }[];
   archivos: { id: string; title: string; blobId: string | null; tipo: string | null }[];
+  /** Carpetas de la raíz con sus primeros elementos y lo suelto en la raíz (D-79). */
+  carpetas: {
+    total: number;
+    lista: { id: string; title: string; total: number; elementos: ElementoPrevia[] }[];
+    sueltos: { total: number; elementos: ElementoPrevia[] };
+  };
   ficha: { respondidos: number; total: number };
 }
 

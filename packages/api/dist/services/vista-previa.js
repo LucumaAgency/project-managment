@@ -1,6 +1,6 @@
 /**
  * Vista previa de cada sección en la página del proyecto (como en Basecamp): unas tareas
- * pendientes, los últimos mensajes y los últimos archivos. Lo mismo que ve cada quien en la
+ * pendientes, los últimos mensajes, las carpetas con sus primeros elementos (D-79) y los últimos archivos. Lo mismo que ve cada quien en la
  * sección: el cliente, solo lo visible con toda su cadena.
  */
 import { esCliente } from '@lucuma-pm/shared';
@@ -10,6 +10,9 @@ const LISTAS = 2;
 const TAREAS_POR_LISTA = 3;
 const MENSAJES = 3;
 const ARCHIVOS = 4;
+const CARPETAS = 3;
+const POR_CARPETA = 3;
+const SUELTOS = 3;
 /** De estos ids, los que están activos con toda su cadena (y, para un cliente, visibles). */
 async function vivos(tx, ids, cliente) {
     if (!ids.length)
@@ -84,6 +87,28 @@ export async function vistaPrevia(tx, actor, proyecto) {
         .filter((c) => ok.has(c.id))
         .slice(0, ARCHIVOS)
         .map((c) => ({ id: c.id, title: c.title, blobId: c.versions[0]?.blob.id ?? null, tipo: c.versions[0]?.blob.contentType ?? null }));
+    // Carpetas de la raíz con sus primeros elementos, como las listas de Tareas (D-79). Un nivel:
+    // la cadena es el elemento y su carpeta, así que basta con pedir los dos activos y visibles.
+    const EN_ARCHIVOS = ['folder', 'upload', 'link'];
+    const tipoPrevia = (t) => (t === 'folder' ? 'carpeta' : t === 'link' ? 'enlace' : 'archivo');
+    const raiz = { projectId, parentId: null, type: 'folder', status: 'active', ...visible };
+    const [totalCarpetas, raices] = await Promise.all([
+        tx.recording.count({ where: raiz }),
+        tx.recording.findMany({ where: raiz, select: { id: true, title: true }, orderBy: [{ title: 'asc' }, { createdAt: 'asc' }], take: CARPETAS }),
+    ]);
+    const carpetas = await Promise.all(raices.map(async (c) => {
+        const dentro = { projectId, parentId: c.id, type: { in: [...EN_ARCHIVOS] }, status: 'active', ...visible };
+        const [total, hijos] = await Promise.all([
+            tx.recording.count({ where: dentro }),
+            tx.recording.findMany({ where: dentro, select: { id: true, title: true, type: true }, orderBy: [{ type: 'asc' }, { updatedAt: 'desc' }], take: POR_CARPETA }),
+        ]);
+        return { id: c.id, title: c.title, total, elementos: hijos.map((h) => ({ id: h.id, title: h.title, tipo: tipoPrevia(h.type) })) };
+    }));
+    const enRaiz = { projectId, parentId: null, type: { in: ['upload', 'link'] }, status: 'active', ...visible };
+    const [totalSueltos, sueltos] = await Promise.all([
+        tx.recording.count({ where: enRaiz }),
+        tx.recording.findMany({ where: enRaiz, select: { id: true, title: true, type: true }, orderBy: { updatedAt: 'desc' }, take: SUELTOS }),
+    ]);
     // Ficha del cliente: cuánto va respondido (de lo que cada uno ve).
     const conCampos = await tx.recording.findMany({
         where: { projectId, type: 'todo', status: 'active', parent: { status: 'active', ...visible }, todo: { fields: { not: Prisma.DbNull } }, ...visible },
@@ -91,5 +116,11 @@ export async function vistaPrevia(tx, actor, proyecto) {
     });
     const total = conCampos.reduce((n, t) => n + (Array.isArray(t.todo?.fields) ? t.todo.fields.length : 0), 0);
     const respondidos = conCampos.length ? await tx.taskAnswer.count({ where: { recordingId: { in: conCampos.map((t) => t.id) } } }) : 0;
-    return { tareas: { pendientes, listas: tareas }, mensajes, archivos, ficha: { respondidos, total } };
+    return {
+        tareas: { pendientes, listas: tareas },
+        mensajes,
+        archivos,
+        carpetas: { total: totalCarpetas, lista: carpetas, sueltos: { total: totalSueltos, elementos: sueltos.map((s) => ({ id: s.id, title: s.title, tipo: tipoPrevia(s.type) })) } },
+        ficha: { respondidos, total },
+    };
 }

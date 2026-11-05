@@ -915,6 +915,13 @@ Renombrar, visibilidad, Papelera y comentarios. También en Papelera, Buscar y A
 auditoría de fugas del cliente (D-55); suite completa 346 en verde. **Con migración**: desplegar =
 Git → Desplegar → NPM install → `run prisma:deploy` → `run base:verificar:prod` → Reiniciar.
 
+### 2026-11-05 · Carpetas con su contenido en la tarjeta de Archivos (D-79)
+
+La tarjeta Archivos del proyecto muestra cada carpeta con sus primeros elementos, como Tareas
+muestra cada lista con sus tareas, más lo suelto de la raíz. Test nuevo en `vista-previa.test.ts`
+(equipo y cliente); suite completa 347 en verde. Revisado en el navegador (escritorio y 390 px).
+Solo código, sin migración: desplegar = Git → Desplegar → Reiniciar.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;
@@ -950,7 +957,6 @@ si no hay comentario, quedan así. Las respondidas están en la bitácora.
 ### Antes de la fase 2
 
 - [ ] Desplegar D-72, hora y lugar, D-73, D-74 y D-75 (con `prisma:deploy`).
-- [ ] Desplegar D-78 enlaces en Archivos (migración `enlaces`: con `prisma:deploy`).
 - [ ] Crear la cuenta de la agencia beta en producción y pasarle la contraseña a la dueña.
 
 - [ ] Fase 3 (vender a otras agencias): empezar por el paso 1 de [14-FASE-3-VENDER.md](14-FASE-3-VENDER.md) cuando el usuario lo decida. (WhatsApp/Meta: descartado por ahora, D-70.)

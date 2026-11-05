@@ -779,6 +779,9 @@ mark { background: var(--resaltado); color: inherit; border-radius: 3px; padding
 .casilla-previa { flex: none; width: 13px; height: 13px; border: 1.5px solid var(--tenue); border-radius: 3px; }
 .previa-texto { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--texto); }
 .previa-nada, .previa-mas { margin: 0; font-size: 12px; }
+.previa-carpeta { display: inline-flex; align-items: center; gap: 6px; min-width: 0; color: var(--texto); }
+.previa-carpeta svg { flex: none; color: var(--azul); }
+.icono-previa { flex: none; color: var(--tenue); }
 .previa-mensajes li { display: grid; gap: 1px; min-width: 0; }
 .previa-mensajes .meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
 .previa-archivos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }

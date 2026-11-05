@@ -28,6 +28,27 @@ export declare function vistaPrevia(tx: Tx, actor: Actor, proyecto: ProyectoCarg
         blobId: string;
         tipo: string;
     }[];
+    carpetas: {
+        total: number;
+        lista: {
+            id: string;
+            title: string | null;
+            total: number;
+            elementos: {
+                id: string;
+                title: string | null;
+                tipo: string;
+            }[];
+        }[];
+        sueltos: {
+            total: number;
+            elementos: {
+                id: string;
+                title: string | null;
+                tipo: string;
+            }[];
+        };
+    };
     ficha: {
         respondidos: number;
         total: number;

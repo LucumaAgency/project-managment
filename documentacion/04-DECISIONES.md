@@ -576,3 +576,11 @@ ocupa espacio de la cuenta. El detalle reutiliza `/archivos/:id` (`archivo.enlac
 En el ZIP de exportación va como acceso directo `.url`. Bot: `POST /bot/enlaces` con carpeta por
 nombre (la crea si falta). La web abre el enlace en otra pestaña con `noopener noreferrer`.
 
+**D-79 · Carpetas con su contenido en la tarjeta de Archivos** (2026-11-05, pedido del usuario)
+La tarjeta Archivos de la página del proyecto se ve como la de Tareas: hasta 3 carpetas de la raíz
+(por nombre), cada una con cuántos elementos tiene y sus 3 primeros (subcarpetas primero, luego lo
+más reciente), con icono de carpeta, archivo o enlace; debajo, "Sin carpeta" con lo suelto de la
+raíz, y "N carpetas en total" si hay más. Sin carpetas, siguen las miniaturas de los últimos
+archivos. Un solo nivel: basta con pedir el elemento y su carpeta activos (y visibles, si es
+cliente). `vistaPrevia.carpetas` en `GET /proyectos/:id`; el contador de la sección suma los enlaces.
+
