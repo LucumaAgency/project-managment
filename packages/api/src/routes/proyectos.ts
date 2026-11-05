@@ -227,7 +227,7 @@ export default async function rutasProyectos(app: FastifyInstance) {
         secciones: {
           tareas: cuantos.todolist ?? 0,
           mensajes: cuantos.message ?? 0,
-          archivos: (cuantos.folder ?? 0) + (cuantos.upload ?? 0),
+          archivos: (cuantos.folder ?? 0) + (cuantos.upload ?? 0) + (cuantos.link ?? 0),
           ficha,
         },
         permisos: permisosEn(actor, p),

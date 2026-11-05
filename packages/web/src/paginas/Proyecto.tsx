@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { NOMBRE_ROL, esCliente } from '@lucuma-pm/shared';
-import { api, ErrorApi, urlArchivo, type Evento, type InvitacionCreada, type Personas as DatosPersonas, type ProyectoDetalle, type VistaPrevia } from '../api';
+import { api, ErrorApi, urlArchivo, type Evento, type InvitacionCreada, type Personas as DatosPersonas, type ElementoPrevia, type ProyectoDetalle, type VistaPrevia } from '../api';
 import ListaActividad from '../componentes/Actividad';
 import { olvidarMencionables } from '../componentes/mencionables';
 import EnlaceCompartir, { mensajeInvitacion } from '../componentes/EnlaceCompartir';
@@ -402,6 +402,22 @@ function PreviaArchivo({ a }: { a: VistaPrevia['archivos'][number] }) {
   );
 }
 
+const ICONO_PREVIA = { carpeta: 'carpeta', archivo: 'archivo', enlace: 'enlace' } as const;
+
+/** Elementos de una carpeta en la tarjeta de Archivos: icono y nombre, una línea cada uno. */
+function ElementosPrevia({ elementos }: { elementos: ElementoPrevia[] }) {
+  return (
+    <ul className="previa-tareas">
+      {elementos.map((e) => (
+        <li key={e.id}>
+          <Icono nombre={ICONO_PREVIA[e.tipo]} tam={13} className="icono-previa" />
+          <span className="previa-texto">{e.title}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /** Lo que se ve dentro de cada tarjeta (sin enlaces adentro: la tarjeta entera es el enlace). */
 function Previa({ clave, v }: { clave: string; v: VistaPrevia }) {
   if (clave === 'tareas') {
@@ -445,7 +461,34 @@ function Previa({ clave, v }: { clave: string; v: VistaPrevia }) {
     );
   }
   if (clave === 'archivos') {
-    if (!v.archivos.length) return <p className="meta previa-nada">Solo carpetas por ahora</p>;
+    const { lista, total, sueltos } = v.carpetas;
+    // Con carpetas: cada una con sus primeros elementos, como las listas de Tareas (D-79).
+    if (lista.length) {
+      return (
+        <div className="previa">
+          {lista.map((c) => (
+            <div key={c.id} className="previa-lista">
+              <div className="previa-lista-cab">
+                <span className="previa-titulo previa-carpeta"><Icono nombre="carpeta" tam={14} />{c.title}</span>
+                <span className="meta">{c.total}</span>
+              </div>
+              {c.elementos.length ? <ElementosPrevia elementos={c.elementos} /> : <p className="meta previa-nada">Vacía</p>}
+            </div>
+          ))}
+          {sueltos.elementos.length > 0 && (
+            <div className="previa-lista">
+              <div className="previa-lista-cab">
+                <span className="previa-titulo">Sin carpeta</span>
+                <span className="meta">{sueltos.total}</span>
+              </div>
+              <ElementosPrevia elementos={sueltos.elementos} />
+            </div>
+          )}
+          {total > lista.length && <p className="meta previa-mas">{total} carpetas en total</p>}
+        </div>
+      );
+    }
+    if (!v.archivos.length) return sueltos.elementos.length ? <div className="previa"><ElementosPrevia elementos={sueltos.elementos} /></div> : null;
     return (
       <div className="previa previa-archivos">
         {v.archivos.map((a) => (
