@@ -37,13 +37,13 @@ export declare const esquemaCarga: z.ZodObject<{
                 responsables?: string[] | undefined;
             }>]>, "many">>;
         }, "strip", z.ZodTypeAny, {
+            titulo: string;
             tareas: (string | {
                 titulo: string;
                 responsables: string[];
                 notas?: string | undefined;
                 vence?: string | undefined;
             })[];
-            titulo: string;
         }, {
             titulo: string;
             tareas?: (string | {
@@ -71,13 +71,13 @@ export declare const esquemaCarga: z.ZodObject<{
             titulo: string;
         }[];
         listas: {
+            titulo: string;
             tareas: (string | {
                 titulo: string;
                 responsables: string[];
                 notas?: string | undefined;
                 vence?: string | undefined;
             })[];
-            titulo: string;
         }[];
         descripcion?: string | undefined;
     }, {
@@ -108,13 +108,13 @@ export declare const esquemaCarga: z.ZodObject<{
             titulo: string;
         }[];
         listas: {
+            titulo: string;
             tareas: (string | {
                 titulo: string;
                 responsables: string[];
                 notas?: string | undefined;
                 vence?: string | undefined;
             })[];
-            titulo: string;
         }[];
         descripcion?: string | undefined;
     }[];
@@ -161,13 +161,13 @@ export declare function prepararCarga(datos: unknown): Promise<{
                 titulo: string;
             }[];
             listas: {
+                titulo: string;
                 tareas: (string | {
                     titulo: string;
                     responsables: string[];
                     notas?: string | undefined;
                     vence?: string | undefined;
                 })[];
-                titulo: string;
             }[];
             descripcion?: string | undefined;
         }[];

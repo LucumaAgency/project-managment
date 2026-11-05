@@ -12,6 +12,15 @@ import { registrarEvento } from './eventos.js';
 import { exigir, puede } from './permisos.js';
 import { proyectoPara } from './proyectos.js';
 /** Bytes en uso por la cuenta: archivos listos (las versiones viejas también cuentan). */
+/** Dominio para mostrar junto al enlace ("drive.google.com"), sin www. */
+export function sitioDe(url) {
+    try {
+        return new URL(url).hostname.replace(/^www\./, '');
+    }
+    catch {
+        return '';
+    }
+}
 async function usoDeCuenta(tx, accountId) {
     const r = await tx.blob.aggregate({ where: { accountId, status: 'ready' }, _sum: { byteSize: true } });
     return Number(r._sum.byteSize ?? 0n);
@@ -113,6 +122,65 @@ export async function nuevaVersion(actor, id, datos, entrada) {
     }));
     return conCuenta(actor.ctx, (tx) => detalleArchivo(tx, actor, id));
 }
+/**
+ * Dirección de un enlace: solo http y https (nunca javascript:, data: ni nada que el navegador
+ * ejecute), sin espacios y con un máximo razonable. Devuelve la dirección normalizada.
+ */
+export function urlValida(entrada) {
+    const texto = entrada.trim();
+    let u;
+    try {
+        u = new URL(texto);
+    }
+    catch {
+        throw new HttpError(400, 'La dirección no es válida. Copia el enlace completo, con https://');
+    }
+    if (u.protocol !== 'https:' && u.protocol !== 'http:')
+        throw new HttpError(400, 'Solo se aceptan enlaces http o https.');
+    if (!u.hostname)
+        throw new HttpError(400, 'La dirección no es válida.');
+    const final = u.toString();
+    if (final.length > 2000)
+        throw new HttpError(400, 'La dirección es demasiado larga.');
+    return final;
+}
+/** Agrega un enlace a la raíz del proyecto o a una carpeta. Mismos permisos que subir un archivo. */
+export async function crearEnlace(actor, projectId, datos) {
+    const url = urlValida(datos.url);
+    const id = await conCuenta(actor.ctx, async (tx) => {
+        const carpeta = datos.carpetaId ? (await elementoPara(tx, actor, datos.carpetaId, 'elemento.ver')).elemento : undefined;
+        if (carpeta && carpeta.type !== 'folder')
+            throw new HttpError(400, 'Los enlaces van en la raíz o en una carpeta.');
+        const enlace = await crearElemento(tx, actor, projectId, {
+            type: 'link',
+            parentId: datos.carpetaId,
+            title: datos.titulo,
+            visibleToClients: datos.visibleToClients,
+        });
+        await tx.recording.update({ where: { id: enlace.id }, data: { url } });
+        return enlace.id;
+    });
+    return conCuenta(actor.ctx, (tx) => detalleArchivo(tx, actor, id));
+}
+/** Cambia la dirección de un enlace (el nombre se cambia con la ruta genérica de elementos). */
+export async function cambiarEnlace(actor, id, nueva) {
+    const url = urlValida(nueva);
+    await conCuenta(actor.ctx, async (tx) => {
+        const { proyecto, elemento } = await elementoPara(tx, actor, id, 'elemento.editar', 'No puedes cambiar este enlace.');
+        if (elemento.type !== 'link')
+            throw new HttpError(404, 'No encontrado.');
+        await tx.recording.update({ where: { id }, data: { url } });
+        await registrarEvento(tx, {
+            accountId: actor.ctx.accountId,
+            projectId: proyecto.id,
+            recordingId: id,
+            actorId: actor.ctx.userId,
+            action: 'updated',
+            visibleToClients: elemento.visibleEnCadena,
+        });
+    });
+    return conCuenta(actor.ctx, (tx) => detalleArchivo(tx, actor, id));
+}
 const VERSION = {
     version: true,
     note: true,
@@ -143,11 +211,12 @@ export async function listarArchivos(tx, actor, projectId, carpetaId) {
         throw new HttpError(404, 'No encontrado.');
     const visibles = esCliente(actor.rol) ? { visibleToClients: true } : {};
     const hijos = await tx.recording.findMany({
-        where: { projectId: proyecto.id, parentId: carpetaId, type: { in: ['folder', 'upload'] }, status: 'active', ...visibles },
+        where: { projectId: proyecto.id, parentId: carpetaId, type: { in: ['folder', 'upload', 'link'] }, status: 'active', ...visibles },
         select: {
             id: true,
             type: true,
             title: true,
+            url: true,
             visibleToClients: true,
             createdAt: true,
             updatedAt: true,
@@ -159,7 +228,7 @@ export async function listarArchivos(tx, actor, projectId, carpetaId) {
     });
     const conteos = await tx.recording.groupBy({
         by: ['parentId'],
-        where: { type: { in: ['comment', 'folder', 'upload'] }, status: 'active', parentId: { in: hijos.map((h) => h.id) }, ...visibles },
+        where: { type: { in: ['comment', 'folder', 'upload', 'link'] }, status: 'active', parentId: { in: hijos.map((h) => h.id) }, ...visibles },
         _count: { _all: true },
     });
     const cuantos = new Map(conteos.map((c) => [c.parentId, c._count._all]));
@@ -198,6 +267,18 @@ export async function listarArchivos(tx, actor, projectId, carpetaId) {
             comentarios: cuantos.get(h.id) ?? 0,
             actual: aVersion(h.versions[0]),
         })),
+        enlaces: hijos
+            .filter((h) => h.type === 'link' && h.url)
+            .map((h) => ({
+            id: h.id,
+            title: h.title,
+            url: h.url,
+            sitio: sitioDe(h.url),
+            visibleToClients: h.visibleToClients,
+            updatedAt: h.updatedAt,
+            comentarios: cuantos.get(h.id) ?? 0,
+            creator: h.creator,
+        })),
         permisos: {
             subir: puede(actor, 'elemento.crear', { proyecto, elemento: carpeta?.elemento, tipo: 'upload' }),
             crearCarpeta: puede(actor, 'elemento.crear', { proyecto, elemento: carpeta?.elemento, tipo: 'folder' }),
@@ -210,13 +291,14 @@ export async function listarArchivos(tx, actor, projectId, carpetaId) {
 }
 export async function detalleArchivo(tx, actor, id) {
     const { proyecto, elemento } = await elementoPara(tx, actor, id, 'elemento.ver');
-    if (elemento.type !== 'upload')
+    if (elemento.type !== 'upload' && elemento.type !== 'link')
         throw new HttpError(404, 'No encontrado.');
     const fila = await tx.recording.findUniqueOrThrow({
         where: { id },
         select: {
             id: true,
             title: true,
+            url: true,
             parentId: true,
             visibleToClients: true,
             createdAt: true,
@@ -235,9 +317,12 @@ export async function detalleArchivo(tx, actor, id) {
             createdAt: fila.createdAt,
             creator: fila.creator,
             versiones: fila.versions.map(aVersion),
+            /** Solo en enlaces (D-78): adónde lleva. En un archivo, null. */
+            enlace: elemento.type === 'link' && fila.url ? { url: fila.url, sitio: sitioDe(fila.url) } : null,
         },
         permisos: {
-            nuevaVersion: puede(actor, 'elemento.editar', { proyecto, elemento }),
+            nuevaVersion: elemento.type === 'upload' && puede(actor, 'elemento.editar', { proyecto, elemento }),
+            cambiarEnlace: elemento.type === 'link' && puede(actor, 'elemento.editar', { proyecto, elemento }),
             renombrar: puede(actor, 'elemento.editar', { proyecto, elemento }),
             papelera: puede(actor, 'elemento.papelera', { proyecto, elemento }),
             cambiarVisibilidad: puede(actor, 'elemento.cambiarVisibilidad', { proyecto, elemento }),

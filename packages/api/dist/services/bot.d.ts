@@ -84,6 +84,28 @@ export declare function crearTareaBot(a: AccesoBot, datos: {
     }[];
     enlace: string;
 }>;
+/**
+ * Enlace en Archivos (D-78). `carpeta` es el nombre de una carpeta de la raíz del proyecto: si no
+ * existe, se crea (interna, salvo `visible`). Sin `carpeta`, va a la raíz.
+ */
+export declare function crearEnlaceBot(a: AccesoBot, datos: {
+    proyecto: string;
+    titulo: string;
+    url: string;
+    carpeta?: string;
+    visible?: boolean;
+}): Promise<{
+    id: string;
+    titulo: string | null;
+    url: string;
+    proyecto: {
+        id: string;
+        nombre: string;
+    };
+    carpeta: string | null;
+    visibleParaCliente: boolean;
+    enlace: string;
+}>;
 export declare function completarTareaBot(a: AccesoBot, id: string, completar: boolean): Promise<{
     id: string;
     titulo: string | null;

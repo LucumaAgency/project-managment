@@ -12,9 +12,9 @@ import { esCliente, veTodosLosProyectos } from '@lucuma-pm/shared';
 import { HttpError } from '../lib/errores.js';
 const gestiona = (rol) => veTodosLosProyectos(rol); // owner y admin
 /** Tipos que edita cualquiera del equipo del proyecto, no solo quien los creó. */
-export const DEL_EQUIPO = ['todolist', 'todo', 'folder', 'upload'];
+export const DEL_EQUIPO = ['todolist', 'todo', 'folder', 'upload', 'link'];
 /** Qué tipos puede crear un cliente. Lo que crea nace visible para clientes. */
-export const TIPOS_DE_CLIENTE = ['todo', 'message', 'comment', 'upload'];
+export const TIPOS_DE_CLIENTE = ['todo', 'message', 'comment', 'upload', 'link'];
 export function puede(actor, accion, sobre = {}) {
     const { rol } = actor;
     const cliente = esCliente(rol);

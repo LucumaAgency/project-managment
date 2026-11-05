@@ -36,7 +36,7 @@ const edicion = z.object({
 const mover = z.object({ parentId: id.nullable().optional(), despuesDe: id.nullable() });
 const filtro = z.object({
     padre: id.optional(),
-    tipo: z.enum(['todolist', 'todo', 'message', 'folder', 'upload', 'comment']).optional(),
+    tipo: z.enum(['todolist', 'todo', 'message', 'folder', 'upload', 'link', 'comment']).optional(),
 });
 export default async function rutasElementos(app) {
     /** Hijos de un padre (?padre=) o de la raíz del proyecto, opcionalmente de un tipo. */

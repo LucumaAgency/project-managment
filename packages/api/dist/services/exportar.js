@@ -99,6 +99,7 @@ async function leerProyecto(ctx, projectId) {
                     type: true,
                     parentId: true,
                     title: true,
+                    url: true,
                     bodyHtml: true,
                     bodyText: true,
                     visibleToClients: true,
@@ -178,6 +179,12 @@ export async function exportarCuenta(ctx, log) {
                         log?.(`Exportar: falta en disco ${v.blob.storageKey}`);
                     }
                 }
+            }
+            // Enlaces (D-78): un acceso directo .url junto a los archivos de su carpeta.
+            for (const e of elementos.filter((x) => x.type === 'link' && x.url)) {
+                const dir = [carpeta, 'archivos', rutaCarpeta(e.parentId)].filter(Boolean).join('/');
+                const nombre = `${nombreZip(e.title ?? 'enlace', 'enlace')}.url`;
+                zip.addBuffer(Buffer.from(`[InternetShortcut]\r\nURL=${e.url}\r\n`), ruta(`${dir}/${e.status === 'trashed' ? 'papelera/' : ''}${nombre}`), { mtime: e.updatedAt });
             }
             // Ficha del cliente (D-65): archivos de las respuestas en ficha/<tarea>/.
             for (const t of elementos.filter((x) => x.type === 'todo' && x.attachments.length)) {

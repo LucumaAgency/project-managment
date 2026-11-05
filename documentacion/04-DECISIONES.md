@@ -565,3 +565,14 @@ la página Tareas: tareas activas sin completar en listas activas de primer nive
 solo lo que ve (tarea y lista visibles), así el número no delata trabajo interno. En la tarjeta va
 como insignia azul arriba a la derecha; en gris cuando es 0.
 
+**D-78 · Enlaces en Archivos** (2026-11-05, pedido del usuario)
+Además de subir, en Archivos se puede agregar el **enlace** a un archivo que vive afuera (Drive,
+Previews, otra web): tipo nuevo de elemento `link` con `title` + columna `url` (migración
+`20261105090000_enlaces`). Va en la raíz o en una carpeta, con las mismas reglas que un archivo:
+visibilidad en cadena, el cliente puede agregarlos (nacen visibles), comentarios, papelera,
+renombrar por la ruta genérica y cambiar la dirección con `PATCH /enlaces/:id`. Solo http y https
+(se rechaza `javascript:`, `data:`, `file:`…), normalizada con `URL`, máximo 2.000 caracteres. No
+ocupa espacio de la cuenta. El detalle reutiliza `/archivos/:id` (`archivo.enlace = { url, sitio }`).
+En el ZIP de exportación va como acceso directo `.url`. Bot: `POST /bot/enlaces` con carpeta por
+nombre (la crea si falta). La web abre el enlace en otra pestaña con `noopener noreferrer`.
+

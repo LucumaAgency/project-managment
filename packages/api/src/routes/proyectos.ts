@@ -54,11 +54,11 @@ async function personasDelProyecto(tx: Tx, accountId: string, projectId: string,
 async function vistaCliente(tx: Tx, projectId: string) {
   const filas = await tx.recording.groupBy({
     by: ['type'],
-    where: { projectId, parentId: null, status: 'active', visibleToClients: true, type: { in: ['todolist', 'message', 'folder', 'upload'] } },
+    where: { projectId, parentId: null, status: 'active', visibleToClients: true, type: { in: ['todolist', 'message', 'folder', 'upload', 'link'] } },
     _count: { _all: true },
   });
   const n = Object.fromEntries(filas.map((f) => [f.type, f._count._all]));
-  return { listas: n.todolist ?? 0, mensajes: n.message ?? 0, carpetas: n.folder ?? 0, archivos: n.upload ?? 0 };
+  return { listas: n.todolist ?? 0, mensajes: n.message ?? 0, carpetas: n.folder ?? 0, archivos: (n.upload ?? 0) + (n.link ?? 0) };
 }
 
 /**

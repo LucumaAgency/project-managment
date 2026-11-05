@@ -58,10 +58,10 @@ export type Accion =
 const gestiona = (rol: Rol) => veTodosLosProyectos(rol); // owner y admin
 
 /** Tipos que edita cualquiera del equipo del proyecto, no solo quien los creó. */
-export const DEL_EQUIPO: RecordingType[] = ['todolist', 'todo', 'folder', 'upload'];
+export const DEL_EQUIPO: RecordingType[] = ['todolist', 'todo', 'folder', 'upload', 'link'];
 
 /** Qué tipos puede crear un cliente. Lo que crea nace visible para clientes. */
-export const TIPOS_DE_CLIENTE: RecordingType[] = ['todo', 'message', 'comment', 'upload'];
+export const TIPOS_DE_CLIENTE: RecordingType[] = ['todo', 'message', 'comment', 'upload', 'link'];
 
 export function puede(
   actor: Actor,

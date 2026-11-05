@@ -16,7 +16,7 @@ interface Subida {
   error?: string;
 }
 
-/** Archivos del proyecto: carpetas, subir (botón o arrastrando), y cada archivo con su vista. */
+/** Archivos del proyecto: carpetas, subir (botón o arrastrando), enlaces a archivos de afuera (D-78) y cada archivo con su vista. */
 export default function Archivos() {
   const { id: projectId } = useParams<{ id: string }>();
   const yo = useYo();
@@ -29,6 +29,7 @@ export default function Archivos() {
   const [visibles, setVisibles] = useState(false);
   const [encima, setEncima] = useState(false);
   const [creandoCarpeta, setCreandoCarpeta] = useState(false);
+  const [creandoEnlace, setCreandoEnlace] = useState(false);
   const selector = useRef<HTMLInputElement>(null);
 
   const cargar = useCallback(() => {
@@ -73,7 +74,7 @@ export default function Archivos() {
   };
 
   if (!d) return error ? <p className="error">{error}</p> : <p className="cargando">Cargando…</p>;
-  const vacio = d.carpetas.length === 0 && d.archivos.length === 0;
+  const vacio = d.carpetas.length === 0 && d.archivos.length === 0 && d.enlaces.length === 0;
 
   return (
     <div
@@ -134,6 +135,11 @@ export default function Archivos() {
           </button>
         )}
         {d.permisos.subir && (
+          <button type="button" className="btn btn-sec" onClick={() => setCreandoEnlace(true)}>
+            <Icono nombre="enlace" tam={16} />Agregar enlace
+          </button>
+        )}
+        {d.permisos.subir && (
           <>
             <button type="button" className="btn" onClick={() => selector.current?.click()}>
               <Icono nombre="subirArchivo" tam={16} />Subir archivos
@@ -168,7 +174,7 @@ export default function Archivos() {
         <div className="card vacio">
           <Icono nombre="archivo" tam={28} />
           <p className="nombre" style={{ margin: '8px 0 2px', color: 'var(--texto)' }}>{carpeta ? 'Esta carpeta está vacía' : 'Todavía no hay archivos'}</p>
-          <p className="meta" style={{ margin: 0 }}>{d.permisos.subir ? 'Sube archivos con el botón o arrástralos aquí.' : 'Cuando el equipo comparta archivos contigo, aparecerán aquí.'}</p>
+          <p className="meta" style={{ margin: 0 }}>{d.permisos.subir ? 'Sube archivos con el botón o arrástralos aquí. Si el archivo está en otro lado (Drive, una galería), agrega su enlace.' : 'Cuando el equipo comparta archivos contigo, aparecerán aquí.'}</p>
         </div>
       ) : (
         <div className="rejilla-archivos">
@@ -197,7 +203,31 @@ export default function Archivos() {
               </span>
             </Link>
           ))}
+          {d.enlaces.map((e) => (
+            <Link key={e.id} to={`/proyectos/${projectId}/archivos/${e.id}`} className="tarjeta-archivo">
+              <span className="vista enlace"><Icono nombre="enlace" tam={30} /></span>
+              <span className="nombre">{e.title}</span>
+              <span className="meta">
+                {e.sitio || 'Enlace'} · {cuando(e.updatedAt)}
+                {e.comentarios > 0 ? ` · ${e.comentarios} com.` : ''}
+                {!cliente && e.visibleToClients ? ' · visible' : ''}
+              </span>
+            </Link>
+          ))}
         </div>
+      )}
+
+      {creandoEnlace && (
+        <NuevoEnlace
+          cliente={cliente}
+          visibleInicial={visibles}
+          onCerrar={() => setCreandoEnlace(false)}
+          onCrear={async (titulo, url, visible) => {
+            await api(`/proyectos/${projectId}/enlaces`, { body: { titulo, url, carpeta, visible } });
+            setCreandoEnlace(false);
+            cargar();
+          }}
+        />
       )}
 
       {creandoCarpeta && (
@@ -243,6 +273,68 @@ function NuevaCarpeta({ cliente, onCerrar, onCrear }: { cliente: boolean; onCerr
         <div className="acciones" style={{ justifyContent: 'flex-end', marginBottom: 0 }}>
           <button type="button" className="btn btn-sec" onClick={onCerrar}>Cancelar</button>
           <button className="btn">Crear carpeta</button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+/** Enlace a un archivo que vive afuera: nombre y dirección (solo http o https). */
+function NuevoEnlace({ cliente, visibleInicial, onCerrar, onCrear }: { cliente: boolean; visibleInicial: boolean; onCerrar: () => void; onCrear: (t: string, u: string, v: boolean) => Promise<void> }) {
+  const [titulo, setTitulo] = useState('');
+  const [url, setUrl] = useState('');
+  const [visible, setVisible] = useState(visibleInicial);
+  const [error, setError] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  return (
+    <Modal titulo="Agregar enlace" onCerrar={onCerrar}>
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setEnviando(true);
+          setError(null);
+          try {
+            await onCrear(titulo, url, visible);
+          } catch (err) {
+            setError(mensajeDe(err));
+            setEnviando(false);
+          }
+        }}
+      >
+        <label htmlFor="e-url">Dirección</label>
+        <input
+          id="e-url"
+          type="url"
+          required
+          autoFocus
+          maxLength={2000}
+          placeholder="https://drive.google.com/…"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          onBlur={() => {
+            // Si no le pusieron nombre, se sugiere el final de la dirección.
+            if (titulo.trim() || !url.trim()) return;
+            try {
+              const u = new URL(url.trim());
+              const ultimo = decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() ?? '');
+              setTitulo(ultimo && ultimo.length < 120 && ultimo.includes('.') ? ultimo : u.hostname.replace(/^www\./, ''));
+            } catch {
+              /* dirección incompleta: que la corrijan */
+            }
+          }}
+        />
+        <label htmlFor="e-titulo">Nombre</label>
+        <input id="e-titulo" required maxLength={300} placeholder="Ej.: Reporte de octubre (PDF)" value={titulo} onChange={(e) => setTitulo(e.target.value)} />
+        {!cliente && (
+          <label className="casilla">
+            <input type="checkbox" checked={visible} onChange={(e) => setVisible(e.target.checked)} /> Visible para el cliente
+          </label>
+        )}
+        <p className="ayuda">El archivo sigue donde está (Drive, una galería, otra web). Aquí queda la referencia, con sus comentarios.</p>
+        {error && <p className="error">{error}</p>}
+        <div className="acciones" style={{ justifyContent: 'flex-end', marginBottom: 0 }}>
+          <button type="button" className="btn btn-sec" onClick={onCerrar}>Cancelar</button>
+          <button className="btn" disabled={enviando}>{enviando ? 'Agregando…' : 'Agregar enlace'}</button>
         </div>
       </form>
     </Modal>

@@ -5,7 +5,7 @@ import { almacen } from '../lib/almacen.js';
 import { conCuenta } from '../lib/contexto.js';
 import { seMuestraEnLinea } from '../lib/tipos-archivo.js';
 import { leer } from '../lib/validar.js';
-import { blobParaLeer, detalleArchivo, listarArchivos, nuevaVersion, subirArchivo } from '../services/archivos.js';
+import { blobParaLeer, cambiarEnlace, crearEnlace, detalleArchivo, listarArchivos, nuevaVersion, subirArchivo } from '../services/archivos.js';
 import { exigirCuenta } from '../plugins/contexto.js';
 import { subirArchivoCampo } from '../services/campos.js';
 import { completarPorRespuestas, tareaDetalle } from '../services/tareas.js';
@@ -22,6 +22,13 @@ const subida = z.object({
 });
 const version = z.object({ nombre: z.string().min(1).max(255), nota: z.string().max(500).optional() });
 const listado = z.object({ carpeta: id.optional() });
+const nuevoEnlace = z.object({
+    titulo: z.string().trim().min(1, 'Ponle un nombre al enlace.').max(300),
+    url: z.string().trim().min(1, 'Falta la dirección.').max(2000),
+    carpeta: id.nullable().optional(),
+    visible: z.boolean().optional(),
+});
+const edicionEnlace = z.object({ url: z.string().trim().min(1, 'Falta la dirección.').max(2000) });
 const contenido = z.object({ descargar: z.enum(['0', '1']).optional() });
 /** Nombre para Content-Disposition: ASCII simple + la forma UTF-8 (RFC 5987). */
 function disposicion(tipo, nombre) {
@@ -51,6 +58,16 @@ export default async function rutasArchivos(app) {
         exigirTamano(req);
         const q = leer(version, req.query);
         return nuevaVersion(actor, req.params.id, q, req.body);
+    });
+    /** Enlace a un archivo que vive afuera (D-78): nombre + dirección, en la raíz o en una carpeta. */
+    app.post('/api/v1/proyectos/:id/enlaces', async (req) => {
+        const actor = exigirCuenta(req);
+        const b = leer(nuevoEnlace, req.body);
+        return crearEnlace(actor, req.params.id, { carpetaId: b.carpeta ?? null, titulo: b.titulo, url: b.url, visibleToClients: b.visible });
+    });
+    app.patch('/api/v1/enlaces/:id', async (req) => {
+        const actor = exigirCuenta(req);
+        return cambiarEnlace(actor, req.params.id, leer(edicionEnlace, req.body).url);
     });
     app.get('/api/v1/proyectos/:id/archivos', async (req) => {
         const actor = exigirCuenta(req);

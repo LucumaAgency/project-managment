@@ -26,11 +26,12 @@ export const PADRES = {
     message: [null],
     folder: [null, 'folder'],
     upload: [null, 'folder'],
-    comment: ['todolist', 'todo', 'message', 'upload'],
+    link: [null, 'folder'],
+    comment: ['todolist', 'todo', 'message', 'upload', 'link'],
 };
-/** Los archivos se crean al confirmar una subida (día 10), no por la ruta genérica. */
+/** Los archivos se crean al confirmar una subida (día 10) y los enlaces con su dirección (D-78), no por la ruta genérica. */
 export const TIPOS_CREABLES = ['todolist', 'todo', 'message', 'folder', 'comment'];
-const LLEVA_TITULO = ['todolist', 'todo', 'message', 'folder', 'upload'];
+const LLEVA_TITULO = ['todolist', 'todo', 'message', 'folder', 'upload', 'link'];
 /** Columnas que se devuelven a la web. */
 export const SELECCION = {
     id: true,

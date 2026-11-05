@@ -18,6 +18,7 @@ import { sinTildes } from '../lib/busqueda.js';
 import { conCuenta } from '../lib/contexto.js';
 import { urlEnCuenta } from '../lib/enlaces.js';
 import { HttpError } from '../lib/errores.js';
+import { crearEnlace } from './archivos.js';
 import { crearElemento } from './elementos.js';
 import { registrarEvento } from './eventos.js';
 import { exigirCupoProyectos } from './proyectos.js';
@@ -185,6 +186,38 @@ export async function crearTareaBot(a, datos) {
             enlace: enlaceTarea(a, proyecto.id, tarea.id),
         };
     });
+}
+/**
+ * Enlace en Archivos (D-78). `carpeta` es el nombre de una carpeta de la raíz del proyecto: si no
+ * existe, se crea (interna, salvo `visible`). Sin `carpeta`, va a la raíz.
+ */
+export async function crearEnlaceBot(a, datos) {
+    const { proyecto, carpeta } = await conCuenta(a.actor.ctx, async (tx) => {
+        const proyecto = await proyectoPorNombre(tx, a, datos.proyecto);
+        if (!datos.carpeta?.trim())
+            return { proyecto, carpeta: null };
+        const carpetas = await tx.recording.findMany({
+            where: { projectId: proyecto.id, parentId: null, type: 'folder', status: 'active' },
+            select: { id: true, title: true },
+        });
+        const q = normal(datos.carpeta);
+        const hallada = carpetas.find((c) => normal(c.title ?? '') === q) ?? carpetas.find((c) => normal(c.title ?? '').includes(q));
+        if (hallada)
+            return { proyecto, carpeta: hallada };
+        const titulo = datos.carpeta.trim();
+        const nueva = await crearElemento(tx, a.actor, proyecto.id, { type: 'folder', title: titulo, visibleToClients: datos.visible ?? false });
+        return { proyecto, carpeta: { id: nueva.id, title: titulo } };
+    });
+    const r = await crearEnlace(a.actor, proyecto.id, { carpetaId: carpeta?.id ?? null, titulo: datos.titulo, url: datos.url, visibleToClients: datos.visible ?? false });
+    return {
+        id: r.archivo.id,
+        titulo: r.archivo.title,
+        url: r.archivo.enlace?.url ?? datos.url,
+        proyecto: { id: proyecto.id, nombre: proyecto.name },
+        carpeta: carpeta?.title ?? null,
+        visibleParaCliente: r.archivo.visibleParaCliente,
+        enlace: urlEnCuenta(env.baseDomain, a.slug, `/proyectos/${proyecto.id}/archivos/${r.archivo.id}`),
+    };
 }
 export async function completarTareaBot(a, id, completar) {
     return conCuenta(a.actor.ctx, async (tx) => {

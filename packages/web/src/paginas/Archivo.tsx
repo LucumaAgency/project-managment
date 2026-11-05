@@ -10,7 +10,7 @@ import { useYo } from '../contexto';
 const mensajeDe = (e: unknown) => (e instanceof ErrorApi ? e.message : 'No se pudo conectar.');
 const cuando = (iso: string) => new Date(iso).toLocaleString('es-PE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-/** Un archivo: vista previa (imagen o PDF), versiones, nueva versión, visibilidad y comentarios. */
+/** Un archivo (vista previa, versiones, nueva versión) o un enlace (D-78), con visibilidad y comentarios. */
 export default function Archivo() {
   const { id: projectId, archivoId } = useParams<{ id: string; archivoId: string }>();
   const yo = useYo();
@@ -52,6 +52,7 @@ export default function Archivo() {
   }
   if (!d) return error ? <p className="error">{error}</p> : <p className="cargando">Cargando…</p>;
   const { archivo: a, permisos } = d;
+  if (a.enlace) return <Enlace d={d} volver={volver} hacer={hacer} error={error} projectId={projectId!} interno={!esCliente(yo.rol)} onPapelera={() => navegar(volver)} />;
   const actual = a.versiones[0];
 
   async function nuevaVersion(archivo: File) {
@@ -135,6 +136,72 @@ export default function Archivo() {
         )}
 
         <Comentarios key={`${a.id}-${a.visibleToClients}`} elementoId={a.id} projectId={projectId!} interno={!a.visibleToClients} />
+      </article>
+    </>
+  );
+}
+
+/** Un enlace a un archivo de afuera: abrirlo, cambiar nombre o dirección, visibilidad, papelera y comentarios. */
+function Enlace({ d, volver, hacer, error, projectId, interno, onPapelera }: {
+  d: DetalleArchivo;
+  volver: string;
+  hacer: (f: () => Promise<unknown>) => Promise<boolean>;
+  error: string | null;
+  projectId: string;
+  interno: boolean;
+  onPapelera: () => void;
+}) {
+  const { archivo: a, permisos } = d;
+  const enlace = a.enlace!;
+  return (
+    <>
+      <p className="meta" style={{ margin: '0 0 8px' }}>
+        <Link to={volver}><Icono nombre="atras" tam={14} /> Archivos</Link>
+      </p>
+      <article className="card">
+        <div className="fila" style={{ alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          <div style={{ minWidth: 0 }}>
+            <h2 className="mensaje-titulo">{a.title}</h2>
+            <p className="meta" style={{ margin: 0 }}>
+              Enlace{enlace.sitio ? ` a ${enlace.sitio}` : ''} · agregado por {a.creator.name} el {cuando(a.createdAt)}
+              {interno && (a.visibleParaCliente ? ' · visible para el cliente' : ' · interno')}
+            </p>
+          </div>
+          <a className="btn" href={enlace.url} target="_blank" rel="noopener noreferrer">
+            <Icono nombre="enlace" tam={16} />Abrir
+          </a>
+        </div>
+
+        {interno && a.visibleToClients && !a.visibleParaCliente && (
+          <p className="aviso ambar">Está marcado visible, pero su carpeta es interna: el cliente no lo ve hasta que la carpeta sea visible.</p>
+        )}
+        <p className="meta" style={{ margin: '14px 0 4px', wordBreak: 'break-all' }}>{enlace.url}</p>
+
+        <div className="acciones">
+          {permisos.cambiarEnlace && (
+            <button type="button" className="btn btn-sec btn-chico" onClick={() => { const u = window.prompt('Nueva dirección del enlace', enlace.url); if (u?.trim() && u.trim() !== enlace.url) hacer(() => api(`/enlaces/${a.id}`, { method: 'PATCH', body: { url: u.trim() } })); }}>
+              <Icono nombre="enlace" tam={14} />Cambiar dirección
+            </button>
+          )}
+          {permisos.renombrar && (
+            <button type="button" className="btn btn-sec btn-chico" onClick={() => { const t = window.prompt('Nombre del enlace', a.title); if (t?.trim()) hacer(() => api(`/elementos/${a.id}`, { method: 'PATCH', body: { title: t.trim() } })); }}>
+              <Icono nombre="editar" tam={14} />Renombrar
+            </button>
+          )}
+          {permisos.cambiarVisibilidad && (
+            <button type="button" className="btn btn-sec btn-chico" onClick={() => hacer(() => api(`/elementos/${a.id}`, { method: 'PATCH', body: { visibleToClients: !a.visibleToClients } }))}>
+              <Icono nombre="ojo" tam={14} />{a.visibleToClients ? 'Hacer interno' : 'Mostrar al cliente'}
+            </button>
+          )}
+          {permisos.papelera && (
+            <button type="button" className="btn-texto peligro" onClick={async () => { if (window.confirm('¿Mandar el enlace a la papelera? El archivo al que lleva no se toca.') && (await hacer(() => api(`/elementos/${a.id}/papelera`, { body: {} })))) onPapelera(); }}>
+              Papelera
+            </button>
+          )}
+        </div>
+        {error && <p className="error" role="alert">{error}</p>}
+
+        <Comentarios key={`${a.id}-${a.visibleToClients}`} elementoId={a.id} projectId={projectId} interno={!a.visibleToClients} />
       </article>
     </>
   );

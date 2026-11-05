@@ -212,3 +212,61 @@ describe('lo que ve y hace un cliente', () => {
     expect(sinSesion.statusCode).toBe(401);
   });
 });
+
+describe('enlaces (D-78)', () => {
+  it('agrega un enlace con su dirección normalizada; aparece en enlaces, no en archivos', async () => {
+    const r = await member.post(`/proyectos/${projectId}/enlaces`, { titulo: 'Reporte de octubre', url: '  https://www.Drive.google.com/file/d/abc  ' });
+    expect(r.status).toBe(200);
+    expect(r.json.archivo.enlace).toEqual({ url: 'https://www.drive.google.com/file/d/abc', sitio: 'drive.google.com' });
+    expect(r.json.archivo.versiones).toEqual([]);
+    expect(r.json.permisos.nuevaVersion).toBe(false);
+    expect(r.json.permisos.cambiarEnlace).toBe(true);
+    const l = (await member.get(`/proyectos/${projectId}/archivos`)).json;
+    expect(l.enlaces.map((e: { id: string }) => e.id)).toContain(r.json.archivo.id);
+    expect(l.archivos.map((a: { id: string }) => a.id)).not.toContain(r.json.archivo.id);
+  });
+
+  it('solo http y https, y con nombre', async () => {
+    for (const url of ['javascript:alert(1)', 'data:text/html,hola', 'ftp://example.com/x', 'no es una dirección', 'file:///etc/passwd']) {
+      const r = await member.post(`/proyectos/${projectId}/enlaces`, { titulo: 'x', url });
+      expect({ url, status: r.status }).toEqual({ url, status: 400 });
+    }
+    expect((await member.post(`/proyectos/${projectId}/enlaces`, { titulo: ' ', url: 'https://example.com' })).status).toBe(400);
+  });
+
+  it('cambiar dirección, renombrar, comentar, papelera y restaurar', async () => {
+    const id = (await member.post(`/proyectos/${projectId}/enlaces`, { titulo: 'Brief', url: 'https://example.com/a' })).json.archivo.id;
+    // Otro del equipo también puede cambiarlo (como un archivo).
+    const c = await owner.patch(`/enlaces/${id}`, { url: 'https://example.com/b' });
+    expect(c.status).toBe(200);
+    expect(c.json.archivo.enlace.url).toBe('https://example.com/b');
+    expect((await owner.patch(`/enlaces/${id}`, { url: 'javascript:alert(1)' })).status).toBe(400);
+    expect((await member.patch(`/elementos/${id}`, { title: 'Brief final' })).status).toBe(200);
+    expect((await member.post(`/elementos/${id}/comentarios`, { body: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'ok' }] }] } })).status).toBe(200);
+    expect((await member.post(`/elementos/${id}/papelera`)).status).toBe(200);
+    expect((await member.get(`/proyectos/${projectId}/archivos`)).json.enlaces.map((e: { id: string }) => e.id)).not.toContain(id);
+    // En la papelera no se edita (regla general de permisos: 403).
+    expect((await member.patch(`/enlaces/${id}`, { url: 'https://example.com/c' })).status).toBe(403);
+    expect((await member.post(`/elementos/${id}/restaurar`)).status).toBe(200);
+    const l = (await member.get(`/proyectos/${projectId}/archivos`)).json.enlaces.find((e: { id: string }) => e.id === id);
+    expect(l).toMatchObject({ title: 'Brief final', url: 'https://example.com/b', comentarios: 1 });
+  });
+
+  it('no va dentro de un archivo, y la ruta de enlaces no cambia archivos', async () => {
+    const archivo = (await subir('member', `/proyectos/${projectId}/archivos?nombre=x.pdf`, PDF)).json().archivo.id;
+    expect((await member.post(`/proyectos/${projectId}/enlaces`, { titulo: 'x', url: 'https://example.com', carpeta: archivo })).status).toBe(400);
+    expect((await member.patch(`/enlaces/${archivo}`, { url: 'https://example.com' })).status).toBe(404);
+  });
+
+  it('el cliente agrega enlaces (nacen visibles) y no ve los internos', async () => {
+    const delCliente = await client.post(`/proyectos/${projectId}/enlaces`, { titulo: 'Fotos del local', url: 'https://example.com/fotos', visible: false });
+    expect(delCliente.status).toBe(200);
+    expect(delCliente.json.archivo.visibleToClients).toBe(true);
+    const interno = (await member.post(`/proyectos/${projectId}/enlaces`, { titulo: 'Costos internos', url: 'https://example.com/costos' })).json.archivo.id;
+    const l = (await client.get(`/proyectos/${projectId}/archivos`)).json;
+    const ids = l.enlaces.map((e: { id: string }) => e.id);
+    expect(ids).toContain(delCliente.json.archivo.id);
+    expect(ids).not.toContain(interno);
+    expect((await client.get(`/archivos/${interno}`)).status).toBe(404);
+  });
+});
