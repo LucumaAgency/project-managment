@@ -359,7 +359,7 @@ label { display: block; font-size: 12.5px; font-weight: 600; margin: 12px 0 5px;
 
 /* Barra de herramientas: título a la izquierda, acción a la derecha. */
 .herramientas { display: flex; align-items: center; gap: 8px; margin: 4px 0 12px; flex-wrap: wrap; }
-.herramientas .empuja { flex: 1; min-width: 0; }
+.herramientas .empuja { flex: 1 1 160px; min-width: 0; }
 .herramientas h2 { font-size: 15px; margin: 0; }
 
 /* Enlace para compartir a mano (invitaciones). */
@@ -927,3 +927,12 @@ mark { background: var(--resaltado); color: inherit; border-radius: 3px; padding
   padding: 10px 14px; margin-bottom: 16px; color: var(--azul);
 }
 .pp-banner-texto { flex: 1; min-width: 200px; color: var(--texto); font-size: 13.5px; }
+
+/* Pantallas táctiles: botones chicos y de texto con al menos ~40 px para el dedo.
+   En los de texto el padding agranda la zona de toque y el margen negativo lo compensa,
+   así no se mueve el diseño. En escritorio (mouse) todo queda igual. */
+@media (pointer: coarse) {
+  .btn-chico { min-height: 38px; padding: 8px 12px; }
+  .btn-texto, .pp-enlace { padding-top: 10px; padding-bottom: 10px; margin-top: -10px; margin-bottom: -10px; }
+  .tabla select { min-height: 38px; }
+}
