@@ -922,6 +922,13 @@ muestra cada lista con sus tareas, más lo suelto de la raíz. Test nuevo en `vi
 (equipo y cliente); suite completa 347 en verde. Revisado en el navegador (escritorio y 390 px).
 Solo código, sin migración: desplegar = Git → Desplegar → Reiniciar.
 
+### 2026-11-08 · El bot edita título y notas (D-80)
+
+- `PATCH /api/v1/bot/tareas/:id` (`services/bot.ts` → `editarTareaBot`, reutiliza `editarTarea`); 3 tests nuevos en `test/bot.test.ts` (351 en total, todos en verde).
+- `~/carlos/bin/proyectos.py editar <id> [--titulo] [--notas | --notas-archivo]`.
+- Primer uso: agregar los contactos a la lista Outreach de Ecosistema Heavy Machinery.
+- Falta desplegar (sin migración): Desplegar → Reiniciar.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;

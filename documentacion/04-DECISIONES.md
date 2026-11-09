@@ -584,3 +584,9 @@ raíz, y "N carpetas en total" si hay más. Sin carpetas, siguen las miniaturas 
 archivos. Un solo nivel: basta con pedir el elemento y su carpeta activos (y visibles, si es
 cliente). `vistaPrevia.carpetas` en `GET /proyectos/:id`; el contador de la sección suma los enlaces.
 
+**D-80 · El bot puede editar título y notas de una tarea** (2026-11-08, pedido del usuario)
+`PATCH /api/v1/bot/tareas/:id` con `{ titulo?, notas? }`: reutiliza `editarTarea`, así que valen los
+mismos permisos que en la app. Las notas reemplazan las anteriores enteras (texto plano; cada bloque
+separado por una línea en blanco es un párrafo, igual que al crear) y `notas: ""` las borra. Sin
+ninguno de los dos campos responde 400; una tarea de otra cuenta, 404. Motivo: completar tareas ya
+creadas por el bot (p. ej. agregar los contactos a la lista Outreach) sin recrearlas.

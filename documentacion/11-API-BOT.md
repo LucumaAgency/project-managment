@@ -41,6 +41,7 @@ el bot pregunte.
 | `GET /api/v1/bot/personas` | El equipo (nombre, correo, rol), para asignar |
 | `GET /api/v1/bot/tareas` | Tareas. Filtros: `cuando=hoy\|manana\|semana\|vencidas\|todas`, `proyecto=`, `responsable=`, `completadas=1`, `limite=` (máx. 200) |
 | `POST /api/v1/bot/tareas` | Crear: `{ proyecto, titulo, lista?, vence?: "AAAA-MM-DD", responsables?: [..], notas? }`. Sin `lista`, va a la primera del proyecto; si la lista nombrada no existe, se crea |
+| `PATCH /api/v1/bot/tareas/:id` | Editar `{ titulo?, notas? }` (D-80). Las notas reemplazan las anteriores; `""` las borra. Desde el asistente: `proyectos.py editar <id> --titulo … --notas …` o `--notas-archivo archivo.txt` |
 | `POST /api/v1/bot/tareas/:id/completar` | Completar |
 | `POST /api/v1/bot/tareas/:id/reabrir` | Reabrir |
 | `GET /api/v1/bot/plantillas` | Plantillas de lista (D-64), con cuántas tareas tienen y cuántas son del cliente |

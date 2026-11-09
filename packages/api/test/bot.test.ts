@@ -27,7 +27,7 @@ async function nuevoBot(s: Semilla, nombre = 'Bot Lucuma') {
   await prismaAdmin.membership.create({ data: { accountId: s.accountId, userId: u.id, role: 'admin' } });
   return { id: u.id, clave: await crearClave(s.accountId, u.id, 'prueba') };
 }
-const pedir = (metodo: 'GET' | 'POST', url: string, k: string | null = clave, body?: object) =>
+const pedir = (metodo: 'GET' | 'POST' | 'PATCH', url: string, k: string | null = clave, body?: object) =>
   app.inject({ method: metodo, url: `/api/v1${url}`, headers: k ? { authorization: `Bearer ${k}` } : {}, ...(body ? { payload: body } : {}) });
 
 beforeAll(async () => {
@@ -169,6 +169,34 @@ describe('crear y completar', () => {
     const [t] = (await pedir('GET', '/bot/tareas?proyecto=fenix google')).json().tareas;
     expect((await pedir('POST', `/bot/tareas/${t.id}/completar`, claveB)).statusCode).toBe(404);
     expect((await pedir('POST', '/bot/tareas', claveB, { proyecto: p, titulo: 'x' })).statusCode).toBe(404);
+  });
+});
+
+describe('editar título y notas (D-80)', () => {
+  it('cambia el título y reemplaza las notas; párrafos por línea en blanco', async () => {
+    const t = (await pedir('POST', '/bot/tareas', clave, { proyecto: 'Fénix · Google Ads', titulo: 'Mensaje Old Forge', notas: 'Borrador' })).json().tarea;
+    const r = await pedir('PATCH', `/bot/tareas/${t.id}`, clave, { titulo: 'Mensaje Old Forge · listo', notas: 'Email: sales@ejemplo.com\n\nHi [Name],' });
+    expect(r.statusCode).toBe(200);
+    expect(r.json().tarea).toMatchObject({ id: t.id, titulo: 'Mensaje Old Forge · listo' });
+    const g = await prismaAdmin.recording.findUniqueOrThrow({ where: { id: t.id }, select: { title: true, bodyText: true, bodyHtml: true } });
+    expect(g.title).toBe('Mensaje Old Forge · listo');
+    expect(g.bodyText).toContain('sales@ejemplo.com');
+    expect(g.bodyText).not.toContain('Borrador');
+    expect((g.bodyHtml ?? '').match(/<p>/g)?.length).toBe(2);
+  });
+
+  it('notas vacías las borran; solo el título deja las notas como estaban', async () => {
+    const t = (await pedir('POST', '/bot/tareas', clave, { proyecto: 'Fénix · Google Ads', titulo: 'Con notas', notas: 'Quedan' })).json().tarea;
+    expect((await pedir('PATCH', `/bot/tareas/${t.id}`, clave, { titulo: 'Otro título' })).statusCode).toBe(200);
+    expect((await prismaAdmin.recording.findUniqueOrThrow({ where: { id: t.id } })).bodyText).toContain('Quedan');
+    expect((await pedir('PATCH', `/bot/tareas/${t.id}`, clave, { notas: '' })).statusCode).toBe(200);
+    expect((await prismaAdmin.recording.findUniqueOrThrow({ where: { id: t.id } })).bodyText).toBeNull();
+  });
+
+  it('sin cambios: 400; de otra cuenta: 404', async () => {
+    const t = (await pedir('POST', '/bot/tareas', clave, { proyecto: 'Fénix · Google Ads', titulo: 'Ajena' })).json().tarea;
+    expect((await pedir('PATCH', `/bot/tareas/${t.id}`, clave, {})).statusCode).toBe(400);
+    expect((await pedir('PATCH', `/bot/tareas/${t.id}`, claveB, { notas: 'x' })).statusCode).toBe(404);
   });
 });
 
