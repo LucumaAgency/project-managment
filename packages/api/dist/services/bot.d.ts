@@ -106,6 +106,18 @@ export declare function crearEnlaceBot(a: AccesoBot, datos: {
     visibleParaCliente: boolean;
     enlace: string;
 }>;
+/**
+ * Cambia el título y/o las notas de una tarea (D-80). Las notas reemplazan las anteriores enteras;
+ * `notas: ""` las borra. Mismos permisos que la app (editarTarea): el bot actúa como un admin de la cuenta.
+ */
+export declare function editarTareaBot(a: AccesoBot, id: string, datos: {
+    titulo?: string;
+    notas?: string;
+}): Promise<{
+    id: string;
+    titulo: string | null;
+    enlace: string;
+}>;
 export declare function completarTareaBot(a: AccesoBot, id: string, completar: boolean): Promise<{
     id: string;
     titulo: string | null;

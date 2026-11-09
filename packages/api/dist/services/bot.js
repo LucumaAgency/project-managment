@@ -24,7 +24,7 @@ import { registrarEvento } from './eventos.js';
 import { exigirCupoProyectos } from './proyectos.js';
 import { aplicarPlantilla, guardarPlantilla, listarPlantillas } from './plantillas.js';
 import { diaEn, sumarDias } from './recordatorios.js';
-import { completarTarea, crearTarea } from './tareas.js';
+import { completarTarea, crearTarea, editarTarea } from './tareas.js';
 export const huella = (clave) => createHash('sha256').update(clave).digest('hex');
 /** Crea una clave para un bot. Devuelve la clave en claro: se muestra UNA vez. */
 export async function crearClave(accountId, userId, nombre) {
@@ -149,6 +149,10 @@ export async function tareasBot(a, filtros) {
         };
     });
 }
+/** Notas en texto plano → documento: cada bloque separado por una línea en blanco es un párrafo. */
+function docDeNotas(notas) {
+    return { type: 'doc', content: notas.split(/\n{2,}/).map((p) => ({ type: 'paragraph', content: [{ type: 'text', text: p }] })) };
+}
 /** Crea una tarea. La lista se elige por nombre; sin lista, la primera del proyecto (o "Pendientes"). */
 export async function crearTareaBot(a, datos) {
     return conCuenta(a.actor.ctx, async (tx) => {
@@ -171,7 +175,7 @@ export async function crearTareaBot(a, datos) {
             ...(datos.horaFin ? { horaFin: datos.horaFin } : {}),
             ...(datos.lugar ? { lugar: datos.lugar } : {}),
             assigneeIds: responsables.map((r) => r.id),
-            ...(datos.notas ? { body: { type: 'doc', content: datos.notas.split(/\n{2,}/).map((p) => ({ type: 'paragraph', content: [{ type: 'text', text: p }] })) } } : {}),
+            ...(datos.notas ? { body: docDeNotas(datos.notas) } : {}),
         });
         return {
             id: tarea.id,
@@ -218,6 +222,20 @@ export async function crearEnlaceBot(a, datos) {
         visibleParaCliente: r.archivo.visibleParaCliente,
         enlace: urlEnCuenta(env.baseDomain, a.slug, `/proyectos/${proyecto.id}/archivos/${r.archivo.id}`),
     };
+}
+/**
+ * Cambia el título y/o las notas de una tarea (D-80). Las notas reemplazan las anteriores enteras;
+ * `notas: ""` las borra. Mismos permisos que la app (editarTarea): el bot actúa como un admin de la cuenta.
+ */
+export async function editarTareaBot(a, id, datos) {
+    return conCuenta(a.actor.ctx, async (tx) => {
+        await editarTarea(tx, a.actor, id, {
+            ...(datos.titulo !== undefined ? { title: datos.titulo } : {}),
+            ...(datos.notas !== undefined ? { body: datos.notas.trim() ? docDeNotas(datos.notas) : null } : {}),
+        });
+        const t = await tx.recording.findUniqueOrThrow({ where: { id }, select: { title: true, projectId: true } });
+        return { id, titulo: t.title, enlace: enlaceTarea(a, t.projectId, id) };
+    });
 }
 export async function completarTareaBot(a, id, completar) {
     return conCuenta(a.actor.ctx, async (tx) => {

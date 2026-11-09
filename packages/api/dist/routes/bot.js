@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { conCuenta } from '../lib/contexto.js';
 import { leer } from '../lib/validar.js';
-import { aplicarPlantillaBot, completarTareaBot, crearEnlaceBot, guardarPlantillaBot, crearProyectoBot, crearTareaBot, exigirBot, plantillasBot, tareasBot } from '../services/bot.js';
+import { aplicarPlantillaBot, completarTareaBot, crearEnlaceBot, editarTareaBot, guardarPlantillaBot, crearProyectoBot, crearTareaBot, exigirBot, plantillasBot, tareasBot } from '../services/bot.js';
 /**
  * API para bots (D-63, services/bot.ts). Autenticación: `Authorization: Bearer lpm_…`.
  * Documentación con ejemplos: documentacion/11-API-BOT.md.
@@ -24,6 +24,12 @@ const nuevaTarea = z.object({
     horaFin: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'La hora va como HH:MM (24 horas).').optional(),
     lugar: z.string().max(200).optional(),
 });
+const cambiosTarea = z
+    .object({
+    titulo: z.string().trim().min(1, 'El título no puede quedar vacío.').max(300).optional(),
+    notas: z.string().max(10_000).optional(),
+})
+    .refine((d) => d.titulo !== undefined || d.notas !== undefined, 'Indica titulo o notas.');
 const nuevoEnlace = z.object({
     proyecto: z.string().trim().min(1, 'Falta el proyecto.').max(200),
     titulo: z.string().trim().min(1, 'Falta el nombre del enlace.').max(300),
@@ -81,6 +87,11 @@ export default async function rutasBot(app) {
     app.post('/api/v1/bot/enlaces', async (req) => {
         const a = await exigirBot(req);
         return { enlace: await crearEnlaceBot(a, leer(nuevoEnlace, req.body)) };
+    });
+    /** Editar título y/o notas (D-80): `{ titulo?, notas? }`; las notas reemplazan las anteriores. */
+    app.patch('/api/v1/bot/tareas/:id', async (req) => {
+        const a = await exigirBot(req);
+        return { tarea: await editarTareaBot(a, req.params.id, leer(cambiosTarea, req.body)) };
     });
     app.post('/api/v1/bot/tareas/:id/completar', async (req) => {
         const a = await exigirBot(req);
