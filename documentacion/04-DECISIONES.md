@@ -590,3 +590,17 @@ mismos permisos que en la app. Las notas reemplazan las anteriores enteras (text
 separado por una línea en blanco es un párrafo, igual que al crear) y `notas: ""` las borra. Sin
 ninguno de los dos campos responde 400; una tarea de otra cuenta, 404. Motivo: completar tareas ya
 creadas por el bot (p. ej. agregar los contactos a la lista Outreach) sin recrearlas.
+
+**D-81 · Asistente para crear proyectos** (2026-11-09, pedido del usuario)
+El botón **Nuevo proyecto** abre un asistente de 5 pasos: 1) nombre y descripción, 2) equipo
+(personas activas de la cuenta, sin bots; quien crea entra siempre), 3) cliente (clientes que ya
+están en la cuenta y/o el correo de uno nuevo), 4) plantilla opcional con fecha de inicio y
+responsable de las tareas del equipo, 5) revisar. Nada se guarda hasta **Crear proyecto**; ahí
+la web llama en orden a `POST /proyectos`, `POST /proyectos/:id/personas` por cada persona,
+`POST /proyectos/:id/plantillas` y `POST /invitaciones` (rol cliente, con el proyecto). Sin ruta
+nueva en la API: cada paso conserva sus permisos y validaciones. El cliente va antes que la
+plantilla para que sus tareas le queden asignadas (al cliente invitado no se le pueden asignar
+porque todavía no tiene usuario). Si algo falla después de crear el proyecto, el proyecto queda y
+la pantalla final dice qué faltó y dónde hacerlo a mano; si hubo invitación, muestra el enlace para
+compartir (`EnlaceCompartir`). Sin invitación ni avisos, va directo al proyecto. No es atómico a
+propósito: evitar una ruta compuesta que duplique reglas de cuatro servicios.

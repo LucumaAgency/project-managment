@@ -929,6 +929,13 @@ Solo código, sin migración: desplegar = Git → Desplegar → Reiniciar.
 - Primer uso: agregar los contactos a la lista Outreach de Ecosistema Heavy Machinery.
 - Falta desplegar (sin migración): Desplegar → Reiniciar.
 
+### 2026-11-09 · Asistente para crear proyectos (D-81)
+
+**Nuevo proyecto** abre un asistente de 5 pasos (Datos, Equipo, Cliente, Plantilla, Revisar) en vez
+del formulario corto. Solo web (`componentes/NuevoProyecto.tsx`), sin ruta nueva ni migración: al
+final llama a las rutas que ya había. Recorrido completo probado en el navegador con la web
+compilada (escritorio y 390 px), sin errores de consola. Desplegar = Git → Desplegar → Reiniciar.
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;

@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { veTodosLosProyectos } from '@lucuma-pm/shared';
 import { api, ErrorApi, type EstadoProyecto, type ProyectoResumen } from '../api';
 import Icono from '../componentes/Icono';
-import Modal from '../componentes/Modal';
+import NuevoProyecto from '../componentes/NuevoProyecto';
 import { TarjetaPrimerosPasos } from '../componentes/PrimerosPasos';
 import { useYo } from '../contexto';
 
@@ -116,44 +116,8 @@ export default function Portada() {
         </div>
       )}
 
-      {creando && <NuevoProyecto onCerrar={() => setCreando(false)} onCreado={(id) => navegar(`/proyectos/${id}`)} />}
+      {creando && <NuevoProyecto onCerrar={() => setCreando(false)} onListo={(id) => navegar(`/proyectos/${id}`)} />}
     </>
   );
 }
 
-function NuevoProyecto({ onCerrar, onCreado }: { onCerrar: () => void; onCreado: (id: string) => void }) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [enviando, setEnviando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function crear(e: FormEvent) {
-    e.preventDefault();
-    setEnviando(true);
-    setError(null);
-    try {
-      const r = await api<{ proyecto: { id: string } }>('/proyectos', { body: { name, description: description || undefined } });
-      onCreado(r.proyecto.id);
-    } catch (err) {
-      setError(err instanceof ErrorApi ? err.message : 'No se pudo conectar.');
-      setEnviando(false);
-    }
-  }
-
-  return (
-    <Modal titulo="Nuevo proyecto" onCerrar={onCerrar}>
-      <form onSubmit={crear}>
-        <label htmlFor="p-nombre">Nombre</label>
-        <input id="p-nombre" required autoFocus maxLength={120} placeholder="Ej.: Web de Proba 2027" value={name} onChange={(e) => setName(e.target.value)} />
-        <label htmlFor="p-desc">Descripción (opcional)</label>
-        <textarea id="p-desc" rows={3} maxLength={1000} placeholder="De qué trata, para quién es" value={description} onChange={(e) => setDescription(e.target.value)} />
-        <p className="ayuda">Entras tú. Después sumas al equipo y, si quieres, invitas al cliente.</p>
-        {error && <p className="error" role="alert">{error}</p>}
-        <div className="acciones" style={{ justifyContent: 'flex-end', marginBottom: 0 }}>
-          <button type="button" className="btn btn-sec" onClick={onCerrar}>Cancelar</button>
-          <button className="btn" disabled={enviando}>{enviando ? 'Creando…' : 'Crear proyecto'}</button>
-        </div>
-      </form>
-    </Modal>
-  );
-}
