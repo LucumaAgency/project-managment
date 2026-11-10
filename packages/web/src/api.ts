@@ -306,12 +306,14 @@ export interface ListadoArchivos {
   archivos: { id: string; title: string; visibleToClients: boolean; updatedAt: string; versiones: number; comentarios: number; actual: VersionArchivo }[];
   /** Enlaces a archivos de afuera (D-78). */
   enlaces: { id: string; title: string; url: string; sitio: string; visibleToClients: boolean; updatedAt: string; comentarios: number; creator: { id: string; name: string } }[];
+  /** Documentos en Markdown (D-82). */
+  documentos: { id: string; title: string; visibleToClients: boolean; updatedAt: string; comentarios: number; creator: { id: string; name: string } }[];
   permisos: { subir: boolean; crearCarpeta: boolean };
   almacenamiento: { usados: number | null; maximo: number | null; maxArchivo: number };
 }
 export interface DetalleArchivo {
-  archivo: { id: string; title: string; carpetaId: string | null; visibleToClients: boolean; visibleParaCliente: boolean; createdAt: string; creator: { id: string; name: string }; versiones: VersionArchivo[]; enlace: { url: string; sitio: string } | null };
-  permisos: { nuevaVersion: boolean; cambiarEnlace: boolean; renombrar: boolean; papelera: boolean; cambiarVisibilidad: boolean; mover: boolean };
+  archivo: { id: string; title: string; carpetaId: string | null; visibleToClients: boolean; visibleParaCliente: boolean; createdAt: string; creator: { id: string; name: string }; versiones: VersionArchivo[]; enlace: { url: string; sitio: string } | null; documento: { markdown: string; html: string; updatedAt: string } | null };
+  permisos: { nuevaVersion: boolean; cambiarEnlace: boolean; editarDocumento: boolean; renombrar: boolean; papelera: boolean; cambiarVisibilidad: boolean; mover: boolean };
 }
 
 /**
@@ -376,7 +378,7 @@ export interface Aviso {
 export type Marcas = [number, number][];
 export interface ResultadoBusqueda {
   id: string;
-  type: 'todolist' | 'todo' | 'message' | 'folder' | 'upload' | 'link' | 'comment';
+  type: 'todolist' | 'todo' | 'message' | 'folder' | 'upload' | 'link' | 'doc' | 'comment';
   titulo: { texto: string; marcas: Marcas };
   fragmento: { texto: string; marcas: Marcas } | null;
   proyecto: { id: string; name: string; archivado: boolean };
@@ -507,7 +509,7 @@ export interface Ficha {
 export interface ElementoPrevia {
   id: string;
   title: string;
-  tipo: 'carpeta' | 'archivo' | 'enlace';
+  tipo: 'carpeta' | 'archivo' | 'enlace' | 'documento';
 }
 
 export interface VistaPrevia {

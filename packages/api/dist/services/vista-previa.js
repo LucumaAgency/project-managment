@@ -89,8 +89,8 @@ export async function vistaPrevia(tx, actor, proyecto) {
         .map((c) => ({ id: c.id, title: c.title, blobId: c.versions[0]?.blob.id ?? null, tipo: c.versions[0]?.blob.contentType ?? null }));
     // Carpetas de la raíz con sus primeros elementos, como las listas de Tareas (D-79). Un nivel:
     // la cadena es el elemento y su carpeta, así que basta con pedir los dos activos y visibles.
-    const EN_ARCHIVOS = ['folder', 'upload', 'link'];
-    const tipoPrevia = (t) => (t === 'folder' ? 'carpeta' : t === 'link' ? 'enlace' : 'archivo');
+    const EN_ARCHIVOS = ['folder', 'upload', 'link', 'doc'];
+    const tipoPrevia = (t) => (t === 'folder' ? 'carpeta' : t === 'link' ? 'enlace' : t === 'doc' ? 'documento' : 'archivo');
     const raiz = { projectId, parentId: null, type: 'folder', status: 'active', ...visible };
     const [totalCarpetas, raices] = await Promise.all([
         tx.recording.count({ where: raiz }),
@@ -104,7 +104,7 @@ export async function vistaPrevia(tx, actor, proyecto) {
         ]);
         return { id: c.id, title: c.title, total, elementos: hijos.map((h) => ({ id: h.id, title: h.title, tipo: tipoPrevia(h.type) })) };
     }));
-    const enRaiz = { projectId, parentId: null, type: { in: ['upload', 'link'] }, status: 'active', ...visible };
+    const enRaiz = { projectId, parentId: null, type: { in: ['upload', 'link', 'doc'] }, status: 'active', ...visible };
     const [totalSueltos, sueltos] = await Promise.all([
         tx.recording.count({ where: enRaiz }),
         tx.recording.findMany({ where: enRaiz, select: { id: true, title: true, type: true }, orderBy: { updatedAt: 'desc' }, take: SUELTOS }),

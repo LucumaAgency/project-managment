@@ -3,7 +3,7 @@ import type { Tx } from '../lib/contexto.js';
 import type { Actor } from './permisos.js';
 export interface Resultado {
     id: string;
-    type: 'todolist' | 'todo' | 'message' | 'folder' | 'upload' | 'link' | 'comment';
+    type: 'todolist' | 'todo' | 'message' | 'folder' | 'upload' | 'link' | 'doc' | 'comment';
     titulo: {
         texto: string;
         marcas: Marcas;

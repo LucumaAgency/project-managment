@@ -1,6 +1,7 @@
 /**
- * Archivos (D-46, D-52): carpetas (`folder`), archivos (`upload`) con versiones y enlaces (`link`,
- * D-78) a archivos que viven afuera (Drive, Previews…). Los bytes van
+ * Archivos (D-46, D-52): carpetas (`folder`), archivos (`upload`) con versiones, enlaces (`link`,
+ * D-78) a archivos que viven afuera (Drive, Previews…) y documentos en Markdown (`doc`, D-82)
+ * que se escriben y leen en la app. Los bytes van
  * al almacén (lib/almacen.ts, hoy el disco del servidor); la base guarda Blob (el archivo
  * físico) y UploadVersion (qué versión de qué archivo es).
  *
@@ -71,10 +72,17 @@ export declare function subirArchivo(actor: Actor, projectId: string, datos: {
             url: string;
             sitio: string;
         } | null;
+        /** Solo en documentos (D-82): el Markdown (fuente), su HTML y cuándo se guardó (para no pisar cambios). */
+        documento: {
+            markdown: string;
+            html: string;
+            updatedAt: Date;
+        } | null;
     };
     permisos: {
         nuevaVersion: boolean;
         cambiarEnlace: boolean;
+        editarDocumento: boolean;
         renombrar: boolean;
         papelera: boolean;
         cambiarVisibilidad: boolean;
@@ -117,10 +125,17 @@ export declare function nuevaVersion(actor: Actor, id: string, datos: {
             url: string;
             sitio: string;
         } | null;
+        /** Solo en documentos (D-82): el Markdown (fuente), su HTML y cuándo se guardó (para no pisar cambios). */
+        documento: {
+            markdown: string;
+            html: string;
+            updatedAt: Date;
+        } | null;
     };
     permisos: {
         nuevaVersion: boolean;
         cambiarEnlace: boolean;
+        editarDocumento: boolean;
         renombrar: boolean;
         papelera: boolean;
         cambiarVisibilidad: boolean;
@@ -170,10 +185,17 @@ export declare function crearEnlace(actor: Actor, projectId: string, datos: {
             url: string;
             sitio: string;
         } | null;
+        /** Solo en documentos (D-82): el Markdown (fuente), su HTML y cuándo se guardó (para no pisar cambios). */
+        documento: {
+            markdown: string;
+            html: string;
+            updatedAt: Date;
+        } | null;
     };
     permisos: {
         nuevaVersion: boolean;
         cambiarEnlace: boolean;
+        editarDocumento: boolean;
         renombrar: boolean;
         papelera: boolean;
         cambiarVisibilidad: boolean;
@@ -213,10 +235,128 @@ export declare function cambiarEnlace(actor: Actor, id: string, nueva: string): 
             url: string;
             sitio: string;
         } | null;
+        /** Solo en documentos (D-82): el Markdown (fuente), su HTML y cuándo se guardó (para no pisar cambios). */
+        documento: {
+            markdown: string;
+            html: string;
+            updatedAt: Date;
+        } | null;
     };
     permisos: {
         nuevaVersion: boolean;
         cambiarEnlace: boolean;
+        editarDocumento: boolean;
+        renombrar: boolean;
+        papelera: boolean;
+        cambiarVisibilidad: boolean;
+        mover: boolean;
+    };
+}>;
+/** Crea un documento en Markdown (D-82) en la raíz o en una carpeta. Mismos permisos que subir un archivo. */
+export declare function crearDocumento(actor: Actor, projectId: string, datos: {
+    carpetaId: string | null;
+    titulo: string;
+    contenido?: string;
+    visibleToClients?: boolean;
+}): Promise<{
+    archivo: {
+        id: string;
+        title: string | null;
+        carpetaId: string | null;
+        visibleToClients: boolean;
+        /** Le llega al cliente de verdad: él y su carpeta (con toda la cadena) son visibles. */
+        visibleParaCliente: boolean;
+        createdAt: Date;
+        creator: {
+            name: string;
+            id: string;
+        };
+        versiones: {
+            version: number;
+            nota: string | null;
+            createdAt: Date;
+            uploadedBy: {
+                id: string;
+                name: string;
+            };
+            blobId: string;
+            filename: string;
+            contentType: string;
+            bytes: number;
+            enLinea: boolean;
+        }[];
+        /** Solo en enlaces (D-78): adónde lleva. En un archivo, null. */
+        enlace: {
+            url: string;
+            sitio: string;
+        } | null;
+        /** Solo en documentos (D-82): el Markdown (fuente), su HTML y cuándo se guardó (para no pisar cambios). */
+        documento: {
+            markdown: string;
+            html: string;
+            updatedAt: Date;
+        } | null;
+    };
+    permisos: {
+        nuevaVersion: boolean;
+        cambiarEnlace: boolean;
+        editarDocumento: boolean;
+        renombrar: boolean;
+        papelera: boolean;
+        cambiarVisibilidad: boolean;
+        mover: boolean;
+    };
+}>;
+/**
+ * Guarda el texto de un documento. `base` es la fecha de la versión que la persona abrió: si
+ * otra persona guardó en el medio, responde 409 en vez de pisar su cambio sin avisar.
+ */
+export declare function guardarDocumento(actor: Actor, id: string, datos: {
+    contenido: string;
+    base?: string;
+}): Promise<{
+    archivo: {
+        id: string;
+        title: string | null;
+        carpetaId: string | null;
+        visibleToClients: boolean;
+        /** Le llega al cliente de verdad: él y su carpeta (con toda la cadena) son visibles. */
+        visibleParaCliente: boolean;
+        createdAt: Date;
+        creator: {
+            name: string;
+            id: string;
+        };
+        versiones: {
+            version: number;
+            nota: string | null;
+            createdAt: Date;
+            uploadedBy: {
+                id: string;
+                name: string;
+            };
+            blobId: string;
+            filename: string;
+            contentType: string;
+            bytes: number;
+            enLinea: boolean;
+        }[];
+        /** Solo en enlaces (D-78): adónde lleva. En un archivo, null. */
+        enlace: {
+            url: string;
+            sitio: string;
+        } | null;
+        /** Solo en documentos (D-82): el Markdown (fuente), su HTML y cuándo se guardó (para no pisar cambios). */
+        documento: {
+            markdown: string;
+            html: string;
+            updatedAt: Date;
+        } | null;
+    };
+    permisos: {
+        nuevaVersion: boolean;
+        cambiarEnlace: boolean;
+        editarDocumento: boolean;
         renombrar: boolean;
         papelera: boolean;
         cambiarVisibilidad: boolean;
@@ -276,6 +416,17 @@ export declare function listarArchivos(tx: Tx, actor: Actor, projectId: string, 
             id: string;
         };
     }[];
+    documentos: {
+        id: string;
+        title: string | null;
+        visibleToClients: boolean;
+        updatedAt: Date;
+        comentarios: number;
+        creator: {
+            name: string;
+            id: string;
+        };
+    }[];
     permisos: {
         subir: boolean;
         crearCarpeta: boolean;
@@ -322,10 +473,17 @@ export declare function detalleArchivo(tx: Tx, actor: Actor, id: string): Promis
             url: string;
             sitio: string;
         } | null;
+        /** Solo en documentos (D-82): el Markdown (fuente), su HTML y cuándo se guardó (para no pisar cambios). */
+        documento: {
+            markdown: string;
+            html: string;
+            updatedAt: Date;
+        } | null;
     };
     permisos: {
         nuevaVersion: boolean;
         cambiarEnlace: boolean;
+        editarDocumento: boolean;
         renombrar: boolean;
         papelera: boolean;
         cambiarVisibilidad: boolean;

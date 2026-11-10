@@ -49,11 +49,11 @@ async function personasDelProyecto(tx, accountId, projectId, verCorreos) {
 async function vistaCliente(tx, projectId) {
     const filas = await tx.recording.groupBy({
         by: ['type'],
-        where: { projectId, parentId: null, status: 'active', visibleToClients: true, type: { in: ['todolist', 'message', 'folder', 'upload', 'link'] } },
+        where: { projectId, parentId: null, status: 'active', visibleToClients: true, type: { in: ['todolist', 'message', 'folder', 'upload', 'link', 'doc'] } },
         _count: { _all: true },
     });
     const n = Object.fromEntries(filas.map((f) => [f.type, f._count._all]));
-    return { listas: n.todolist ?? 0, mensajes: n.message ?? 0, carpetas: n.folder ?? 0, archivos: (n.upload ?? 0) + (n.link ?? 0) };
+    return { listas: n.todolist ?? 0, mensajes: n.message ?? 0, carpetas: n.folder ?? 0, archivos: (n.upload ?? 0) + (n.link ?? 0) + (n.doc ?? 0) };
 }
 /**
  * Fecha del último evento de cada proyecto, para ordenar las tarjetas por actividad (D-72).

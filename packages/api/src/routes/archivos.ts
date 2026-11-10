@@ -7,7 +7,7 @@ import { almacen } from '../lib/almacen.js';
 import { conCuenta } from '../lib/contexto.js';
 import { seMuestraEnLinea } from '../lib/tipos-archivo.js';
 import { leer } from '../lib/validar.js';
-import { blobParaLeer, cambiarEnlace, crearEnlace, detalleArchivo, listarArchivos, nuevaVersion, subirArchivo } from '../services/archivos.js';
+import { blobParaLeer, cambiarEnlace, crearDocumento, crearEnlace, detalleArchivo, guardarDocumento, listarArchivos, nuevaVersion, subirArchivo } from '../services/archivos.js';
 import { exigirCuenta } from '../plugins/contexto.js';
 import { subirArchivoCampo } from '../services/campos.js';
 import { completarPorRespuestas, tareaDetalle } from '../services/tareas.js';
@@ -32,6 +32,14 @@ const nuevoEnlace = z.object({
   visible: z.boolean().optional(),
 });
 const edicionEnlace = z.object({ url: z.string().trim().min(1, 'Falta la dirección.').max(2000) });
+// El tope fino del texto lo pone services/archivos.ts (MAX_DOCUMENTO); aquí solo uno grueso.
+const nuevoDocumento = z.object({
+  titulo: z.string().trim().min(1, 'Ponle un nombre al documento.').max(300),
+  contenido: z.string().max(400_000).optional(),
+  carpeta: id.nullable().optional(),
+  visible: z.boolean().optional(),
+});
+const edicionDocumento = z.object({ contenido: z.string().max(400_000), base: z.string().max(40).optional() });
 const contenido = z.object({ descargar: z.enum(['0', '1']).optional() });
 
 /** Nombre para Content-Disposition: ASCII simple + la forma UTF-8 (RFC 5987). */
@@ -78,6 +86,19 @@ export default async function rutasArchivos(app: FastifyInstance) {
   app.patch<{ Params: { id: string } }>('/api/v1/enlaces/:id', async (req) => {
     const actor = exigirCuenta(req);
     return cambiarEnlace(actor, req.params.id, leer(edicionEnlace, req.body).url);
+  });
+
+  /** Documento en Markdown (D-82): nombre + texto, en la raíz o en una carpeta. */
+  app.post<{ Params: { id: string } }>('/api/v1/proyectos/:id/documentos', async (req) => {
+    const actor = exigirCuenta(req);
+    const b = leer(nuevoDocumento, req.body);
+    return crearDocumento(actor, req.params.id, { carpetaId: b.carpeta ?? null, titulo: b.titulo, contenido: b.contenido, visibleToClients: b.visible });
+  });
+
+  /** Guarda el texto. `base` = `documento.updatedAt` de lo que se abrió; si cambió, 409. El nombre va por /elementos/:id. */
+  app.put<{ Params: { id: string } }>('/api/v1/documentos/:id', async (req) => {
+    const actor = exigirCuenta(req);
+    return guardarDocumento(actor, req.params.id, leer(edicionDocumento, req.body));
   });
 
   app.get<{ Params: { id: string } }>('/api/v1/proyectos/:id/archivos', async (req) => {

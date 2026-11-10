@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { conCuenta } from '../lib/contexto.js';
 import { leer } from '../lib/validar.js';
-import { aplicarPlantillaBot, completarTareaBot, crearEnlaceBot, editarTareaBot, guardarPlantillaBot, crearProyectoBot, crearTareaBot, exigirBot, plantillasBot, tareasBot } from '../services/bot.js';
+import { aplicarPlantillaBot, completarTareaBot, crearEnlaceBot, guardarDocumentoBot, editarTareaBot, guardarPlantillaBot, crearProyectoBot, crearTareaBot, exigirBot, plantillasBot, tareasBot } from '../services/bot.js';
 
 /**
  * API para bots (D-63, services/bot.ts). Autenticación: `Authorization: Bearer lpm_…`.
@@ -34,6 +34,13 @@ const cambiosTarea = z
   })
   .refine((d) => d.titulo !== undefined || d.notas !== undefined, 'Indica titulo o notas.');
 
+const nuevoDocumento = z.object({
+  proyecto: z.string().trim().min(1, 'Falta el proyecto.').max(200),
+  titulo: z.string().trim().min(1, 'Falta el nombre del documento.').max(300),
+  contenido: z.string().max(400_000),
+  carpeta: z.string().trim().max(300).optional(),
+  visible: z.boolean().optional(),
+});
 const nuevoEnlace = z.object({
   proyecto: z.string().trim().min(1, 'Falta el proyecto.').max(200),
   titulo: z.string().trim().min(1, 'Falta el nombre del enlace.').max(300),
@@ -102,6 +109,12 @@ export default async function rutasBot(app: FastifyInstance) {
   app.post('/api/v1/bot/enlaces', async (req) => {
     const a = await exigirBot(req);
     return { enlace: await crearEnlaceBot(a, leer(nuevoEnlace, req.body)) };
+  });
+
+  /** Documento en Markdown (D-82): `{ proyecto, titulo, contenido, carpeta?, visible? }`. Mismo nombre en el mismo lugar = se reemplaza. */
+  app.post('/api/v1/bot/documentos', async (req) => {
+    const a = await exigirBot(req);
+    return { documento: await guardarDocumentoBot(a, leer(nuevoDocumento, req.body)) };
   });
 
   /** Editar título y/o notas (D-80): `{ titulo?, notas? }`; las notas reemplazan las anteriores. */

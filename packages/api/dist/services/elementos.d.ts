@@ -3,7 +3,7 @@ import type { Tx } from '../lib/contexto.js';
 import { type Accion, type Actor, type ElementoCargado, type ProyectoCargado } from './permisos.js';
 /** Dentro de qué puede ir cada tipo. `null` = en la raíz del proyecto. */
 export declare const PADRES: Record<RecordingType, (RecordingType | null)[]>;
-/** Los archivos se crean al confirmar una subida (día 10) y los enlaces con su dirección (D-78), no por la ruta genérica. */
+/** Los archivos se crean al confirmar una subida (día 10), los enlaces con su dirección (D-78) y los documentos con su texto (D-82), no por la ruta genérica. */
 export declare const TIPOS_CREABLES: readonly ["todolist", "todo", "message", "folder", "comment"];
 export type TipoCreable = (typeof TIPOS_CREABLES)[number];
 /** Columnas que se devuelven a la web. */
@@ -47,8 +47,8 @@ export declare function elementoPara(tx: Tx, actor: Actor, id: string, accion: A
     elemento: ElementoCargado;
 }>;
 export interface DatosNuevo {
-    /** `upload` y `link` solo los usa services/archivos.ts (subida confirmada, enlace con su dirección). */
-    type: TipoCreable | 'upload' | 'link';
+    /** `upload`, `link` y `doc` solo los usa services/archivos.ts (subida confirmada, enlace con su dirección, documento con su texto). */
+    type: TipoCreable | 'upload' | 'link' | 'doc';
     parentId?: string | null;
     title?: string;
     /** Documento del editor (JSON de Tiptap). El servidor arma el HTML y el texto. */

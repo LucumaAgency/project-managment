@@ -107,6 +107,29 @@ export declare function crearEnlaceBot(a: AccesoBot, datos: {
     enlace: string;
 }>;
 /**
+ * Documento en Markdown (D-82). Si en ese mismo lugar (raíz o carpeta) ya hay un documento con el
+ * mismo nombre (sin tildes ni mayúsculas), se reemplaza su texto en vez de crear otro: así se puede
+ * volver a publicar una documentación sin duplicarla. `visible` solo cuenta al crear.
+ */
+export declare function guardarDocumentoBot(a: AccesoBot, datos: {
+    proyecto: string;
+    titulo: string;
+    contenido: string;
+    carpeta?: string;
+    visible?: boolean;
+}): Promise<{
+    id: string;
+    titulo: string | null;
+    reemplazado: boolean;
+    proyecto: {
+        id: string;
+        nombre: string;
+    };
+    carpeta: string | null;
+    visibleParaCliente: boolean;
+    enlace: string;
+}>;
+/**
  * Cambia el título y/o las notas de una tarea (D-80). Las notas reemplazan las anteriores enteras;
  * `notas: ""` las borra. Mismos permisos que la app (editarTarea): el bot actúa como un admin de la cuenta.
  */

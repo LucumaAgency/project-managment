@@ -936,6 +936,18 @@ del formulario corto. Solo web (`componentes/NuevoProyecto.tsx`), sin ruta nueva
 final llama a las rutas que ya había. Recorrido completo probado en el navegador con la web
 compilada (escritorio y 390 px), sin errores de consola. Desplegar = Git → Desplegar → Reiniciar.
 
+### 2026-11-09 · Documentos en Markdown en Archivos (D-82)
+
+Botón **Nuevo documento** en Archivos: se escribe en Markdown con vista previa en vivo (lado a lado
+en escritorio, pestañas en el celular), se lee formateado, se baja como `.md` y se puede importar un
+`.md` existente. Tipo nuevo `doc` (migración `documentos`), rutas `POST /proyectos/:id/documentos` y
+`PUT /documentos/:id` (409 si otro guardó antes), ruta de bot `POST /bot/documentos` (reemplaza si ya
+existe con ese nombre), `.md` en el ZIP. Markdown con `markdown-it` (MIT) en `shared/markdown.ts`,
+misma regla en servidor y vista previa. Tests nuevos en `archivos.test.ts`, `bot.test.ts` y la
+auditoría del cliente (D-55); suite completa 357 en verde. Recorrido en el navegador (escritorio y
+390 px) sin errores. **Con migración**: desplegar = Git → Desplegar → NPM install → `run prisma:deploy`
+→ Reiniciar (hay dependencia nueva: `markdown-it`).
+
 ## Para confirmar
 
 Decisiones que tomé con un criterio por defecto para no frenar el avance. Se pueden cambiar;

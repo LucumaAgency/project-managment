@@ -221,3 +221,17 @@ describe('enlaces en Archivos (D-78)', () => {
     expect((await pedir('POST', '/bot/enlaces', claveB, { proyecto: p, titulo: 'x', url: 'https://example.com' })).statusCode).toBe(404);
   });
 });
+
+describe('documentos en Archivos (D-82)', () => {
+  it('crea el documento en su carpeta y, con el mismo nombre, reemplaza el texto sin duplicar', async () => {
+    const r = await pedir('POST', '/bot/documentos', clave, { proyecto: p, titulo: 'Guía de despliegue', contenido: '# v1', carpeta: 'Documentación' });
+    expect(r.statusCode).toBe(200);
+    const d = r.json().documento;
+    expect(d).toMatchObject({ titulo: 'Guía de despliegue', carpeta: 'Documentación', reemplazado: false, visibleParaCliente: false });
+    expect(d.enlace).toContain(`/proyectos/${p}/archivos/${d.id}`);
+    const otra = (await pedir('POST', '/bot/documentos', clave, { proyecto: p, titulo: 'guia de despliegue', contenido: '# v2', carpeta: 'documentacion' })).json().documento;
+    expect(otra).toMatchObject({ id: d.id, reemplazado: true });
+    expect((await owner.get(`/archivos/${d.id}`)).json.archivo.documento.markdown).toBe('# v2');
+    expect((await pedir('POST', '/bot/documentos', claveB, { proyecto: p, titulo: 'x', contenido: 'x' })).statusCode).toBe(404);
+  });
+});

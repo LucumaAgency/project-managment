@@ -1,6 +1,7 @@
 /**
- * Archivos (D-46, D-52): carpetas (`folder`), archivos (`upload`) con versiones y enlaces (`link`,
- * D-78) a archivos que viven afuera (Drive, Previews…). Los bytes van
+ * Archivos (D-46, D-52): carpetas (`folder`), archivos (`upload`) con versiones, enlaces (`link`,
+ * D-78) a archivos que viven afuera (Drive, Previews…) y documentos en Markdown (`doc`, D-82)
+ * que se escriben y leen en la app. Los bytes van
  * al almacén (lib/almacen.ts, hoy el disco del servidor); la base guarda Blob (el archivo
  * físico) y UploadVersion (qué versión de qué archivo es).
  *
@@ -12,6 +13,7 @@
  */
 import type { Readable } from 'node:stream';
 import { planPermite } from '@lucuma-pm/shared';
+import { markdownAHtml, MAX_DOCUMENTO } from '@lucuma-pm/shared/markdown';
 import { esCliente } from '@lucuma-pm/shared';
 import { almacen } from '../lib/almacen.js';
 import { conCuenta, type Tx } from '../lib/contexto.js';
@@ -207,6 +209,62 @@ export async function cambiarEnlace(actor: Actor, id: string, nueva: string) {
   return conCuenta(actor.ctx, (tx) => detalleArchivo(tx, actor, id));
 }
 
+/** Texto de un documento: se guarda tal cual (fuente) y su HTML armado con la misma regla de la web. */
+function textoDocumento(markdown: string) {
+  const texto = markdown.replace(/\r\n?/g, '\n');
+  if (texto.length > MAX_DOCUMENTO) throw new HttpError(400, `El documento es demasiado largo (máximo ${MAX_DOCUMENTO.toLocaleString('es-PE')} caracteres).`);
+  return { bodyText: texto, bodyHtml: markdownAHtml(texto) };
+}
+
+/** Crea un documento en Markdown (D-82) en la raíz o en una carpeta. Mismos permisos que subir un archivo. */
+export async function crearDocumento(
+  actor: Actor,
+  projectId: string,
+  datos: { carpetaId: string | null; titulo: string; contenido?: string; visibleToClients?: boolean }
+) {
+  const cuerpo = textoDocumento(datos.contenido ?? '');
+  const id = await conCuenta(actor.ctx, async (tx) => {
+    const carpeta = datos.carpetaId ? (await elementoPara(tx, actor, datos.carpetaId, 'elemento.ver')).elemento : undefined;
+    if (carpeta && carpeta.type !== 'folder') throw new HttpError(400, 'Los documentos van en la raíz o en una carpeta.');
+    const doc = await crearElemento(tx, actor, projectId, {
+      type: 'doc',
+      parentId: datos.carpetaId,
+      title: datos.titulo,
+      visibleToClients: datos.visibleToClients,
+    });
+    await tx.recording.update({ where: { id: doc.id }, data: cuerpo });
+    return doc.id;
+  });
+  return conCuenta(actor.ctx, (tx) => detalleArchivo(tx, actor, id));
+}
+
+/**
+ * Guarda el texto de un documento. `base` es la fecha de la versión que la persona abrió: si
+ * otra persona guardó en el medio, responde 409 en vez de pisar su cambio sin avisar.
+ */
+export async function guardarDocumento(actor: Actor, id: string, datos: { contenido: string; base?: string }) {
+  const cuerpo = textoDocumento(datos.contenido);
+  await conCuenta(actor.ctx, async (tx) => {
+    const { proyecto, elemento } = await elementoPara(tx, actor, id, 'elemento.editar', 'No puedes editar este documento.');
+    if (elemento.type !== 'doc') throw new HttpError(404, 'No encontrado.');
+    const actual = await tx.recording.findUniqueOrThrow({ where: { id }, select: { bodyText: true, updatedAt: true } });
+    if (actual.bodyText === cuerpo.bodyText) return;
+    if (datos.base && new Date(datos.base).getTime() !== actual.updatedAt.getTime()) {
+      throw new HttpError(409, 'Alguien cambió este documento mientras lo editabas. Copia tu texto, recarga la página y vuelve a aplicar tus cambios.');
+    }
+    await tx.recording.update({ where: { id }, data: cuerpo });
+    await registrarEvento(tx, {
+      accountId: actor.ctx.accountId,
+      projectId: proyecto.id,
+      recordingId: id,
+      actorId: actor.ctx.userId,
+      action: 'updated',
+      visibleToClients: elemento.visibleEnCadena,
+    });
+  });
+  return conCuenta(actor.ctx, (tx) => detalleArchivo(tx, actor, id));
+}
+
 const VERSION = {
   version: true,
   note: true,
@@ -238,7 +296,7 @@ export async function listarArchivos(tx: Tx, actor: Actor, projectId: string, ca
 
   const visibles = esCliente(actor.rol) ? { visibleToClients: true } : {};
   const hijos = await tx.recording.findMany({
-    where: { projectId: proyecto.id, parentId: carpetaId, type: { in: ['folder', 'upload', 'link'] }, status: 'active', ...visibles },
+    where: { projectId: proyecto.id, parentId: carpetaId, type: { in: ['folder', 'upload', 'link', 'doc'] }, status: 'active', ...visibles },
     select: {
       id: true,
       type: true,
@@ -255,7 +313,7 @@ export async function listarArchivos(tx: Tx, actor: Actor, projectId: string, ca
   });
   const conteos = await tx.recording.groupBy({
     by: ['parentId'],
-    where: { type: { in: ['comment', 'folder', 'upload', 'link'] }, status: 'active', parentId: { in: hijos.map((h) => h.id) }, ...visibles },
+    where: { type: { in: ['comment', 'folder', 'upload', 'link', 'doc'] }, status: 'active', parentId: { in: hijos.map((h) => h.id) }, ...visibles },
     _count: { _all: true },
   });
   const cuantos = new Map(conteos.map((c) => [c.parentId, c._count._all]));
@@ -308,6 +366,16 @@ export async function listarArchivos(tx: Tx, actor: Actor, projectId: string, ca
         comentarios: cuantos.get(h.id) ?? 0,
         creator: h.creator,
       })),
+    documentos: hijos
+      .filter((h) => h.type === 'doc')
+      .map((h) => ({
+        id: h.id,
+        title: h.title,
+        visibleToClients: h.visibleToClients,
+        updatedAt: h.updatedAt,
+        comentarios: cuantos.get(h.id) ?? 0,
+        creator: h.creator,
+      })),
     permisos: {
       subir: puede(actor, 'elemento.crear', { proyecto, elemento: carpeta?.elemento, tipo: 'upload' }),
       crearCarpeta: puede(actor, 'elemento.crear', { proyecto, elemento: carpeta?.elemento, tipo: 'folder' }),
@@ -321,16 +389,19 @@ export async function listarArchivos(tx: Tx, actor: Actor, projectId: string, ca
 
 export async function detalleArchivo(tx: Tx, actor: Actor, id: string) {
   const { proyecto, elemento } = await elementoPara(tx, actor, id, 'elemento.ver');
-  if (elemento.type !== 'upload' && elemento.type !== 'link') throw new HttpError(404, 'No encontrado.');
+  if (elemento.type !== 'upload' && elemento.type !== 'link' && elemento.type !== 'doc') throw new HttpError(404, 'No encontrado.');
   const fila = await tx.recording.findUniqueOrThrow({
     where: { id },
     select: {
       id: true,
       title: true,
       url: true,
+      bodyText: true,
+      bodyHtml: true,
       parentId: true,
       visibleToClients: true,
       createdAt: true,
+      updatedAt: true,
       creator: { select: { id: true, name: true } },
       versions: { select: VERSION, orderBy: { version: 'desc' } },
     },
@@ -348,10 +419,13 @@ export async function detalleArchivo(tx: Tx, actor: Actor, id: string) {
       versiones: fila.versions.map(aVersion),
       /** Solo en enlaces (D-78): adónde lleva. En un archivo, null. */
       enlace: elemento.type === 'link' && fila.url ? { url: fila.url, sitio: sitioDe(fila.url) } : null,
+      /** Solo en documentos (D-82): el Markdown (fuente), su HTML y cuándo se guardó (para no pisar cambios). */
+      documento: elemento.type === 'doc' ? { markdown: fila.bodyText ?? '', html: fila.bodyHtml ?? '', updatedAt: fila.updatedAt } : null,
     },
     permisos: {
       nuevaVersion: elemento.type === 'upload' && puede(actor, 'elemento.editar', { proyecto, elemento }),
       cambiarEnlace: elemento.type === 'link' && puede(actor, 'elemento.editar', { proyecto, elemento }),
+      editarDocumento: elemento.type === 'doc' && puede(actor, 'elemento.editar', { proyecto, elemento }),
       renombrar: puede(actor, 'elemento.editar', { proyecto, elemento }),
       papelera: puede(actor, 'elemento.papelera', { proyecto, elemento }),
       cambiarVisibilidad: puede(actor, 'elemento.cambiarVisibilidad', { proyecto, elemento }),

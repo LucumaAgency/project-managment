@@ -27,11 +27,12 @@ export const PADRES = {
     folder: [null, 'folder'],
     upload: [null, 'folder'],
     link: [null, 'folder'],
-    comment: ['todolist', 'todo', 'message', 'upload', 'link'],
+    doc: [null, 'folder'],
+    comment: ['todolist', 'todo', 'message', 'upload', 'link', 'doc'],
 };
-/** Los archivos se crean al confirmar una subida (día 10) y los enlaces con su dirección (D-78), no por la ruta genérica. */
+/** Los archivos se crean al confirmar una subida (día 10), los enlaces con su dirección (D-78) y los documentos con su texto (D-82), no por la ruta genérica. */
 export const TIPOS_CREABLES = ['todolist', 'todo', 'message', 'folder', 'comment'];
-const LLEVA_TITULO = ['todolist', 'todo', 'message', 'folder', 'upload', 'link'];
+const LLEVA_TITULO = ['todolist', 'todo', 'message', 'folder', 'upload', 'link', 'doc'];
 /** Columnas que se devuelven a la web. */
 export const SELECCION = {
     id: true,
@@ -211,6 +212,9 @@ export async function editarElemento(tx, actor, id, datos) {
         cambios.title = t;
     }
     if (datos.body !== undefined || datos.bodyText !== undefined) {
+        // El texto de un documento (D-82) es Markdown y se guarda solo por PUT /documentos/:id.
+        if (elemento.type === 'doc')
+            throw new HttpError(400, 'El texto de un documento se guarda desde el documento.');
         doc = cuerpo(datos);
         if (elemento.type === 'comment' && !doc)
             throw new HttpError(400, 'El comentario está vacío.');

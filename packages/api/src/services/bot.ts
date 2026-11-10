@@ -20,7 +20,7 @@ import { sinTildes } from '../lib/busqueda.js';
 import { conCuenta, type Tx } from '../lib/contexto.js';
 import { urlEnCuenta } from '../lib/enlaces.js';
 import { HttpError } from '../lib/errores.js';
-import { crearEnlace } from './archivos.js';
+import { crearDocumento, crearEnlace, guardarDocumento } from './archivos.js';
 import { crearElemento } from './elementos.js';
 import { registrarEvento } from './eventos.js';
 import { exigirCupoProyectos } from './proyectos.js';
@@ -220,25 +220,60 @@ export async function crearTareaBot(
  * existe, se crea (interna, salvo `visible`). Sin `carpeta`, va a la raíz.
  */
 export async function crearEnlaceBot(a: AccesoBot, datos: { proyecto: string; titulo: string; url: string; carpeta?: string; visible?: boolean }) {
-  const { proyecto, carpeta } = await conCuenta(a.actor.ctx, async (tx) => {
-    const proyecto = await proyectoPorNombre(tx, a, datos.proyecto);
-    if (!datos.carpeta?.trim()) return { proyecto, carpeta: null };
-    const carpetas = await tx.recording.findMany({
-      where: { projectId: proyecto.id, parentId: null, type: 'folder', status: 'active' },
-      select: { id: true, title: true },
-    });
-    const q = normal(datos.carpeta);
-    const hallada = carpetas.find((c) => normal(c.title ?? '') === q) ?? carpetas.find((c) => normal(c.title ?? '').includes(q));
-    if (hallada) return { proyecto, carpeta: hallada };
-    const titulo = datos.carpeta.trim();
-    const nueva = await crearElemento(tx, a.actor, proyecto.id, { type: 'folder', title: titulo, visibleToClients: datos.visible ?? false });
-    return { proyecto, carpeta: { id: nueva.id, title: titulo } };
-  });
+  const { proyecto, carpeta } = await conCuenta(a.actor.ctx, (tx) => proyectoYCarpeta(tx, a, datos));
   const r = await crearEnlace(a.actor, proyecto.id, { carpetaId: carpeta?.id ?? null, titulo: datos.titulo, url: datos.url, visibleToClients: datos.visible ?? false });
   return {
     id: r.archivo.id,
     titulo: r.archivo.title,
     url: r.archivo.enlace?.url ?? datos.url,
+    proyecto: { id: proyecto.id, nombre: proyecto.name },
+    carpeta: carpeta?.title ?? null,
+    visibleParaCliente: r.archivo.visibleParaCliente,
+    enlace: urlEnCuenta(env.baseDomain, a.slug, `/proyectos/${proyecto.id}/archivos/${r.archivo.id}`),
+  };
+}
+
+/**
+ * Proyecto por nombre y, si viene `carpeta`, la carpeta de la raíz con ese nombre (sin tildes ni
+ * mayúsculas; si no está, se crea interna salvo `visible`). Lo usan enlaces y documentos.
+ */
+async function proyectoYCarpeta(tx: Tx, a: AccesoBot, datos: { proyecto: string; carpeta?: string; visible?: boolean }) {
+  const proyecto = await proyectoPorNombre(tx, a, datos.proyecto);
+  if (!datos.carpeta?.trim()) return { proyecto, carpeta: null };
+  const carpetas = await tx.recording.findMany({
+    where: { projectId: proyecto.id, parentId: null, type: 'folder', status: 'active' },
+    select: { id: true, title: true },
+  });
+  const q = normal(datos.carpeta);
+  const hallada = carpetas.find((c) => normal(c.title ?? '') === q) ?? carpetas.find((c) => normal(c.title ?? '').includes(q));
+  if (hallada) return { proyecto, carpeta: hallada };
+  const titulo = datos.carpeta.trim();
+  const nueva = await crearElemento(tx, a.actor, proyecto.id, { type: 'folder', title: titulo, visibleToClients: datos.visible ?? false });
+  return { proyecto, carpeta: { id: nueva.id, title: titulo } };
+}
+
+/**
+ * Documento en Markdown (D-82). Si en ese mismo lugar (raíz o carpeta) ya hay un documento con el
+ * mismo nombre (sin tildes ni mayúsculas), se reemplaza su texto en vez de crear otro: así se puede
+ * volver a publicar una documentación sin duplicarla. `visible` solo cuenta al crear.
+ */
+export async function guardarDocumentoBot(a: AccesoBot, datos: { proyecto: string; titulo: string; contenido: string; carpeta?: string; visible?: boolean }) {
+  const { proyecto, carpeta, existente } = await conCuenta(a.actor.ctx, async (tx) => {
+    const { proyecto, carpeta } = await proyectoYCarpeta(tx, a, datos);
+    const docs = await tx.recording.findMany({
+      where: { projectId: proyecto.id, parentId: carpeta?.id ?? null, type: 'doc', status: 'active' },
+      select: { id: true, title: true },
+    });
+    const q = normal(datos.titulo);
+    return { proyecto, carpeta, existente: docs.find((d) => normal(d.title ?? '') === q) ?? null };
+  });
+  const r = existente
+    ? await guardarDocumento(a.actor, existente.id, { contenido: datos.contenido })
+    : await crearDocumento(a.actor, proyecto.id, { carpetaId: carpeta?.id ?? null, titulo: datos.titulo, contenido: datos.contenido, visibleToClients: datos.visible ?? false });
+  return {
+    id: r.archivo.id,
+    titulo: r.archivo.title,
+    reemplazado: !!existente,
     proyecto: { id: proyecto.id, nombre: proyecto.name },
     carpeta: carpeta?.title ?? null,
     visibleParaCliente: r.archivo.visibleParaCliente,
