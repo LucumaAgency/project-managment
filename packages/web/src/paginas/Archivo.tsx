@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Documento from '../componentes/Documento';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { esCliente } from '@lucuma-pm/shared';
 import { api, ErrorApi, subirBinario, tamano, urlArchivo, type DetalleArchivo } from '../api';
@@ -10,7 +11,7 @@ import { useYo } from '../contexto';
 const mensajeDe = (e: unknown) => (e instanceof ErrorApi ? e.message : 'No se pudo conectar.');
 const cuando = (iso: string) => new Date(iso).toLocaleString('es-PE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-/** Un archivo (vista previa, versiones, nueva versión) o un enlace (D-78), con visibilidad y comentarios. */
+/** Un archivo (vista previa, versiones, nueva versión), un enlace (D-78) o un documento (D-82), con visibilidad y comentarios. */
 export default function Archivo() {
   const { id: projectId, archivoId } = useParams<{ id: string; archivoId: string }>();
   const yo = useYo();
@@ -52,6 +53,7 @@ export default function Archivo() {
   }
   if (!d) return error ? <p className="error">{error}</p> : <p className="cargando">Cargando…</p>;
   const { archivo: a, permisos } = d;
+  if (a.documento) return <Documento d={d} volver={volver} hacer={hacer} error={error} projectId={projectId!} interno={!esCliente(yo.rol)} onPapelera={() => navegar(volver)} onGuardado={setD} />;
   if (a.enlace) return <Enlace d={d} volver={volver} hacer={hacer} error={error} projectId={projectId!} interno={!esCliente(yo.rol)} onPapelera={() => navegar(volver)} />;
   const actual = a.versiones[0];
 

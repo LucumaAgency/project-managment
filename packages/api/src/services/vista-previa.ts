@@ -101,8 +101,8 @@ export async function vistaPrevia(tx: Tx, actor: Actor, proyecto: ProyectoCargad
 
   // Carpetas de la raíz con sus primeros elementos, como las listas de Tareas (D-79). Un nivel:
   // la cadena es el elemento y su carpeta, así que basta con pedir los dos activos y visibles.
-  const EN_ARCHIVOS = ['folder', 'upload', 'link'] as const;
-  const tipoPrevia = (t: string) => (t === 'folder' ? 'carpeta' : t === 'link' ? 'enlace' : 'archivo');
+  const EN_ARCHIVOS = ['folder', 'upload', 'link', 'doc'] as const;
+  const tipoPrevia = (t: string) => (t === 'folder' ? 'carpeta' : t === 'link' ? 'enlace' : t === 'doc' ? 'documento' : 'archivo');
   const raiz = { projectId, parentId: null, type: 'folder' as const, status: 'active' as const, ...visible };
   const [totalCarpetas, raices] = await Promise.all([
     tx.recording.count({ where: raiz }),
@@ -118,7 +118,7 @@ export async function vistaPrevia(tx: Tx, actor: Actor, proyecto: ProyectoCargad
       return { id: c.id, title: c.title, total, elementos: hijos.map((h) => ({ id: h.id, title: h.title, tipo: tipoPrevia(h.type) })) };
     })
   );
-  const enRaiz = { projectId, parentId: null, type: { in: ['upload' as const, 'link' as const] }, status: 'active' as const, ...visible };
+  const enRaiz = { projectId, parentId: null, type: { in: ['upload' as const, 'link' as const, 'doc' as const] }, status: 'active' as const, ...visible };
   const [totalSueltos, sueltos] = await Promise.all([
     tx.recording.count({ where: enRaiz }),
     tx.recording.findMany({ where: enRaiz, select: { id: true, title: true, type: true }, orderBy: { updatedAt: 'desc' }, take: SUELTOS }),

@@ -29,14 +29,15 @@ export const PADRES: Record<RecordingType, (RecordingType | null)[]> = {
   folder: [null, 'folder'],
   upload: [null, 'folder'],
   link: [null, 'folder'],
-  comment: ['todolist', 'todo', 'message', 'upload', 'link'],
+  doc: [null, 'folder'],
+  comment: ['todolist', 'todo', 'message', 'upload', 'link', 'doc'],
 };
 
-/** Los archivos se crean al confirmar una subida (día 10) y los enlaces con su dirección (D-78), no por la ruta genérica. */
+/** Los archivos se crean al confirmar una subida (día 10), los enlaces con su dirección (D-78) y los documentos con su texto (D-82), no por la ruta genérica. */
 export const TIPOS_CREABLES = ['todolist', 'todo', 'message', 'folder', 'comment'] as const;
 export type TipoCreable = (typeof TIPOS_CREABLES)[number];
 
-const LLEVA_TITULO: RecordingType[] = ['todolist', 'todo', 'message', 'folder', 'upload', 'link'];
+const LLEVA_TITULO: RecordingType[] = ['todolist', 'todo', 'message', 'folder', 'upload', 'link', 'doc'];
 
 /** Columnas que se devuelven a la web. */
 export const SELECCION = {
@@ -113,8 +114,8 @@ async function visibleEfectivo(tx: Tx, id: string) {
 }
 
 export interface DatosNuevo {
-  /** `upload` y `link` solo los usa services/archivos.ts (subida confirmada, enlace con su dirección). */
-  type: TipoCreable | 'upload' | 'link';
+  /** `upload`, `link` y `doc` solo los usa services/archivos.ts (subida confirmada, enlace con su dirección, documento con su texto). */
+  type: TipoCreable | 'upload' | 'link' | 'doc';
   parentId?: string | null;
   title?: string;
   /** Documento del editor (JSON de Tiptap). El servidor arma el HTML y el texto. */
@@ -255,6 +256,8 @@ export async function editarElemento(tx: Tx, actor: Actor, id: string, datos: Da
     cambios.title = t;
   }
   if (datos.body !== undefined || datos.bodyText !== undefined) {
+    // El texto de un documento (D-82) es Markdown y se guarda solo por PUT /documentos/:id.
+    if (elemento.type === 'doc') throw new HttpError(400, 'El texto de un documento se guarda desde el documento.');
     doc = cuerpo(datos);
     if (elemento.type === 'comment' && !doc) throw new HttpError(400, 'El comentario está vacío.');
     Object.assign(cambios, columnasCuerpo(doc));

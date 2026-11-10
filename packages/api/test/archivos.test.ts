@@ -270,3 +270,76 @@ describe('enlaces (D-78)', () => {
     expect((await client.get(`/archivos/${interno}`)).status).toBe(404);
   });
 });
+
+describe('documentos en Markdown (D-82)', () => {
+  it('crea un documento con su HTML armado; aparece en documentos, no en archivos ni enlaces', async () => {
+    const r = await member.post(`/proyectos/${projectId}/documentos`, { titulo: 'Guía de marca', contenido: '# Colores\r\n\n**Azul** #174FCA' });
+    expect(r.status).toBe(200);
+    expect(r.json.archivo.documento.markdown).toBe('# Colores\n\n**Azul** #174FCA');
+    expect(r.json.archivo.documento.html).toContain('<h1>Colores</h1>');
+    expect(r.json.archivo.documento.html).toContain('<strong>Azul</strong>');
+    expect(r.json.archivo.enlace).toBeNull();
+    expect(r.json.permisos).toMatchObject({ editarDocumento: true, nuevaVersion: false, cambiarEnlace: false });
+    const l = (await member.get(`/proyectos/${projectId}/archivos`)).json;
+    expect(l.documentos.map((d: { id: string }) => d.id)).toContain(r.json.archivo.id);
+    expect(l.archivos.map((a: { id: string }) => a.id)).not.toContain(r.json.archivo.id);
+    expect(l.enlaces.map((a: { id: string }) => a.id)).not.toContain(r.json.archivo.id);
+  });
+
+  it('el HTML no deja pasar código ni enlaces peligrosos', async () => {
+    const contenido = '<script>alert(1)</script>\n\n[x](javascript:alert(1)) <img src=x onerror=alert(1)> [ok](https://example.com)\n\n![a](http://example.com/a.png)';
+    const html = (await member.post(`/proyectos/${projectId}/documentos`, { titulo: 'xss', contenido })).json.archivo.documento.html as string;
+    expect(html).not.toMatch(/<script|<img src="x|href="javascript|onerror="/i);
+    expect(html).toContain('&lt;script&gt;');
+    expect(html).toContain('<a href="https://example.com" target="_blank" rel="noopener noreferrer nofollow">ok</a>');
+    expect(html).not.toContain('http://example.com/a.png');
+  });
+
+  it('guardar, conflicto si otro guardó antes, renombrar, papelera y restaurar', async () => {
+    const d = (await member.post(`/proyectos/${projectId}/documentos`, { titulo: 'Notas' })).json.archivo;
+    expect(d.documento.markdown).toBe('');
+    const base = d.documento.updatedAt;
+    // Otro del equipo también puede editarlo (como un archivo).
+    const g = await owner.put(`/documentos/${d.id}`, { contenido: '- uno', base });
+    expect(g.status).toBe(200);
+    expect(g.json.archivo.documento.html).toContain('<li>uno</li>');
+    // Quien abrió la versión anterior no pisa el cambio.
+    expect((await member.put(`/documentos/${d.id}`, { contenido: '- dos', base })).status).toBe(409);
+    // Guardar lo mismo que ya está no es conflicto.
+    expect((await member.put(`/documentos/${d.id}`, { contenido: '- uno', base })).status).toBe(200);
+    expect((await member.put(`/documentos/${d.id}`, { contenido: '- dos', base: g.json.archivo.documento.updatedAt })).status).toBe(200);
+    expect((await member.patch(`/elementos/${d.id}`, { title: 'Notas finales' })).status).toBe(200);
+    expect((await member.patch(`/elementos/${d.id}`, { bodyText: '<b>x</b>' })).status).toBe(400);
+    expect((await member.post(`/elementos/${d.id}/papelera`)).status).toBe(200);
+    expect((await member.put(`/documentos/${d.id}`, { contenido: 'x' })).status).toBe(403);
+    expect((await member.post(`/elementos/${d.id}/restaurar`)).status).toBe(200);
+    const l = (await member.get(`/proyectos/${projectId}/archivos`)).json.documentos.find((x: { id: string }) => x.id === d.id);
+    expect(l).toMatchObject({ title: 'Notas finales' });
+    expect((await member.get(`/archivos/${d.id}`)).json.archivo.documento.markdown).toBe('- dos');
+  });
+
+  it('tope de largo, nombre obligatorio, y la ruta de documentos no edita otros tipos', async () => {
+    expect((await member.post(`/proyectos/${projectId}/documentos`, { titulo: ' ' })).status).toBe(400);
+    expect((await member.post(`/proyectos/${projectId}/documentos`, { titulo: 'largo', contenido: 'a'.repeat(200_001) })).status).toBe(400);
+    const archivo = (await subir('member', `/proyectos/${projectId}/archivos?nombre=y.pdf`, PDF)).json().archivo.id;
+    expect((await member.put(`/documentos/${archivo}`, { contenido: 'x' })).status).toBe(404);
+    expect((await member.post(`/proyectos/${projectId}/documentos`, { titulo: 'x', carpeta: archivo })).status).toBe(400);
+  });
+
+  it('se encuentra por su texto en la búsqueda', async () => {
+    await member.post(`/proyectos/${projectId}/documentos`, { titulo: 'Manual', contenido: 'Proceso de onboarding con zanahorias' });
+    const r = (await member.get('/buscar?q=zanahorias')).json;
+    expect(JSON.stringify(r)).toContain('Manual');
+  });
+
+  it('el cliente crea documentos (nacen visibles) y no ve los internos', async () => {
+    const delCliente = await client.post(`/proyectos/${projectId}/documentos`, { titulo: 'Datos de la empresa', contenido: 'RUC', visible: false });
+    expect(delCliente.status).toBe(200);
+    expect(delCliente.json.archivo.visibleToClients).toBe(true);
+    const interno = (await member.post(`/proyectos/${projectId}/documentos`, { titulo: 'Margen interno', contenido: 'x' })).json.archivo.id;
+    const ids = (await client.get(`/proyectos/${projectId}/archivos`)).json.documentos.map((d: { id: string }) => d.id);
+    expect(ids).toContain(delCliente.json.archivo.id);
+    expect(ids).not.toContain(interno);
+    expect((await client.get(`/archivos/${interno}`)).status).toBe(404);
+  });
+});

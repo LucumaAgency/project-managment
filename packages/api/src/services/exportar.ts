@@ -205,6 +205,13 @@ export async function exportarCuenta(ctx: Contexto, log?: (msg: string) => void)
         zip.addBuffer(Buffer.from(`[InternetShortcut]\r\nURL=${e.url}\r\n`), ruta(`${dir}/${e.status === 'trashed' ? 'papelera/' : ''}${nombre}`), { mtime: e.updatedAt });
       }
 
+      // Documentos (D-82): el Markdown tal cual, como .md junto a los archivos de su carpeta.
+      for (const e of elementos.filter((x) => x.type === 'doc')) {
+        const dir = [carpeta, 'archivos', rutaCarpeta(e.parentId)].filter(Boolean).join('/');
+        const nombre = `${nombreZip((e.title ?? 'documento').replace(/\.md$/i, ''), 'documento')}.md`;
+        zip.addBuffer(Buffer.from(e.bodyText ?? '', 'utf8'), ruta(`${dir}/${e.status === 'trashed' ? 'papelera/' : ''}${nombre}`), { mtime: e.updatedAt });
+      }
+
       // Ficha del cliente (D-65): archivos de las respuestas en ficha/<tarea>/.
       for (const t of elementos.filter((x) => x.type === 'todo' && x.attachments.length)) {
         const dir = `${carpeta}/ficha/${nombreZip(t.title ?? 'tarea')}`;

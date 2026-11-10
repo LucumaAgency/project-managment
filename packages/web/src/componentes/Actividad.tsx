@@ -9,6 +9,7 @@ const QUE: Record<string, string> = {
   folder: 'la carpeta',
   upload: 'el archivo',
   link: 'el enlace',
+  doc: 'el documento',
 };
 
 function fechaCorta(dia: unknown) {
@@ -31,6 +32,7 @@ export function enlaceDe(projectId: string, e: Evento): string | null {
       return `/proyectos/${projectId}/tareas`;
     case 'upload':
     case 'link':
+    case 'doc':
       return `/proyectos/${projectId}/archivos/${destino.id}`;
     case 'folder':
       return `/proyectos/${projectId}/archivos?carpeta=${destino.id}`;

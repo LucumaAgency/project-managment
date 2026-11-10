@@ -11,6 +11,7 @@ const ICONO: Record<string, NombreIcono> = {
   folder: 'carpeta',
   upload: 'archivo',
   link: 'enlace',
+  doc: 'documento',
 };
 const TIPO: Record<string, string> = {
   todolist: 'Lista',
@@ -20,6 +21,7 @@ const TIPO: Record<string, string> = {
   folder: 'Carpeta',
   upload: 'Archivo',
   link: 'Enlace',
+  doc: 'Documento',
 };
 
 /** A dónde lleva un resultado (lo comentado, si es un comentario). */
@@ -34,6 +36,7 @@ export function enlaceResultado(r: ResultadoBusqueda): string {
       return `${p}/mensajes/${r.abre.id}`;
     case 'upload':
     case 'link':
+    case 'doc':
       return `${p}/archivos/${r.abre.id}`;
     case 'folder':
       return `${p}/archivos?carpeta=${r.abre.id}`;

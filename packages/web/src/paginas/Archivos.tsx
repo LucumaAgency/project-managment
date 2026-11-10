@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { esCliente } from '@lucuma-pm/shared';
 import { api, ErrorApi, subirBinario, tamano, urlArchivo, type DetalleArchivo, type ListadoArchivos } from '../api';
 import Icono from '../componentes/Icono';
@@ -16,7 +16,7 @@ interface Subida {
   error?: string;
 }
 
-/** Archivos del proyecto: carpetas, subir (botón o arrastrando), enlaces a archivos de afuera (D-78) y cada archivo con su vista. */
+/** Archivos del proyecto: carpetas, subir (botón o arrastrando), enlaces a archivos de afuera (D-78), documentos en Markdown (D-82) y cada archivo con su vista. */
 export default function Archivos() {
   const { id: projectId } = useParams<{ id: string }>();
   const yo = useYo();
@@ -30,6 +30,8 @@ export default function Archivos() {
   const [encima, setEncima] = useState(false);
   const [creandoCarpeta, setCreandoCarpeta] = useState(false);
   const [creandoEnlace, setCreandoEnlace] = useState(false);
+  const [creandoDoc, setCreandoDoc] = useState(false);
+  const navegar = useNavigate();
   const selector = useRef<HTMLInputElement>(null);
 
   const cargar = useCallback(() => {
@@ -74,7 +76,7 @@ export default function Archivos() {
   };
 
   if (!d) return error ? <p className="error">{error}</p> : <p className="cargando">Cargando…</p>;
-  const vacio = d.carpetas.length === 0 && d.archivos.length === 0 && d.enlaces.length === 0;
+  const vacio = d.carpetas.length === 0 && d.archivos.length === 0 && d.enlaces.length === 0 && d.documentos.length === 0;
 
   return (
     <div
@@ -135,6 +137,11 @@ export default function Archivos() {
           </button>
         )}
         {d.permisos.subir && (
+          <button type="button" className="btn btn-sec" onClick={() => setCreandoDoc(true)}>
+            <Icono nombre="documento" tam={16} />Nuevo documento
+          </button>
+        )}
+        {d.permisos.subir && (
           <button type="button" className="btn btn-sec" onClick={() => setCreandoEnlace(true)}>
             <Icono nombre="enlace" tam={16} />Agregar enlace
           </button>
@@ -174,7 +181,7 @@ export default function Archivos() {
         <div className="card vacio">
           <Icono nombre="archivo" tam={28} />
           <p className="nombre" style={{ margin: '8px 0 2px', color: 'var(--texto)' }}>{carpeta ? 'Esta carpeta está vacía' : 'Todavía no hay archivos'}</p>
-          <p className="meta" style={{ margin: 0 }}>{d.permisos.subir ? 'Sube archivos con el botón o arrástralos aquí. Si el archivo está en otro lado (Drive, una galería), agrega su enlace.' : 'Cuando el equipo comparta archivos contigo, aparecerán aquí.'}</p>
+          <p className="meta" style={{ margin: 0 }}>{d.permisos.subir ? 'Sube archivos con el botón o arrástralos aquí. Si el archivo está en otro lado (Drive, una galería), agrega su enlace. Para escribir una guía o documentación, crea un documento.' : 'Cuando el equipo comparta archivos contigo, aparecerán aquí.'}</p>
         </div>
       ) : (
         <div className="rejilla-archivos">
@@ -203,6 +210,17 @@ export default function Archivos() {
               </span>
             </Link>
           ))}
+          {d.documentos.map((doc) => (
+            <Link key={doc.id} to={`/proyectos/${projectId}/archivos/${doc.id}`} className="tarjeta-archivo">
+              <span className="vista documento"><Icono nombre="documento" tam={30} /><span className="tipo-md">MD</span></span>
+              <span className="nombre">{doc.title}</span>
+              <span className="meta">
+                Documento · {cuando(doc.updatedAt)}
+                {doc.comentarios > 0 ? ` · ${doc.comentarios} com.` : ''}
+                {!cliente && doc.visibleToClients ? ' · visible' : ''}
+              </span>
+            </Link>
+          ))}
           {d.enlaces.map((e) => (
             <Link key={e.id} to={`/proyectos/${projectId}/archivos/${e.id}`} className="tarjeta-archivo">
               <span className="vista enlace"><Icono nombre="enlace" tam={30} /></span>
@@ -215,6 +233,19 @@ export default function Archivos() {
             </Link>
           ))}
         </div>
+      )}
+
+      {creandoDoc && (
+        <NuevoDocumento
+          cliente={cliente}
+          visibleInicial={visibles}
+          onCerrar={() => setCreandoDoc(false)}
+          onCrear={async (titulo, contenido, visible) => {
+            const r = await api<DetalleArchivo>(`/proyectos/${projectId}/documentos`, { body: { titulo, contenido, carpeta, visible } });
+            // Uno nuevo se abre listo para escribir; uno importado, para leerlo.
+            navegar(`/proyectos/${projectId}/archivos/${r.archivo.id}${contenido ? '' : '?editar=1'}`);
+          }}
+        />
       )}
 
       {creandoEnlace && (
@@ -335,6 +366,68 @@ function NuevoEnlace({ cliente, visibleInicial, onCerrar, onCrear }: { cliente: 
         <div className="acciones" style={{ justifyContent: 'flex-end', marginBottom: 0 }}>
           <button type="button" className="btn btn-sec" onClick={onCerrar}>Cancelar</button>
           <button className="btn" disabled={enviando}>{enviando ? 'Agregando…' : 'Agregar enlace'}</button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+/** Documento en Markdown (D-82): nombre y, si quieren, un .md que ya tengan para importarlo. */
+function NuevoDocumento({ cliente, visibleInicial, onCerrar, onCrear }: { cliente: boolean; visibleInicial: boolean; onCerrar: () => void; onCrear: (t: string, c: string, v: boolean) => Promise<void> }) {
+  const [titulo, setTitulo] = useState('');
+  const [contenido, setContenido] = useState('');
+  const [importado, setImportado] = useState<string | null>(null);
+  const [visible, setVisible] = useState(visibleInicial);
+  const [error, setError] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  const selector = useRef<HTMLInputElement>(null);
+
+  async function importar(f: File) {
+    setError(null);
+    if (f.size > 600_000) return setError('Ese archivo es demasiado grande para un documento.');
+    const texto = await f.text();
+    setContenido(texto);
+    setImportado(f.name);
+    // Nombre: el primer "# Título" del archivo; si no tiene, el nombre del archivo.
+    const h1 = /^#\s+(.+?)\s*#*\s*$/m.exec(texto)?.[1];
+    if (!titulo.trim()) setTitulo((h1 ?? f.name.replace(/\.(md|markdown|txt)$/i, '')).slice(0, 300));
+  }
+
+  return (
+    <Modal titulo="Nuevo documento" onCerrar={onCerrar}>
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setEnviando(true);
+          setError(null);
+          try {
+            await onCrear(titulo.trim(), contenido, visible);
+          } catch (err) {
+            setError(mensajeDe(err));
+            setEnviando(false);
+          }
+        }}
+      >
+        <label htmlFor="d-titulo">Nombre</label>
+        <input id="d-titulo" required autoFocus maxLength={300} placeholder="Ej.: Guía de marca, Manual de despliegue" value={titulo} onChange={(e) => setTitulo(e.target.value)} />
+        {!cliente && (
+          <label className="casilla">
+            <input type="checkbox" checked={visible} onChange={(e) => setVisible(e.target.checked)} /> Visible para el cliente
+          </label>
+        )}
+        <p className="ayuda">
+          Se escribe en Markdown (# títulos, **negrita**, listas, tablas) y se lee ya formateado.{' '}
+          {importado ? (
+            <>Se importará <b>{importado}</b>. <button type="button" className="btn-texto" onClick={() => { setContenido(''); setImportado(null); }}>Quitar</button></>
+          ) : (
+            <button type="button" className="btn-texto" onClick={() => selector.current?.click()}>¿Ya tienes un .md? Impórtalo</button>
+          )}
+        </p>
+        <input ref={selector} type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) importar(f); }} />
+        {error && <p className="error">{error}</p>}
+        <div className="acciones" style={{ justifyContent: 'flex-end', marginBottom: 0 }}>
+          <button type="button" className="btn btn-sec" onClick={onCerrar}>Cancelar</button>
+          <button className="btn" disabled={enviando}>{enviando ? 'Creando…' : importado ? 'Importar documento' : 'Crear y escribir'}</button>
         </div>
       </form>
     </Modal>

@@ -604,3 +604,25 @@ porque todavía no tiene usuario). Si algo falla después de crear el proyecto, 
 la pantalla final dice qué faltó y dónde hacerlo a mano; si hubo invitación, muestra el enlace para
 compartir (`EnlaceCompartir`). Sin invitación ni avisos, va directo al proyecto. No es atómico a
 propósito: evitar una ruta compuesta que duplique reglas de cuatro servicios.
+
+**D-82 · Documentos en Markdown dentro de Archivos** (2026-11-09, pedido del usuario)
+Para escribir documentación en el propio proyecto. Tipo nuevo de elemento `doc` (migración
+`20261109090000_documentos`, solo `ADD VALUE`): título + el Markdown en `bodyText` (fuente; ya
+alimenta la búsqueda por el trigger existente) + el HTML armado en `bodyHtml`. Va en la raíz o en
+una carpeta, con las mismas reglas que un archivo o un enlace: visibilidad en cadena, lo edita
+cualquiera del equipo del proyecto (DEL_EQUIPO), el cliente puede crear (nace visible),
+comentarios, papelera, renombrar por la ruta genérica. El texto se guarda SOLO por
+`PUT /documentos/:id`; la ruta genérica rechaza `body`/`bodyText` en un `doc` (si no, se podría
+meter HTML de Tiptap sin pasar por la regla de Markdown).
+Markdown: `markdown-it` 14 (MIT) en `@lucuma-pm/shared/markdown` (entrada aparte para no cargarlo
+en todo), una sola configuración para el servidor y la vista previa de la web: `html: false` (el
+HTML escrito a mano se muestra como texto), enlaces solo http/https/mailto con `target=_blank` y
+`rel=noopener noreferrer nofollow`, imágenes solo https (con `no-referrer`). La web lee el HTML del
+servidor y solo baja la librería (≈46 KB gzip) al editar. Tope: 200.000 caracteres.
+Concurrencia: al guardar se manda `base` = `updatedAt` de lo que se abrió; si cambió y el texto es
+distinto, 409 con aviso (sin fusionar ni bloquear). Sin versiones del texto por ahora: el historial
+queda en Actividad ("editó el documento"). Descarga `.md` desde el navegador; importar un `.md` toma
+el primer `# título` como nombre. En el ZIP de exportación va como `.md`. Bot: `POST /bot/documentos`
+reemplaza el texto si ya hay uno con el mismo nombre en el mismo lugar, para republicar
+documentación sin duplicarla. Subir un `.md` por "Subir archivos" sigue siendo un archivo común.
+

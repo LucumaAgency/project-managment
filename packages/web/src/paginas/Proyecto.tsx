@@ -402,7 +402,7 @@ function PreviaArchivo({ a }: { a: VistaPrevia['archivos'][number] }) {
   );
 }
 
-const ICONO_PREVIA = { carpeta: 'carpeta', archivo: 'archivo', enlace: 'enlace' } as const;
+const ICONO_PREVIA = { carpeta: 'carpeta', archivo: 'archivo', enlace: 'enlace', documento: 'documento' } as const;
 
 /** Elementos de una carpeta en la tarjeta de Archivos: icono y nombre, una línea cada uno. */
 function ElementosPrevia({ elementos }: { elementos: ElementoPrevia[] }) {
